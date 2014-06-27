@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/epochtalk/epoch",
   "dependencies": {
+    "leveldown": "^0.10.2",
     "levelup": "^0.18.5"
   }
 }

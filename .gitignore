@@ -18,3 +18,5 @@ node_modules
 test/coverage/
 /public/bundle.js
 /public/.bundle.js
+
+/epochcore_db
