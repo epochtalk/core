@@ -1,0 +1,22 @@
+{
+  "name": "epoch",
+  "version": "0.1.0",
+  "description": "Epochtalk Backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/epochtalk/epoch.git"
+  },
+  "author": "James Wang <jw@slickage.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/epochtalk/epoch/issues"
+  },
+  "homepage": "https://github.com/epochtalk/epoch",
+  "dependencies": {
+    "levelup": "^0.18.5"
+  }
+}
