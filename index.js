@@ -1,5 +1,6 @@
 var levelup = require('levelup')
 var db = levelup(__dirname + '/epochcore_db')
+var epochcore = {};
 
 // temporary
 db.put('name', 'epochcore', function (err) {
@@ -9,3 +10,5 @@ db.put('name', 'epochcore', function (err) {
     console.log('name=' + value)
   })
 })
+
+module.exports = epochcore;
