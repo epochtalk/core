@@ -4,11 +4,14 @@ var posts = {};
 var postPrefix = 'post\x00';
 
 posts.create = function(post, cb) {
-  db.put(postPrefix + uuid.v4(), post, cb);
+  var id = uuid.v4();
+  var key = postPrefix + id;
+  post.id = id;
+  db.put(key, post, cb);
 };
 
 posts.find = function(id, cb) {
-  db.get(id, cb);
+  db.get(postPrefix + id, cb);
 };
 
 posts.all = function(cb) {
