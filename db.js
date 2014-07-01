@@ -2,6 +2,6 @@ var levelup = require('levelup');
 var options = {
   valueEncoding: 'json'
 };
-var db = levelup(__dirname + '/epochcore_db', options)
+var db = levelup(__dirname + '/epoch.db', options)
 
 module.exports = db;
