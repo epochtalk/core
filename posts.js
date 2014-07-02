@@ -16,7 +16,7 @@ posts.find = function(id, cb) {
 
 posts.all = function(cb) {
   var entries = []
-  db.createReadStream({ start: postPrefix, end: postPrefix + '\xff', limit: 100})
+  db.createReadStream({ start: postPrefix, end: postPrefix + '\xff'})
     .on('data', function (entry) { entries.push(entry) })
     .on('close', function () { cb(null, entries) })
 }
