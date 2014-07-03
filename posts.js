@@ -3,11 +3,21 @@ var db = require(__dirname + '/db');
 var posts = {};
 var modelPrefix = 'post\x00';
 
+// posts.create({foo: 'bar'})
+
+printPost = function(err, post) {
+  console.log('asdf');
+  return 'asdf';
+};
+
 posts.create = function(post, cb) {
+  if (cb === undefined) cb = printPost;
   var id = uuid.v4();
   var key = modelPrefix + id;
   post.id = id;
-  db.put(key, post, cb);
+  db.put(key, post, function(err) {
+    return cb(err, post);
+  });
 };
 
 posts.find = function(id, cb) {

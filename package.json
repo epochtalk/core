@@ -20,7 +20,9 @@
     "async": "^0.9.0",
     "leveldown": "^0.10.2",
     "levelup": "^0.18.5",
-    "node-uuid": "^1.4.1"
+    "node-uuid": "^1.4.1",
+    "replify": "^1.2.0",
+    "replpad": "^0.11.9"
   },
   "devDependencies": {
     "charlatan": "^0.1.9"

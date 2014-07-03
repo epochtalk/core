@@ -1,5 +1,7 @@
 var levelup = require('levelup')
-var db = levelup(__dirname + '/epochcore_db')
-var epochcore = {};
+var core = {};
+core.users = require(__dirname + '/users');
+core.boards = require(__dirname + '/boards');
+core.posts = require(__dirname + '/posts');
 
-module.exports = epochcore;
+module.exports = core;
