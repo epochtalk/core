@@ -3,11 +3,8 @@ var db = require(__dirname + '/db');
 var posts = {};
 var modelPrefix = 'post\x00';
 
-// posts.create({foo: 'bar'})
-
 printPost = function(err, post) {
-  console.log('asdf');
-  return 'asdf';
+  console.log(post);
 };
 
 posts.create = function(post, cb) {
