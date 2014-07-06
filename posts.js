@@ -12,21 +12,27 @@ posts.create = function(post, cb) {
   var id = uuid.v4();
   var key = modelPrefix + id;
   post.id = id;
-  db.put(key, post, function(err) {
+  db.put(key, post, function(err, version) {
+    post.version = version;
     return cb(err, post);
   });
 };
 
 posts.find = function(id, cb) {
+  if (cb === undefined) cb = printPost;
   db.get(modelPrefix + id, cb);
 };
 
 posts.all = function(cb) {
   var entries = []
   db.createReadStream({ start: modelPrefix, end: modelPrefix + '\xff'})
-    .on('data', function (entry) { entries.push(entry) })
-    .on('close', function () { cb(null, entries) })
-}
+  .on('data', function (entry) {
+    entries.push(entry);
+  })
+  .on('end', function () {
+    cb(null, entries)
+  });
+};
 
 module.exports = posts;
 
