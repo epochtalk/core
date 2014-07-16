@@ -15,13 +15,13 @@ printPost = function(err, post) {
 posts.create = function(post, cb) {
   if (cb === undefined) cb = printPost;
   var timestamp = Date.now();
-  var id = timestamp + uuid.v4();
+  var id = timestamp + sep + uuid.v1();
   var threadId = post.thread_id;
 
   // new thread
   if (!threadId) {
     // separate id for thread
-    threadId = timestamp + uuid.v4();
+    threadId = timestamp + sep + uuid.v1();
     var threadKey = threadPrefix + sep + threadId;
     var threadMeta = { id: threadId };
 
@@ -61,10 +61,15 @@ posts.threads = function(limit, cb) {
   });
 }
 
-posts.forThread = function(threadId, cb) {
+posts.forThread = function(threadId, opts, cb) {
   var entries = [];
-  var startKey = postPrefix + sep + threadId + sep;
-  db.createReadStream({ start: startKey , end: startKey + '\xff'})
+  var startThreadKey = postPrefix + sep + threadId + sep;
+  var limit = opts.limit ? opts.limit : 100000;
+  var startPostKey = startThreadKey;
+  if (opts.startPostId) startPostKey += opts.startPostId;
+
+  console.log(startPostKey);
+  db.createReadStream({ limit: (limit + 1), reverse: true, start: startPostKey, end: startThreadKey + '\xff'})
   .on('data', function (entry) {
     entries.push(entry);
   })
