@@ -23,7 +23,7 @@ posts.create = function(post, cb) {
     // separate id for thread
     threadId = timestamp + uuid.v4();
     var threadKey = threadPrefix + sep + threadId;
-    var threadMeta = { id: threadId, post_count: 1 };
+    var threadMeta = { id: threadId };
 
     db.put(threadKey, threadMeta, function(err, version) {
       console.log('thread key: ' + threadKey);
@@ -48,8 +48,8 @@ posts.find = function(id, cb) {
   db.get(modelPrefix + id, cb);
 };
 
-posts.starters = function(cb) {
-  var entries = []
+posts.threads = function(cb) {
+  var entries = [];
   db.createReadStream({ start: threadPrefix, end: threadPrefix + '\xff'})
   .on('data', function (entry) {
     entries.push(entry);
@@ -61,8 +61,22 @@ posts.starters = function(cb) {
   });
 }
 
+posts.forThread = function(threadId, cb) {
+  var entries = [];
+  var startKey = postPrefix + sep + threadId + sep;
+  db.createReadStream({ start: startKey , end: startKey + '\xff'})
+  .on('data', function (entry) {
+    entries.push(entry);
+  })
+  .on('end', function () {
+    cb(null, entries.map(function(entry) {
+      return entry.value;
+    }));
+  });
+}
+
 posts.all = function(cb) {
-  var entries = []
+  var entries = [];
 
   db.createReadStream({ start: postPrefix, end: postPrefix + '\xff'})
   .on('data', function (entry) {
