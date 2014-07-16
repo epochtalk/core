@@ -48,9 +48,9 @@ posts.find = function(id, cb) {
   db.get(modelPrefix + id, cb);
 };
 
-posts.threads = function(cb) {
+posts.threads = function(limit, cb) {
   var entries = [];
-  db.createReadStream({ start: threadPrefix, end: threadPrefix + '\xff'})
+  db.createReadStream({limit: Number(limit), reverse: true, start: threadPrefix, end: threadPrefix + '\xff'})
   .on('data', function (entry) {
     entries.push(entry);
   })
