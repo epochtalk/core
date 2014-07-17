@@ -26,7 +26,7 @@ posts.create = function(post, cb) {
     var threadMeta = { id: threadId };
 
     db.put(threadKey, threadMeta, function(err, version) {
-      console.log('thread key: ' + threadKey);
+      // console.log('thread key: ' + threadKey);
     });
   }
 
@@ -37,7 +37,7 @@ posts.create = function(post, cb) {
 
   var key = postPrefix + sep + threadId + sep + id;
   db.put(key, post, function(err, version) {
-    console.log('key: ' + key);
+    // console.log('key: ' + key);
     post.version = version;
     return cb(err, post);
   });

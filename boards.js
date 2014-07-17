@@ -4,7 +4,7 @@ var boards = {};
 var modelPrefix = 'board\x00';
 
 boards.create = function(board, cb) {
-  var id = uuid.v4();
+  var id = uuid.v1();
   var key = modelPrefix + id;
   board.id = id;
   db.put(key, board, function(err, body) {
