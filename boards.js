@@ -1,14 +1,19 @@
 var uuid = require('node-uuid');
 var db = require(__dirname + '/db');
+var config = require(__dirname + '/config');
+var sep = config.sep;
 var boards = {};
-var modelPrefix = 'board\x00';
+var modelPrefix = 'board';
 
 boards.create = function(board, cb) {
-  var id = uuid.v1();
-  var key = modelPrefix + id;
+  if (cb === undefined) cb = null;
+  var timestamp = Date.now();
+  var id = timestamp + sep + uuid.v1();
+  var key = modelPrefix + sep + id;
   board.id = id;
-  db.put(key, board, function(err, body) {
-    console.log(body);
+  db.put(key, board, function(err, version) {
+    board.version = version;
+    return cb(err, board);
   });
 };
 
