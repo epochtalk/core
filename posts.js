@@ -80,7 +80,7 @@ posts.threads = function(boardId, limit, cb) {
   .on('end', handler);
 }
 
-posts.forThread = function(threadId, opts, cb) {
+posts.byThread = function(threadId, opts, cb) {
   var entries = [];
   var startThreadKey = postPrefix + sep + threadId + sep;
   var limit = opts.limit ? opts.limit : 10;
