@@ -22,10 +22,14 @@ boards.find = function(id, cb) {
 };
 
 boards.all = function(cb) {
-  var entries = []
-  db.createReadStream({ start: modelPrefix, end: modelPrefix + '\xff'})
-    .on('data', function (entry) { entries.push(entry) })
-    .on('close', function () { cb(null, entries) })
+  var entries = [];
+  db.createReadStream()
+  .on('data', function (entry) { entries.push(entry) })
+  .on('error', function (err) {
+    console.log('Oh my!', err)
+  })
+  .on('close', function () { cb(null, entries) })
+  .on('end', function () { cb(null, entries) });
 }
 
 module.exports = boards;
