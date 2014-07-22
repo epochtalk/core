@@ -11,6 +11,7 @@ boards.create = function(board, cb) {
   var id = timestamp + sep + uuid.v1();
   var key = modelPrefix + sep + id;
   board.id = id;
+  board.created_at = timestamp;
   db.put(key, board, function(err, version) {
     board.version = version;
     return cb(err, board);
@@ -21,15 +22,22 @@ boards.find = function(id, cb) {
   db.get(modelPrefix + id, cb);
 };
 
+
 boards.all = function(cb) {
   var entries = [];
+  var handler = function() {
+    cb(null, entries.map(function(entry) {
+      return entry.value;
+    }));
+  };
+
   db.createReadStream()
   .on('data', function (entry) { entries.push(entry) })
   .on('error', function (err) {
     console.log('Oh my!', err)
   })
-  .on('close', function () { cb(null, entries) })
-  .on('end', function () { cb(null, entries) });
+  .on('close', handler)
+  .on('end', handler);
 }
 
 module.exports = boards;
