@@ -34,14 +34,14 @@ posts.create = function(post, cb) {
     return cb(new Error('Post not valid'), post);
   }
   var timestamp = Date.now();
-  var id = timestamp + sep + uuid.v1();
+  var id = timestamp + uuid.v1();
   var threadId = post.thread_id;
   var boardId = post.board_id;
 
   // new thread
   if (!threadId) {
     // separate id for thread
-    threadId = timestamp + sep + uuid.v1();
+    threadId = timestamp + uuid.v1();
     var threadKey = threadPrefix + sep + boardId + sep + threadId;
     var threadMeta = { id: threadId };
 
@@ -83,7 +83,7 @@ posts.threads = function(boardId, limit, cb) {
 posts.forThread = function(threadId, opts, cb) {
   var entries = [];
   var startThreadKey = postPrefix + sep + threadId + sep;
-  var limit = opts.limit ? opts.limit : 100000;
+  var limit = opts.limit ? opts.limit : 10;
   var startPostKey = startThreadKey;
   if (opts.startPostId) startPostKey += opts.startPostId;
 

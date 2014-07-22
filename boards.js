@@ -16,7 +16,7 @@ var makeHandler = function(entries, cb) {
 boards.create = function(board, cb) {
   if (cb === undefined) cb = null;
   var timestamp = Date.now();
-  var id = timestamp + sep + uuid.v1();
+  var id = timestamp + uuid.v1();
   var key = modelPrefix + sep + id;
   board.id = id;
   board.created_at = timestamp;
