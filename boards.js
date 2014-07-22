@@ -33,7 +33,8 @@ boards.find = function(id, cb) {
 boards.all = function(cb) {
   var entries = [];
   var handler = makeHandler(entries, cb);
-  db.createReadStream()
+  var searchKey = modelPrefix;
+  db.createReadStream({reverse: true, start: searchKey, end: searchKey + '\xff'})
   .on('data', function(entry) {
     entries.push(entry);
   })
