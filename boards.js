@@ -5,6 +5,14 @@ var sep = config.sep;
 var boards = {};
 var modelPrefix = 'board';
 
+var makeHandler = function(entries, cb) {
+  return function() {
+    cb(null, entries.map(function(entry) {
+      return entry.value;
+    }));
+  }
+}
+
 boards.create = function(board, cb) {
   if (cb === undefined) cb = null;
   var timestamp = Date.now();
@@ -22,20 +30,14 @@ boards.find = function(id, cb) {
   db.get(modelPrefix + sep + id, cb);
 };
 
-
 boards.all = function(cb) {
   var entries = [];
-  var handler = function() {
-    cb(null, entries.map(function(entry) {
-      return entry.value;
-    }));
-  };
-
+  var handler = makeHandler(entries, cb);
   db.createReadStream()
-  .on('data', function (entry) { entries.push(entry) })
-  .on('error', function (err) {
-    console.log('Oh my!', err)
+  .on('data', function(entry) {
+    entries.push(entry);
   })
+  .on('error', cb)
   .on('close', handler)
   .on('end', handler);
 }
