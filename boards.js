@@ -19,7 +19,7 @@ boards.create = function(board, cb) {
 };
 
 boards.find = function(id, cb) {
-  db.get(modelPrefix + id, cb);
+  db.get(modelPrefix + sep + id, cb);
 };
 
 
