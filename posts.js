@@ -1,96 +1,68 @@
 var uuid = require('node-uuid');
+var async = require('async');
 var db = require(__dirname + '/db');
 var config = require(__dirname + '/config');
+var helper = require(__dirname + '/helper');
 var sep = config.sep;
 var postPrefix = config.posts.prefix;
 var threadPrefix = config.threads.prefix;
 
+// helper
+var makeHandler = helper.makeHandler;
+var printPost = helper.printPost;
+
 var posts = {};
-
-printPost = function(err, post) {
-  // console.log(post);
-  // logging?
-};
-
-var makeHandler = function(entries, cb) {
-  return function() {
-    cb(null, entries.map(function(entry) {
-      return entry.value;
-    }));
-  };
-};
-
-var validateBoard = function(post) {
-  var valid = false;
-  if (post.board_id) {
-    valid = true;
-  }
-  return valid;
-};
-
-var validateThread = function(post) {
-  var valid = false;
-  if (post.thread_id) {
-    valid = true;
-  }
-  return valid;
-};
 
 /* CREATE */
 posts.create = function(post, cb) {
   if (cb === undefined) cb = printPost;
-  if (!validateBoard(post)) {
-    return cb(new Error('Post not valid'), post);
-  }
-  var timestamp = Date.now();
-  var id = timestamp + uuid.v1();
+  var ts = Date.now();
+  var postId = helper.genId(ts);
   var threadId = post.thread_id;
   var boardId = post.board_id;
-  post.threadStarter = false;
+
+  var batch = db.batch();
 
   // new thread
   if (!threadId) {
     // separate id for thread
-    threadId = timestamp + uuid.v1();
-    var threadKey = threadPrefix + sep + boardId + sep + threadId;
-    var threadMeta = { id: threadId, title: post.title };
-    post.threadStarter = true;
-
-    db.put(threadKey, threadMeta, function(err, version) {
-      // console.log('thread key: ' + threadKey);
-    });
+    threadId = helper.genId(ts);
+    var boardThreadKey = threadPrefix + sep + boardId + sep + threadId;
+    batch.put(boardThreadKey, {id: threadId});
+    console.log('new thread: ' + threadId);
   }
 
   // configuring post
   post.thread_id = threadId;
-  post.id = id;
-  post.created_at = timestamp;
+  post.id = postId;
+  post.created_at = ts;
 
-  var key = postPrefix + sep + threadId + sep + id;
-  db.put(key, post, function(err, version) {
-    // console.log('key: ' + key);
-    post.version = version;
+  var threadPostKey = postPrefix + sep + threadId + sep + postId;
+  var postKey = postPrefix + sep + postId;
+
+  console.log('post: ' + postKey);
+  console.log(threadPostKey);
+
+  batch.put(threadPostKey, {id: postId});
+  batch.put(postKey, post);
+  batch.write(function(err) {
     return cb(err, post);
   });
 };
 
 /* RETRIEVE POST */
-posts.find = function(threadId, id, cb) {
+posts.find = function(postId, cb) {
   if (cb === undefined) cb = printPost;
-  var key = postPrefix + sep + threadId + sep + id;
-  db.get(key, cb);
+  var key = postPrefix + sep + postId;
+  db.get(key, function(err, value) {
+    console.log(value);
+    return cb(err, value);
+  });
 };
 
 /* UPDATE */
 posts.update = function(post, cb) {
   if (cb === undefined) cb = printPost;
-  if (!validateBoard(post)) {
-    return cb(new Error('Post not valid: No Board Id'), post);
-  }
-  if (!validateThread(post)) {
-    return cb(new Error('Post not valid: No Thread Id'), post);
-  }
-
   var key = postPrefix + sep + post.thread_id + sep + post.id;
 
   // see if post already exists
@@ -111,13 +83,6 @@ posts.update = function(post, cb) {
       // update old post
       db.put(key, oldPost, opts, function(err, version) {
         oldPost.version = version;
-
-        // update thread title?
-        if (oldPost.threadStarter === true) {
-          updateThreadTitle(oldBoardId, oldThreadId, oldPost.title, function(err, value) {
-            if (err){ console.log(err); }
-          });
-        }
         return cb(err, oldPost);
       });
     }
@@ -138,12 +103,6 @@ posts.delete = function(threadId, postId, cb) {
     else {
       var opts = { version: version };
       db.del(key, opts, function(err, version) {
-        if (post.threadStarter === true) {
-          post.version = version;
-          updateThreadTitle(post.board_id, post.thread_id, "DELTED: "+ post.title, function(err, value) {
-            if (err) { console.log(err); }
-          });
-        }
         return cb(null, post);
       });
     }
@@ -160,7 +119,11 @@ posts.thread = function(boardId, id, cb) {
 /* QUERY: All the threads in one board */
 posts.threads = function(boardId, limit, cb) {
   var entries = [];
-  var handler = makeHandler(entries, cb);
+  var handler = function() {
+    return cb(null, entries.map(function(entry) {
+      return entry.value;
+    }));
+  };
 
   // query vars
   var searchKey = threadPrefix + sep + boardId;
@@ -170,9 +133,9 @@ posts.threads = function(boardId, limit, cb) {
     start: searchKey,
     end: searchKey + '\xff'
   };
-  
+
   // query
-  db.createReadStream(queryOptions)
+  db.createValueStream(queryOptions)
   .on('data', function (entry) {
     entries.push(entry);
   })
@@ -184,8 +147,14 @@ posts.threads = function(boardId, limit, cb) {
 /* QUERY: All the posts in one thread */
 posts.byThread = function(threadId, opts, cb) {
   var entries = [];
-  var handler = makeHandler(entries, cb);
-
+  var handler = function() {
+    var postIds = entries.map(function(entry) {
+      return entry.value.id;
+    });
+    async.concat(postIds, posts.find, function(err, posts) {
+      return cb(null, posts);
+    });
+  };
   // query vars
   var limit = opts.limit ? opts.limit : 10;
   var startThreadKey = postPrefix + sep + threadId + sep;
@@ -199,7 +168,7 @@ posts.byThread = function(threadId, opts, cb) {
   };
 
   // query
-  db.createReadStream(queryOptions)
+  db.createValueStream(queryOptions)
   .on('data', function (entry) {
     entries.push(entry);
   })
@@ -225,18 +194,3 @@ posts.all = function(cb) {
 
 module.exports = posts;
 
-
-function updateThreadTitle(boardId, id, title, cb) {
-  if (cb === undefined) { cb = null; }
-  var key = threadPrefix + sep + boardId + sep + id;
-  db.get(key, function(err, thread, version) {
-    if (err) {
-      return cb(new Error('Thread Not Found'), undefined);
-    }
-    else {
-      thread.title = title;
-      var opts = { version: version };
-      db.put(key, thread, opts, cb);
-    }
-  });
-}

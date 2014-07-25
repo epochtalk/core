@@ -1,17 +1,13 @@
 var uuid = require('node-uuid');
 var db = require(__dirname + '/db');
 var config = require(__dirname + '/config');
+var helper = require(__dirname + '/helper');
 var sep = config.sep;
 var boards = {};
-var modelPrefix = 'board';
+var modelPrefix = config.boards.prefix;
 
-var makeHandler = function(entries, cb) {
-  return function() {
-    cb(null, entries.map(function(entry) {
-      return entry.value;
-    }));
-  };
-};
+// helpers
+var makeHandler = helper.makeHandler;
 
 /*
   CREATE 

@@ -1,7 +1,9 @@
+require(__dirname + '/make_boards');
+
 var posts = require(__dirname + '/../posts');
 var boards = require(__dirname + '/../boards');
-var threadsCount = 100;
-var postsCount = 100;
+var threadsCount = 5;
+var postsCount = 5;
 boards.all(function(err, allBoards) {
   allBoards.forEach(function(board) {
     for (var i = 0; i < threadsCount; i++) {

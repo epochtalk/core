@@ -1,6 +1,6 @@
 var boards = require(__dirname + '/../boards');
 
-var boardCount = 100;
+var boardCount = 5;
 for (var i = 1; i <= boardCount; i++) {
   boards.create({
     name: 'Board ' + i,
