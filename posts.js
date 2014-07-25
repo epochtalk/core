@@ -29,7 +29,6 @@ posts.create = function(post, cb) {
     threadId = helper.genId(ts);
     var boardThreadKey = threadPrefix + sep + boardId + sep + threadId;
     batch.put(boardThreadKey, {id: threadId});
-    console.log('new thread: ' + threadId);
   }
 
   // configuring post
@@ -39,10 +38,6 @@ posts.create = function(post, cb) {
 
   var threadPostKey = postPrefix + sep + threadId + sep + postId;
   var postKey = postPrefix + sep + postId;
-
-  console.log('post: ' + postKey);
-  console.log(threadPostKey);
-
   batch.put(threadPostKey, {id: postId});
   batch.put(postKey, post);
   batch.write(function(err) {
@@ -54,10 +49,7 @@ posts.create = function(post, cb) {
 posts.find = function(postId, cb) {
   if (cb === undefined) cb = printPost;
   var key = postPrefix + sep + postId;
-  db.get(key, function(err, value) {
-    console.log(value);
-    return cb(err, value);
-  });
+  db.get(key, cb);
 };
 
 /* UPDATE */
@@ -119,23 +111,42 @@ posts.thread = function(boardId, id, cb) {
 /* QUERY: All the threads in one board */
 posts.threads = function(boardId, limit, cb) {
   var entries = [];
+  // return map of entries as an threadId and title
   var handler = function() {
-    return cb(null, entries.map(function(entry) {
-      return entry.value;
-    }));
+    async.map(entries,
+      function(entry, callback) {
+        var threadId = entry.value.id;
+        var entryObject = { id: threadId };
+        // get title of first post of each thread
+        threadFirstPost(threadId, function(err, post) {
+          if (err) { return callback(err, undefined); }
+          if (post) {
+            entryObject.title = post.title;
+            return callback(null, entryObject);
+          }
+        });
+      },
+      function(err, threads) {
+        if (err) {
+          console.log(err);
+          return cb(err, undefined);
+        }
+        return cb(null, threads);
+      }
+    );
   };
 
   // query vars
   var searchKey = threadPrefix + sep + boardId;
   var queryOptions = {
-    limit: Number(limit),
+    limit: Number(limit + 1),
     reverse: true,
     start: searchKey,
     end: searchKey + '\xff'
   };
 
-  // query
-  db.createValueStream(queryOptions)
+  // query thread Index
+  db.createReadStream(queryOptions)
   .on('data', function (entry) {
     entries.push(entry);
   })
@@ -162,7 +173,6 @@ posts.byThread = function(threadId, opts, cb) {
   if (opts.startPostId) startPostKey += opts.startPostId;
   var queryOptions = {
     limit: (limit + 1),
-    reverse: true,
     start: startPostKey,
     end: startThreadKey + '\xff'
   };
@@ -191,6 +201,40 @@ posts.all = function(cb) {
   .on('close', handler)
   .on('end', handler);
 };
+
+function threadFirstPost(threadId, cb) {
+  // returned post
+  var postId = "";
+
+  // build the postIndexKey
+  var postIndexKey = postPrefix + sep + threadId;
+
+  // get the first post from the postIndex by threadId
+  var postIndexOpts = {
+    limit: 1,
+    start: postIndexKey,
+    end: postIndexKey + '\xff'
+  };
+
+  // search the postIndex
+  db.createReadStream(postIndexOpts)
+  .on('data', function(postIndex) {
+    postId = postIndex.value.id;
+  })
+  .on('error', function(err) {
+    return cb(err, undefined);
+  })
+  .on('close', function() {
+    posts.find(postId, function(err, post) {
+      return cb(null, post);
+    });
+  })
+  .on('end', function() {
+    posts.find(postId, function(err, post) {
+      return cb(null, post);
+    });
+  });
+}
 
 module.exports = posts;
 

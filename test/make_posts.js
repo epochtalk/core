@@ -7,9 +7,9 @@ var postsCount = 5;
 boards.all(function(err, allBoards) {
   allBoards.forEach(function(board) {
     for (var i = 0; i < threadsCount; i++) {
-      posts.create({body: 'Thread testing 1234: ' + i, board_id: board.id}, function(err, post) {
+      posts.create({body: 'Thread testing 1234: ' + i, title: "New Thread!", board_id: board.id}, function(err, post) {
         for (var j = 0; j < postsCount; j++) {
-          posts.create({body: 'Post testing 1234: ' + j, thread_id: post.thread_id});
+          posts.create({body: 'Post testing 1234: ' + j, title: "New Post " + j, thread_id: post.thread_id});
         }
       });
     }
