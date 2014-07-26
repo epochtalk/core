@@ -1,11 +1,11 @@
-var uuid = require('node-uuid');
 var async = require('async');
 var db = require(__dirname + '/db');
 var config = require(__dirname + '/config');
 var helper = require(__dirname + '/helper');
 var sep = config.sep;
 var postPrefix = config.posts.prefix;
-var threadPrefix = config.threads.prefix;
+var postIndexPrefix = config.posts.indexPrefix;
+var threadIndexPrefix = config.threads.indexPrefix;
 
 // helper
 var makeHandler = helper.makeHandler;
@@ -27,7 +27,7 @@ posts.create = function(post, cb) {
   if (!threadId) {
     // separate id for thread
     threadId = helper.genId(ts);
-    var boardThreadKey = threadPrefix + sep + boardId + sep + threadId;
+    var boardThreadKey = threadIndexPrefix + sep + boardId + sep + threadId;
     batch.put(boardThreadKey, {id: threadId});
   }
 
@@ -36,7 +36,7 @@ posts.create = function(post, cb) {
   post.id = postId;
   post.created_at = ts;
 
-  var threadPostKey = postPrefix + sep + threadId + sep + postId;
+  var threadPostKey = postIndexPrefix + sep + threadId + sep + postId;
   var postKey = postPrefix + sep + postId;
   batch.put(threadPostKey, {id: postId});
   batch.put(postKey, post);
@@ -55,7 +55,7 @@ posts.find = function(postId, cb) {
 /* UPDATE */
 posts.update = function(post, cb) {
   if (cb === undefined) cb = printPost;
-  var key = postPrefix + sep + post.thread_id + sep + post.id;
+  var key = postIndexPrefix + sep + post.thread_id + sep + post.id;
 
   // see if post already exists
   db.get(key, function(err, oldPost, version) {
@@ -85,7 +85,7 @@ posts.update = function(post, cb) {
 posts.delete = function(threadId, postId, cb) {
   if (cb === undefined) cb = printPost;
 
-  var key = postPrefix + sep + threadId + sep + postId;
+  var key = postIndexPrefix + sep + threadId + sep + postId;
 
   // see if post already exists
   db.get(key, function(err, post, version) {
@@ -101,18 +101,13 @@ posts.delete = function(threadId, postId, cb) {
   });
 };
 
-/* RETRIEVE THREAD */
-posts.thread = function(boardId, id, cb) {
-  if (cb === undefined) cb = printPost;
-  var key = threadPrefix + sep + boardId + sep + id;
-  db.get(key, cb);
-};
-
 /* QUERY: All the threads in one board */
-posts.threads = function(boardId, limit, cb) {
+posts.threads = function(boardId, opts, cb) {
+  console.log(opts);
   var entries = [];
   // return map of entries as an threadId and title
   var handler = function() {
+    console.log('ENTRIES: ' + entries.length)
     async.map(entries,
       function(entry, callback) {
         var threadId = entry.value.id;
@@ -137,13 +132,23 @@ posts.threads = function(boardId, limit, cb) {
   };
 
   // query vars
-  var searchKey = threadPrefix + sep + boardId;
+  var endIndexKey = threadIndexPrefix + sep + boardId + sep;
+  var startThreadKey = endIndexKey;
+  var limit = opts.limit ? Number(opts.limit) : 10;
+  if (opts.startThreadId) {
+    endIndexKey += opts.startThreadId;
+  }
+  else {
+    endIndexKey += '\xff';
+  }
   var queryOptions = {
-    limit: Number(limit + 1),
+    limit: limit,
     reverse: true,
-    start: searchKey,
-    end: searchKey + '\xff'
+    start: startThreadKey + '\x00',
+    end: endIndexKey
   };
+
+  console.log(JSON.stringify(queryOptions, null, 2));
 
   // query thread Index
   db.createReadStream(queryOptions)
@@ -167,14 +172,20 @@ posts.byThread = function(threadId, opts, cb) {
     });
   };
   // query vars
-  var limit = opts.limit ? opts.limit : 10;
-  var startThreadKey = postPrefix + sep + threadId + sep;
-  var startPostKey = startThreadKey;
-  if (opts.startPostId) startPostKey += opts.startPostId;
+  var limit = opts.limit ? Number(opts.limit) : 10;
+  var startPostKey = postIndexPrefix + sep + threadId + sep;
+  var endIndexKey = startPostKey;
+  if (opts.startPostId) {
+    endIndexKey += opts.startPostId;
+    startPostKey += '\xff';
+  }
+  else {
+    endIndexKey += '\xff';
+  }
   var queryOptions = {
-    limit: (limit + 1),
-    start: startPostKey,
-    end: startThreadKey + '\xff'
+    limit: limit,
+    end: endIndexKey,
+    start: startPostKey
   };
 
   // query
@@ -187,33 +198,18 @@ posts.byThread = function(threadId, opts, cb) {
   .on('end', handler);
 };
 
-/* QUERY: All posts in all threads but no threads */
-posts.all = function(cb) {
-  var entries = [];
-  var handler = makeHandler(entries, cb);
-
-  // query
-  db.createReadStream({ start: postPrefix, end: postPrefix + '\xff'})
-  .on('data', function (entry) {
-    entries.push(entry);
-  })
-  .on('error', cb)
-  .on('close', handler)
-  .on('end', handler);
-};
-
 function threadFirstPost(threadId, cb) {
   // returned post
-  var postId = "";
+  var postId = '';
 
   // build the postIndexKey
-  var postIndexKey = postPrefix + sep + threadId;
+  var postIndexKey = postIndexPrefix + sep + threadId;
 
   // get the first post from the postIndex by threadId
   var postIndexOpts = {
     limit: 1,
-    start: postIndexKey,
-    end: postIndexKey + '\xff'
+    start: postIndexKey + sep,
+    end: postIndexKey + sep + '\xff'
   };
 
   // search the postIndex

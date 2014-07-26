@@ -6,9 +6,10 @@ module.exports = {
     prefix: 'board'
   },
   posts: {
-    prefix: 'post'
+    prefix: 'post',
+    indexPrefix: 'posts'
   },
   threads: {
-    prefix: 'thread'
+    indexPrefix: 'threads'
   }
 };

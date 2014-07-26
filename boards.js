@@ -87,7 +87,7 @@ boards.delete = function(boardId, cb) {
 boards.all = function(cb) {
   var entries = [];
   var handler = makeHandler(entries, cb);
-  var searchKey = modelPrefix;
+  var searchKey = modelPrefix + sep;
   db.createReadStream({reverse: true, start: searchKey, end: searchKey + '\xff'})
   .on('data', function(entry) {
     entries.push(entry);
