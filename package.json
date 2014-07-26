@@ -4,7 +4,7 @@
   "description": "Epochtalk Backend",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha -R spec ./tests"
   },
   "repository": {
     "type": "git",
@@ -26,6 +26,7 @@
     "replpad": "^0.11.9"
   },
   "devDependencies": {
-    "charlatan": "^0.1.9"
+    "charlatan": "^0.1.9",
+    "mocha": "^1.21.0"
   }
 }
