@@ -4,7 +4,7 @@
   "description": "Epochtalk Backend",
   "main": "index.js",
   "scripts": {
-    "test": "mocha -R spec ./tests"
+    "test": "./node_modules/.bin/mocha -R spec ./tests"
   },
   "repository": {
     "type": "git",
