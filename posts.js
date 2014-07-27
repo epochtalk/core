@@ -8,14 +8,13 @@ var postIndexPrefix = config.posts.indexPrefix;
 var threadIndexPrefix = config.threads.indexPrefix;
 
 // helper
-var makeHandler = helper.makeHandler;
 var printPost = helper.printPost;
 
 var posts = {};
 
 /* CREATE */
 posts.create = function(post, cb) {
-  if (cb === undefined) cb = printPost;
+  if (cb === undefined) { cb = printPost; }
   var ts = Date.now();
   var postId = helper.genId(ts);
   var threadId = post.thread_id;
@@ -47,55 +46,69 @@ posts.create = function(post, cb) {
 
 /* RETRIEVE POST */
 posts.find = function(postId, cb) {
-  if (cb === undefined) cb = printPost;
+  if (cb === undefined) { cb = printPost; }
   var key = postPrefix + sep + postId;
   db.get(key, cb);
 };
 
 /* UPDATE */
 posts.update = function(post, cb) {
-  if (cb === undefined) cb = printPost;
-  var key = postIndexPrefix + sep + post.thread_id + sep + post.id;
+  if (cb === undefined) { cb = printPost; }
+  var key = postPrefix + sep + post.id;
 
   // see if post already exists
-  db.get(key, function(err, oldPost, version) {
+  db.get(key, function(err, value, version) {
     if (err) {
       return cb(new Error('Post Not Found'), undefined);
     }
     else {
       // update old post
-      var oldThreadId = oldPost.thread_id;
-      var oldBoardId = oldPost.board_id;
-      oldPost.title = post.title;
-      oldPost.body = post.body;
+      value.title = post.title;
+      value.body = post.body;
 
       // input options
       var opts = { version: version };
       
       // update old post
-      db.put(key, oldPost, opts, function(err, version) {
-        oldPost.version = version;
-        return cb(err, oldPost);
+      db.put(key, value, opts, function(err, version) {
+        value.version = version;
+        return cb(err, value);
       });
     }
   });
 };
 
 /* DELETE */
-posts.delete = function(threadId, postId, cb) {
-  if (cb === undefined) cb = printPost;
+posts.delete = function(postId, cb) {
+  if (cb === undefined) { cb = printPost; }
 
-  var key = postIndexPrefix + sep + threadId + sep + postId;
+  var deleteItr = function(key, callback) {
+    db.get(key, function(err, value, version) {
+      if (err) {
+        return callback(new Error('Post Not Found'));
+      }
+      else {
+        db.del(key, {version: version}, function(err) {
+          if (err) {
+            return callback(err);
+          }
+          else { // call empty callback to proceed with async each
+            return callback();
+          }
+        });
+      }
+    });
+  };
 
-  // see if post already exists
-  db.get(key, function(err, post, version) {
+  var postKey = postPrefix + sep + postId;
+  db.get(postKey, function(err, post) {
     if (err) {
       return cb(new Error('Post Not Found'), undefined);
     }
     else {
-      var opts = { version: version };
-      db.del(key, opts, function(err, version) {
-        return cb(null, post);
+      var associatedKeys = helper.associatedKeys(post);
+      async.each(associatedKeys, deleteItr, function(err) {
+        return cb(err, post);
       });
     }
   });
@@ -103,11 +116,10 @@ posts.delete = function(threadId, postId, cb) {
 
 /* QUERY: All the threads in one board */
 posts.threads = function(boardId, opts, cb) {
-  console.log(opts);
+  if (cb === undefined) { cb = printPost; }
   var entries = [];
   // return map of entries as an threadId and title
   var handler = function() {
-    console.log('ENTRIES: ' + entries.length)
     async.map(entries,
       function(entry, callback) {
         var threadId = entry.value.id;
@@ -123,7 +135,6 @@ posts.threads = function(boardId, opts, cb) {
       },
       function(err, threads) {
         if (err) {
-          console.log(err);
           return cb(err, undefined);
         }
         return cb(null, threads);
@@ -147,8 +158,6 @@ posts.threads = function(boardId, opts, cb) {
     start: startThreadKey + '\x00',
     end: endIndexKey
   };
-
-  console.log(JSON.stringify(queryOptions, null, 2));
 
   // query thread Index
   db.createReadStream(queryOptions)
