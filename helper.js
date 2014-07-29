@@ -27,6 +27,11 @@ module.exports = {
     var sep = config.sep;
     var boardThreadKey = threadIndexPrefix + sep + boardId + sep + threadId;
     var threadPostKey = postIndexPrefix + sep + threadId + sep + post.id;
-    return [postPrefix + sep + post.id, boardThreadKey, threadPostKey];
+    var postKey = postPrefix + sep + post.id;
+    var associatedKeys = [postKey, threadPostKey];
+    if (boardId) {
+      associatedKeys.push(boardThreadKey);
+    }
+    return associatedKeys;
   }
 };
