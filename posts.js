@@ -147,7 +147,7 @@ posts.threads = function(boardId, opts, cb) {
   var startThreadKey = endIndexKey;
   var limit = opts.limit ? Number(opts.limit) : 10;
   if (opts.startThreadId) {
-    endIndexKey += opts.startThreadId;
+    endIndexKey += opts.startThreadId + '\x00';
   }
   else {
     endIndexKey += '\xff';
