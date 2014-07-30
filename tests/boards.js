@@ -3,6 +3,7 @@ var boards = require(__dirname + '/../boards');
 var seed = require(__dirname + '/../seed/seed');
 var emptyCb = function() {};
 var savedBoard;
+var oldBoardId, newBoardId;
 
 describe('boards', function() {
   describe('#ALL', function() {
@@ -76,6 +77,55 @@ describe('boards', function() {
             }
           });
         }
+      });
+    });
+  });
+});
+
+describe('boards', function() {
+  describe('#IMPORT', function() {
+    it('should import a board', function(done) {
+      oldBoardId = 111;
+      var importBoard = {
+        name: 'import name',
+        description: 'import description',
+        smf: {
+          board_id: oldBoardId,
+        }
+      };
+
+      boards.import(importBoard, function(err, board) {
+        assert.equal(board.name, importBoard.name);
+        assert.equal(board.description, importBoard.description);
+        assert.equal(board.smf.board_id, importBoard.smf.board_id);
+        assert.notEqual(board.id, undefined);
+        newBoardId = board.id;
+        done();
+      });
+    });
+  });
+});
+
+describe('boards', function() {
+  describe('#IMPORT_GET', function() {
+    it('should verify key mapping for imported boards', function(done) {
+      boards.boardByOldId(oldBoardId, function(err, board) {
+        assert.equal(board.id, newBoardId);
+        done();
+      });
+    });
+  });
+});
+
+describe('boards', function() {
+  describe('#IMPORT_DELETE', function() {
+    it('should delete all imported boards key mappings', function(done) {
+      boards.delete(newBoardId, function(err, board) {
+        boards.boardByOldId(oldBoardId, function(err, board) {
+          var expectedErr = 'Key not found in database';
+          assert.equal(err.message, expectedErr);
+          done();
+        });
       });
     });
   });

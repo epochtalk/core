@@ -1,9 +1,12 @@
 var assert = require('assert');
+var async = require('async');
 var posts = require(__dirname + '/../posts');
 var boards = require(__dirname + '/../boards');
 var seed = require(__dirname + '/../seed/seed');
 var emptyCb = function() {};
 var savedPost, savedBoardId, savedThreadId;
+var importThreadId, importThreadPostId, importPostId;
+var oldThreadId, oldFirstPostId, oldSecondPostId;
 
 describe('posts', function() {
   describe('#CREATE', function() {
@@ -16,8 +19,7 @@ describe('posts', function() {
             var testPost = {
               title: 'Test Post Title',
               body: 'Test Post Body',
-              thread_id: savedThreadId,
-              board_id: savedBoardId
+              thread_id: savedThreadId
             };
             posts.create(testPost, function(err, post) {
               savedPost = post;
@@ -76,8 +78,9 @@ describe('posts', function() {
   describe('#THREADS', function() {
     it('should return all threads for a board', function(done) {
       posts.threads(savedBoardId, { startThreadId: savedThreadId }, function(err, threadsForBoard) {
+
         if (!err) {
-          assert.equal(threadsForBoard.length, 2);
+          assert.equal(threadsForBoard.length, 1);
           posts.threads(savedBoardId, { limit: 1 }, function(err, threadsForBoard) {
             if (!err) {
               assert.equal(threadsForBoard.length, 1);
@@ -118,6 +121,106 @@ describe('posts', function() {
 });
 
 describe('posts', function() {
+  describe('#IMPORT', function() {
+    it('should import a post', function(done) {
+      // thread starting post with prior thread_id and post_id
+      oldThreadId = 222;
+      oldFirstPostId = 111;
+      var importNewThreadPost = {
+        title: 'import title',
+        body: 'import body',
+        board_id: savedBoardId,
+        smf: {
+          post_id: oldFirstPostId,
+          thread_id: oldThreadId
+        }
+      };
+
+      posts.import(importNewThreadPost, function(err, post) {
+        // validate post import
+        assert.equal(post.title, importNewThreadPost.title);
+        assert.equal(post.body, importNewThreadPost.body);
+        assert.equal(post.board_id, importNewThreadPost.board_id);
+        assert.equal(post.smf.post_id, importNewThreadPost.smf.post_id);
+        assert.equal(post.smf.thread_id, importNewThreadPost.smf.thread_id);
+        assert.notEqual(post.thread_id, undefined);
+        assert.notEqual(post.id, undefined);
+        importThreadId = post.thread_id;
+        importThreadPostId = post.id;
+
+        // import second post with only post_id
+        oldSecondPostId = 112;
+        var secondImportPost = {
+          title: 'second title',
+          body: 'second body',
+          thread_id: post.thread_id,
+          smf: {
+            post_id: oldSecondPostId
+          }
+        };
+
+        posts.import(secondImportPost, function(err, secondPost) {
+          // validate post import
+          assert.equal(secondPost.title, secondImportPost.title);
+          assert.equal(secondPost.body, secondImportPost.body);
+          assert.equal(secondPost.thread_id, secondImportPost.thread_id);
+          assert.equal(secondPost.smf.post_id, secondImportPost.smf.post_id);
+          assert.notEqual(secondPost.id, undefined);
+          importPostId = secondPost.id;
+          done();
+        });
+      });
+    });
+  });
+});
+
+describe('posts', function() {
+  describe('#IMPORT_GET', function() {
+    it('should verify key mapping for imported posts/threads', function() {
+      posts.threadByOldId(oldThreadId, function(err, thread) {
+        assert.equal(thread.id, importThreadId);
+      });
+
+      posts.postByOldId(oldFirstPostId, function(err, firstPost) {
+        assert.equal(firstPost.id, importThreadPostId);
+      });
+
+      posts.postByOldId(oldSecondPostId, function(err, secondPost) {
+        assert.equal(secondPost.id, importPostId);
+      });
+    });
+  });
+});
+
+describe('posts', function() {
+  describe('#IMPORT_DELETE', function() {
+    it('should delete all imported posts/threads key mappings', function(done) {
+
+      posts.delete(importThreadPostId, function(err, post) {
+        posts.threadByOldId(oldThreadId, function(err, thread) {
+          var expectedErr = 'Key not found in database';
+          assert.equal(err.message, expectedErr);
+        });
+
+        posts.postByOldId(oldFirstPostId, function(err, firstPost) {
+          var expectedErr = 'Key not found in database';
+          assert.equal(err.message, expectedErr);
+        });
+
+        posts.delete(importPostId, function(err, secondPost) {
+          posts.postByOldId(oldSecondPostId, function(err, secondPost) {
+            var expectedErr = 'Key not found in database';
+            assert.equal(err.message, expectedErr);
+            done();
+          });
+        });
+
+      });
+    });
+  });
+});
+
+describe('posts', function() {
   describe('#DELETE', function() {
     it('should delete specified post', function(done) {
       posts.delete(savedPost.id, function(err, post) {
@@ -127,10 +230,10 @@ describe('posts', function() {
           posts.find(post.id, function(err) {
             var expectedErr = 'Key not found in database [post~' + savedPost.id + ']';
             assert.equal(err.message, expectedErr);
-            posts.delete(post.thread_id, function() {
-              boards.delete(post.board_id, function() {
-                done();
-              });
+
+            // tear down
+            boards.all(function(err, allBoards) {
+              deleteAllBoards(allBoards, done);
             });
           });
         }
@@ -138,3 +241,45 @@ describe('posts', function() {
     });
   });
 });
+
+function deleteAllBoards(allBoards, callback) {
+  // for each board
+  async.each(allBoards, function(board, bCallback) {
+    // delete the board
+    boards.delete(savedBoardId, function() {});
+    
+    // get all the threads for this board
+    posts.threads(board.id, {}, function(err, allThreads) {
+      deleteAllThreads(allThreads, bCallback);
+    });
+  },
+  function(err) {
+    return callback(err);
+  });
+}
+
+function deleteAllThreads(allThreads, callback) {
+  // for each thread
+  async.each(allThreads, function(thread, tCallback) {
+    // get all the posts for this thread
+    posts.byThread(thread.id, {}, function(err, allPosts) {
+      deleteAllPosts(allPosts, function(err) {
+        tCallback(err);
+      });
+    });
+  },
+  function(err) {
+    return callback(err);
+  });
+}
+
+function deleteAllPosts(allPosts, callback) {
+  async.each(allPosts, function(post, cb) {
+    posts.delete(post.id, function(err, post) {
+      cb(err);
+    });
+  },
+  function(err) {
+    return callback(err);
+  });
+}

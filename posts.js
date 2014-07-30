@@ -1,16 +1,100 @@
 var async = require('async');
 var db = require(__dirname + '/db');
+var sublevel = require('level-sublevel');
 var config = require(__dirname + '/config');
 var helper = require(__dirname + '/helper');
+var postLevel = sublevel(db);
+var smfSubLevel = postLevel.sublevel('meta-smf');
 var sep = config.sep;
 var postPrefix = config.posts.prefix;
 var postIndexPrefix = config.posts.indexPrefix;
+var threadPrefix = config.threads.prefix;
 var threadIndexPrefix = config.threads.indexPrefix;
 
 // helper
 var printPost = helper.printPost;
 
 var posts = {};
+
+posts.import = function(post, cb) {
+  if (!post) { return cb(new Error('No Post Found'), undefined); }
+  if (cb === undefined) { cb = printPost; }
+  if (!post.thread_id && !post.board_id) {
+    var errorMessage = 'BOARD_ID REQUIRED IF NO THREAD_ID';
+    return cb(new Error(errorMessage), undefined);
+  }
+  if (!post.smf.post_id) {
+    var errorPostMessage = 'SMF POST_ID DOES NOT EXISTS';
+    return cb(new Error(errorPostMessage), undefined);
+  }
+  if (!post.thread_id && !post.smf.thread_id) {
+    var errorThreadMessage = 'SMF THREAD_ID DOES NOT EXISTS';
+    return cb(new Error(errorThreadMessage), undefined);
+  }
+
+  // check if created_at exists and set post id
+  var ts = Date.now(); // current time
+  var postId = '';
+  if (post.created_at) {
+    // set imported_at datetime
+    post.imported_at = ts;
+    // generate post id from old timestamp
+    postId = helper.genId(post.created_at);
+  }
+  else {
+    // user current time as created_at and imported_at
+    post.created_at = ts;
+    post.imported_at = ts;
+    // generate post id from current time
+    postId = helper.genId(ts);
+  }
+
+  var threadId = post.thread_id;
+  var boardId = post.board_id;
+  var batch = db.batch();
+
+  // smf metadata
+  var smf = post.smf;
+
+  // new thread
+  if (!threadId && boardId) {
+    // separate id for thread, generated with created_at
+    threadId = helper.genId(post.created_at);
+    var boardThreadKey = threadIndexPrefix + sep + boardId + sep + threadId;
+    batch.put(boardThreadKey, {id: threadId});
+
+    // handle smf thread id mapping
+    if (smf) {
+      var key = threadPrefix + sep  + smf.thread_id.toString();
+      var value = { id: threadId };
+      smfSubLevel.put(key, value, function(err) {
+        if (err) { console.log(err); }
+      });
+    }
+  }
+
+  // configuring post
+  post.thread_id = threadId;
+  post.id = postId;
+
+  var threadPostKey = postIndexPrefix + sep + threadId + sep + postId;
+  var postKey = postPrefix + sep + postId;
+  batch.put(threadPostKey, {id: postId});
+  batch.put(postKey, post);
+  batch.write(function(err) {
+    // handle smf post id mapping
+    if (smf) {
+      var key = postPrefix + sep  + smf.post_id.toString();
+      var value = { id: postId };
+      smfSubLevel.put(key, value, function(err) {
+        return cb(err, post);
+      });
+    }
+    else {
+      return cb(err, post);
+    }
+  });
+};
 
 /* CREATE */
 posts.create = function(post, cb) {
@@ -82,36 +166,31 @@ posts.update = function(post, cb) {
 posts.delete = function(postId, cb) {
   if (cb === undefined) { cb = printPost; }
 
-  var deleteItr = function(key, callback) {
-    db.get(key, function(err, value, version) {
-      if (err) {
-        return callback(new Error('Post Not Found'));
-      }
-      else {
-        db.del(key, {version: version}, function(err) {
-          if (err) {
-            return callback(err);
-          }
-          else { // call empty callback to proceed with async each
-            return callback();
-          }
-        });
-      }
-    });
-  };
-
+  // delete post with given postId
   var postKey = postPrefix + sep + postId;
   db.get(postKey, function(err, post) {
-    if (err) {
-      return cb(new Error('Post Not Found'), undefined);
-    }
+    if (err) { return cb(new Error('Post Not Found'), undefined); }
     else {
+      // delete all associated post indexes
       var associatedKeys = helper.associatedKeys(post);
       async.each(associatedKeys, deleteItr, function(err) {
-        return cb(err, post);
+        if (err) { return cb(err, undefined); }
+        else { return cb(err, post); }
       });
     }
   });
+};
+
+/* QUERY: post using old id */
+posts.postByOldId = function(oldId, cb) {
+  if (cb === undefined) { cb = null; }
+  smfSubLevel.get(postPrefix + sep + oldId, cb);
+};
+
+/* QUERY: thread using old id */
+posts.threadByOldId = function(oldId, cb) {
+  if (cb === undefined) { cb = null; }
+  smfSubLevel.get(threadPrefix + sep + oldId, cb);
 };
 
 /* QUERY: All the threads in one board */
@@ -239,6 +318,39 @@ function threadFirstPost(threadId, cb) {
       return cb(null, post);
     });
   });
+}
+
+function deleteItr(opts, callback) {
+  if (opts.smf) {
+    // delete from smf sublevel
+    smfSubLevel.get(opts.key, function(err, board, version) {
+      if (err) { return callback (err); }
+      else {
+        var delOpts = { version: version };
+        smfSubLevel.del(opts.key, delOpts, function(err) {
+          if (err) { return callback(err); }
+          else {
+            return callback(); }
+        });
+      }
+    });
+  }
+  else {
+    // delete from db
+    db.get(opts.key, function(err, value, version) {
+      if (err) { return callback(err); }
+      else {
+        var delOpts = { version: version };
+        db.del(opts.key, delOpts, function(err) {
+          if (err) { return callback(err); }
+          else {
+            // call empty callback to proceed with async each
+            return callback();
+          }
+        });
+      }
+    });
+  }
 }
 
 module.exports = posts;

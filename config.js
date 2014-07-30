@@ -10,6 +10,7 @@ module.exports = {
     indexPrefix: 'posts'
   },
   threads: {
+    prefix: 'thread',
     indexPrefix: 'threads'
   }
 };
