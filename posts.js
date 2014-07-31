@@ -208,6 +208,7 @@ posts.threads = function(boardId, opts, cb) {
           if (err) { return callback(err, undefined); }
           if (post) {
             entryObject.title = post.title;
+            entryObject.created_at = post.created_at;
             return callback(null, entryObject);
           }
         });
