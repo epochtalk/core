@@ -1,8 +1,9 @@
 var assert = require('assert');
 var async = require('async');
-var posts = require(__dirname + '/../posts');
-var boards = require(__dirname + '/../boards');
-var seed = require(__dirname + '/../seed/seed');
+var path = require('path');
+var posts = require(path.join(__dirname, '..', 'posts'));
+var boards = require(path.join(__dirname, '..', 'boards', 'boards'));
+var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var emptyCb = function() {};
 var savedPost, savedBoardId, savedThreadId;
 var importThreadId, importThreadPostId, importPostId;

@@ -1,6 +1,7 @@
 var assert = require('assert');
-var boards = require(__dirname + '/../boards');
-var seed = require(__dirname + '/../seed/seed');
+var path = require('path');
+var boards = require(path.join(__dirname, '..', 'boards', 'boards'));
+var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var emptyCb = function() {};
 var savedBoard;
 var oldBoardId, newBoardId;

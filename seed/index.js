@@ -1,4 +1,5 @@
-var seed = require(__dirname + '/seed');
+var path = require('path');
+var seed = require(path.join(__dirname, 'seed'));
 
 var boardCount = process.argv[2] || 5;
 var threadsCount = process.argv[3] || 5;

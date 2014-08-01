@@ -1,6 +1,7 @@
-var boards = require(__dirname + '/../boards');
-var posts = require(__dirname + '/../posts');
 var async = require('async');
+var path = require('path');
+var boards = require(path.join(__dirname, '..', 'boards', 'boards'));
+var posts = require(path.join(__dirname, '..', 'posts'));
 
 var createBoards = function (numBoards, finishedCb) {
   var createBoard = function(n, cb) {

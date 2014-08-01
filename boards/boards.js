@@ -1,51 +1,39 @@
 var uuid = require('node-uuid');
-var db = require(__dirname + '/db');
+var path = require('path');
+var db = require(path.join(__dirname, '..', 'db'));
 var sublevel = require('level-sublevel');
-var config = require(__dirname + '/config');
-var helper = require(__dirname + '/helper');
 var boardLevel = sublevel(db);
 var smfSubLevel = boardLevel.sublevel('meta-smf');
+var config = require(path.join(__dirname, '..', 'config'));
 var sep = config.sep;
-var boards = {};
 var modelPrefix = config.boards.prefix;
+var helper = require(path.join(__dirname, '..', 'helper'));
+var validator = require(path.join(__dirname , 'validator'));
+var boards = {};
 
 // helpers
 var makeHandler = helper.makeHandler;
 
-/* IMPORT */
-boards.import = function(board, cb) {
-  if (!board) { return cb(new Error('No Board Found'), undefined); }
-  if (cb === undefined) cb = null;
 
-  // check if created_at exists and set board id 
-  var timestamp = Date.now(); // current time
-  if (board.created_at) {
-    // set imported_at datetime
-    board.imported_at = timestamp;
-    // genereate board id from old timestamp
-    board.id = board.created_at + uuid.v1({ msecs: board.created_at });
-  }
-  else {
-    // use current time as created_at and imported_at
-    board.created_at = timestamp;
-    board.imported_at = timestamp;
-    // genereate board id from current time
-    board.id = timestamp + uuid.v1({ msecs: timestamp });
-  }
+/* IMPORT */
+function importBoard (board, cb) {
+  // set imported_at datetime
+  board.imported_at = Date.now();
+
+  // genereate board id from created_at
+  board.id = board.created_at + uuid.v1({ msecs: board.created_at });
 
   // generate board key 
   var key = modelPrefix + sep + board.id;
-
-  // pull any smf related data
-  var smf = board.smf;
 
   // insert board into db
   db.put(key, board, function(err, version) {
     board.version = version;
 
     // insert the board mapping of old id to new id
-    if (smf) {
-      var key = modelPrefix + sep  + smf.board_id.toString();
+    if (board.smf) {
+      var smfId = board.smf.board_id.toString();
+      var key = modelPrefix + sep  + smfId;
       var value = { id: board.id };
       smfSubLevel.put(key, value, function(err) {
         if (err) { return cb(err, undefined); }
@@ -56,32 +44,29 @@ boards.import = function(board, cb) {
       return cb(err, board);
     }
   });
-};
+}
 
 /* CREATE */
-boards.create = function(board, cb) {
-  if (cb === undefined) cb = null;
+function createBoard (board, cb) {
   var timestamp = Date.now();
-  var id = timestamp + uuid.v1({ msecs: board.created_at });
+  var id = timestamp + uuid.v1({ msecs: timestamp });
   var key = modelPrefix + sep + id;
   board.id = id;
   board.created_at = timestamp;
+
   db.put(key, board, function(err, version) {
     board.version = version;
     return cb(err, board);
   });
-};
+}
 
 /* RETRIEVE */
-boards.find = function(id, cb) {
-  if (cb === undefined) { cb = null; }
+function findBoard(id, cb) {
   db.get(modelPrefix + sep + id, cb);
-};
+}
 
 /*  UPDATE */
-boards.update = function(board, cb) {
-  if (cb === undefined) cb = null;
-  
+function updateBoard(board, cb) {
   // generate db key
   var key = modelPrefix + sep + board.id;
 
@@ -101,12 +86,10 @@ boards.update = function(board, cb) {
       });
     }
   });
-};
+}
 
 /* DELETE */
-boards.delete = function(boardId, cb) {
-  if (cb === undefined) cb = null;
-  
+function deleteBoard(boardId, cb) {
   // generate db key
   var key = modelPrefix + sep + boardId;
 
@@ -133,16 +116,15 @@ boards.delete = function(boardId, cb) {
       });
     }
   });
-};
+}
 
 /*  QUERY: board using old id */
-boards.boardByOldId = function(oldId, cb) {
-  if (cb === undefined) { cb = null; }
+function boardByOldId(oldId, cb) {
   smfSubLevel.get(modelPrefix + sep + oldId, cb);
-};
+}
 
 /* QUERY: get all boards */
-boards.all = function(cb) {
+function allBoards(cb) {
   var entries = [];
   var handler = makeHandler(entries, cb);
   var searchKey = modelPrefix + sep;
@@ -153,10 +135,9 @@ boards.all = function(cb) {
   .on('error', cb)
   .on('close', handler)
   .on('end', handler);
-};
+}
 
 function deleteSMFKeyMapping(oldId, cb) {
-  if (cb === undefined) { cb = null; }
   var oldKey = modelPrefix + sep + oldId;
   smfSubLevel.get(oldKey, function(err, board, version) {
     if (err) { return cb (err, undefined); }
@@ -171,5 +152,27 @@ function deleteSMFKeyMapping(oldId, cb) {
 }
 
 
-module.exports = boards;
+module.exports = {
+  import: function(board, cb) {
+    validator.importBoard(board, cb, importBoard);
+  },
+  create: function(board, cb) {
+    validator.createBoard(board, cb, createBoard);
+  },
+  find: function(id, cb) {
+    validator.id(id, cb, findBoard);
+  },
+  update: function(board, cb) {
+    validator.updateBoard(board, cb, updateBoard);
+  },
+  delete: function(id, cb) {
+    validator.id(id, cb, deleteBoard);
+  },
+  boardByOldId: function(id, cb) {
+    validator.id(id, cb, boardByOldId);
+  },
+  all: function(cb) {
+    validator.callback(cb, allBoards);
+  }
+};
 

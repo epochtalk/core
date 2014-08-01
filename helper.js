@@ -1,5 +1,6 @@
 var uuid = require('node-uuid');
-var config = require(__dirname + '/config');
+var path = require('path');
+var config = require(path.join(__dirname, 'config'));
 var postPrefix = config.posts.prefix;
 var threadPrefix = config.threads.prefix;
 var postIndexPrefix = config.posts.indexPrefix;
@@ -15,7 +16,13 @@ module.exports = {
     };
   },
   printPost: function(err, post) {
-    console.log(post);
+    if (err) { console.log(err); }
+    if (post) { console.log(post); }
+    // logging?
+  },
+  printBoard: function(err, value) {
+    if (err) { console.error(err); }
+    if (value) { console.log(value); }
     // logging?
   },
   genId: function(timestamp) {
