@@ -187,6 +187,7 @@ function threads(boardId, opts, cb) {
           if (err) { return callback(err, undefined); }
           if (post) {
             entryObject.title = post.title;
+            entryObject.created_at = entry.value.created_at;
             return callback(null, entryObject);
           }
         });
