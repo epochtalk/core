@@ -1,7 +1,8 @@
 var assert = require('assert');
 var async = require('async');
 var path = require('path');
-var posts = require(path.join(__dirname, '..', 'posts'));
+var posts = require(path.join(__dirname, '..', 'posts', 'posts'));
+var threads = require(path.join(__dirname, '..', 'threads', 'threads'));
 var boards = require(path.join(__dirname, '..', 'boards', 'boards'));
 var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var emptyCb = function() {};
@@ -15,7 +16,7 @@ describe('posts', function() {
       seed.init(1, 2, 0, function() {
         boards.all(function(err, allBoards) {
           savedBoardId = allBoards[0].id;
-          posts.threads(allBoards[0].id, {}, function(err, allThreads) {
+          threads.threads(allBoards[0].id, {}, function(err, allThreads) {
             savedThreadId = allThreads[0].id;
             var testPost = {
               title: 'Test Post Title',
@@ -23,6 +24,7 @@ describe('posts', function() {
               thread_id: savedThreadId
             };
             posts.create(testPost, function(err, post) {
+              if (err) console.log(err);
               savedPost = post;
               assert.equal(post.title, testPost.title);
               assert.equal(post.body, testPost.body);
@@ -61,6 +63,7 @@ describe('posts', function() {
       savedPost.title = newTitle;
       savedPost.body = newBody;
       posts.update(savedPost, function(err, post) {
+        if (err) console.log(err);
         assert.equal(post.title, newTitle);
         assert.equal(post.body, newBody);
         posts.find(post.id, function(err, retrievedPost) {
@@ -78,11 +81,12 @@ describe('posts', function() {
 describe('posts', function() {
   describe('#THREADS', function() {
     it('should return all threads for a board', function(done) {
-      posts.threads(savedBoardId, { startThreadId: savedThreadId }, function(err, threadsForBoard) {
-
+      threads.threads(savedBoardId, { startThreadId: savedThreadId }, function(err, threadsForBoard) {
+        if(err) console.log(err);
         if (!err) {
           assert.equal(threadsForBoard.length, 1);
-          posts.threads(savedBoardId, { limit: 1 }, function(err, threadsForBoard) {
+          threads.threads(savedBoardId, { limit: 1 }, function(err, threadsForBoard) {
+            if (err) console.log(err);
             if (!err) {
               assert.equal(threadsForBoard.length, 1);
               done();
@@ -137,15 +141,16 @@ describe('posts', function() {
         }
       };
 
-      posts.import(importNewThreadPost, function(err, post) {
-        // validate post import
+      threads.import(importNewThreadPost, function(err, post) {
+        if(err) console.log(err);
+
+        // validate thread import -- only returns imported post
+        assert.notEqual(post.id, undefined);
         assert.equal(post.title, importNewThreadPost.title);
         assert.equal(post.body, importNewThreadPost.body);
         assert.equal(post.board_id, importNewThreadPost.board_id);
-        assert.equal(post.smf.post_id, importNewThreadPost.smf.post_id);
-        assert.equal(post.smf.thread_id, importNewThreadPost.smf.thread_id);
         assert.notEqual(post.thread_id, undefined);
-        assert.notEqual(post.id, undefined);
+        assert.equal(post.smf.post_id, importNewThreadPost.smf.post_id);
         importThreadId = post.thread_id;
         importThreadPostId = post.id;
 
@@ -162,11 +167,11 @@ describe('posts', function() {
 
         posts.import(secondImportPost, function(err, secondPost) {
           // validate post import
+          assert.notEqual(secondPost.id, undefined);
           assert.equal(secondPost.title, secondImportPost.title);
           assert.equal(secondPost.body, secondImportPost.body);
           assert.equal(secondPost.thread_id, secondImportPost.thread_id);
           assert.equal(secondPost.smf.post_id, secondImportPost.smf.post_id);
-          assert.notEqual(secondPost.id, undefined);
           importPostId = secondPost.id;
           done();
         });
@@ -178,7 +183,7 @@ describe('posts', function() {
 describe('posts', function() {
   describe('#IMPORT_GET', function() {
     it('should verify key mapping for imported posts/threads', function() {
-      posts.threadByOldId(oldThreadId, function(err, thread) {
+      threads.threadByOldId(oldThreadId, function(err, thread) {
         assert.equal(thread.id, importThreadId);
       });
 
@@ -198,7 +203,7 @@ describe('posts', function() {
     it('should delete all imported posts/threads key mappings', function(done) {
 
       posts.delete(importThreadPostId, function(err, post) {
-        posts.threadByOldId(oldThreadId, function(err, thread) {
+        threads.threadByOldId(oldThreadId, function(err, thread) {
           var expectedErr = 'Key not found in database';
           assert.equal(err.message, expectedErr);
         });
@@ -250,7 +255,7 @@ function deleteAllBoards(allBoards, callback) {
     boards.delete(savedBoardId, function() {});
     
     // get all the threads for this board
-    posts.threads(board.id, {}, function(err, allThreads) {
+    threads.threads(board.id, {}, function(err, allThreads) {
       deleteAllThreads(allThreads, bCallback);
     });
   },

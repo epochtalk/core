@@ -15,14 +15,19 @@ module.exports = {
       }));
     };
   },
+  printThread: function(err, thread) {
+    if (err) { console.log(err); }
+    if (thread) { console.log(thread); }
+    // logging?
+  },
   printPost: function(err, post) {
     if (err) { console.log(err); }
     if (post) { console.log(post); }
     // logging?
   },
-  printBoard: function(err, value) {
+  printBoard: function(err, board) {
     if (err) { console.error(err); }
-    if (value) { console.log(value); }
+    if (board) { console.log(board); }
     // logging?
   },
   genId: function(timestamp) {
@@ -33,7 +38,7 @@ module.exports = {
     // key array (return value)
     var associatedKeys = [];
 
-    // thread key 
+    // thread index key 
     var threadId = post.thread_id;
     var threadPostKey = postIndexPrefix + sep + threadId + sep + post.id;
     associatedKeys.push({ key: threadPostKey });
@@ -42,11 +47,13 @@ module.exports = {
     var postKey = postPrefix + sep + post.id;
     associatedKeys.push({ key: postKey });
 
-    // add board key if available
+    // add board index key if available
     var boardId = post.board_id;
     if (boardId) {
       var boardThreadKey = threadIndexPrefix + sep + boardId + sep + threadId;
       associatedKeys.push({ key: boardThreadKey });
+      var threadKey = threadPrefix + sep + threadId;
+      associatedKeys.push({ key: threadKey });
     }
 
     // smf sublevel post key

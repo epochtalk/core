@@ -1,7 +1,7 @@
 var uuid = require('node-uuid');
 var path = require('path');
-var db = require(path.join(__dirname, '..', 'db'));
 var sublevel = require('level-sublevel');
+var db = require(path.join(__dirname, '..', 'db'));
 var boardLevel = sublevel(db);
 var smfSubLevel = boardLevel.sublevel('meta-smf');
 var config = require(path.join(__dirname, '..', 'config'));
@@ -9,7 +9,6 @@ var sep = config.sep;
 var modelPrefix = config.boards.prefix;
 var helper = require(path.join(__dirname, '..', 'helper'));
 var validator = require(path.join(__dirname , 'validator'));
-var boards = {};
 
 // helpers
 var makeHandler = helper.makeHandler;
@@ -17,8 +16,11 @@ var makeHandler = helper.makeHandler;
 
 /* IMPORT */
 function importBoard (board, cb) {
-  // set imported_at datetime
-  board.imported_at = Date.now();
+  // set created_at and imported_at datetime
+  var ts = Date.now();
+  if(!board.created_at) { board.created_at = ts; }
+  else { board.created_at = Date.parse(board.created_at).getTime(); }
+  board.imported_at = ts;
 
   // genereate board id from created_at
   board.id = board.created_at + uuid.v1({ msecs: board.created_at });
@@ -48,11 +50,11 @@ function importBoard (board, cb) {
 
 /* CREATE */
 function createBoard (board, cb) {
-  var timestamp = Date.now();
-  var id = timestamp + uuid.v1({ msecs: timestamp });
+  // set created_at datetime
+  board.created_at = Date.now();
+  var id = board.created_at + uuid.v1({ msecs: board.created_at });
   var key = modelPrefix + sep + id;
   board.id = id;
-  board.created_at = timestamp;
 
   db.put(key, board, function(err, version) {
     board.version = version;

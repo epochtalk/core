@@ -7,7 +7,7 @@ var helper = require(path.join(__dirname, '..', 'helper'));
 var importSchema = joi.object().keys({
   name: joi.string().required(),
   description: joi.string(),
-  created_at: joi.date().default(Date.now()),
+  created_at: joi.date(),
   smf: {
     board_id: joi.number()
   }

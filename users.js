@@ -1,5 +1,6 @@
 var uuid = require('node-uuid');
-var db = require(__dirname + '/db');
+var path = require('path');
+var db = require(path.join(__dirname, 'db'));
 var users = {};
 var modelPrefix = 'user\x00';
 
@@ -15,12 +16,10 @@ users.find = function(id, cb) {
 };
 
 users.all = function(cb) {
-  var entries = []
+  var entries = [];
   db.createReadStream({ start: modelPrefix, end: modelPrefix + '\xff'})
-    .on('data', function (entry) { entries.push(entry) })
-    .on('close', function () { cb(null, entries) })
-}
+    .on('data', function (entry) { entries.push(entry); })
+    .on('close', function () { cb(null, entries); });
+};
 
 module.exports = users;
-
-

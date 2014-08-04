@@ -1,7 +1,8 @@
 var async = require('async');
 var path = require('path');
 var boards = require(path.join(__dirname, '..', 'boards', 'boards'));
-var posts = require(path.join(__dirname, '..', 'posts'));
+var threads = require(path.join(__dirname, '..', 'threads', 'threads'));
+var posts = require(path.join(__dirname, '..', 'posts', 'posts'));
 
 var createBoards = function (numBoards, finishedCb) {
   var createBoard = function(n, cb) {
@@ -27,7 +28,7 @@ var createThreadsAndPosts = function (numThreads, numPosts, finishedCb) {
 
   var createThread = function(board, cb) {
     async.times(numThreads, function(n, nextThread) {
-      posts.create({title: 'Thread ' + n, body: 'Hello World! This is thread ' + n, board_id: board.id}, function(err, post) {
+      threads.create({title: 'Thread ' + n, body: 'Hello World! This is thread ' + n, board_id: board.id}, function(err, post) {
         async.times(numPosts, function(j, nextPost) {
           createPost(post.thread_id, j, function(err) {
             nextPost(err);
