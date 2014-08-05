@@ -58,22 +58,25 @@ function createBoard (board, cb) {
 
 /* RETRIEVE */
 function findBoard(id, cb) {
-  allBoards(function(err, boards) {
-    var result = null;
-    boards.forEach(function(board) {
-      if (board.id === id) {
-        result = board;
-      }
-      else if (board.child_boards) {
-        // TODO: Refactor this so we dont have a nested loop
-        board.child_boards.forEach(function(childBoard) {
-          if (childBoard.id === id) {
-            result = childBoard;
+  var key = modelPrefix + sep + id;
+  db.get(key, function(err, board) {
+    if (err) {
+      return cb(err, null);
+    }
+    else if (board.parent_id) {
+      return cb(null, board);
+    }
+    else {
+      allBoards(function(err, boards) {
+        var result = null;
+        boards.forEach(function(board) {
+          if (board.id === id) {
+            result = board;
           }
         });
-      }
-    });
-    cb(err, result);
+        return cb(err, result);
+      });
+    }
   });
 }
 
