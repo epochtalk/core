@@ -8,6 +8,7 @@ var importSchema = joi.object().keys({
   name: joi.string().required(),
   description: joi.string(),
   created_at: joi.date(),
+  parent_id: joi.string(),
   smf: {
     board_id: joi.number()
   }
@@ -26,7 +27,8 @@ validator.importBoard = function(board, cb, next) {
 
 var createSchema = joi.object().keys({
   name: joi.string().required(),
-  description: joi.string()
+  description: joi.string(),
+  parent_id: joi.string()
 });
 validator.createBoard = function(board, cb, next) {
   // validate cb 
@@ -47,6 +49,7 @@ var updateSchema = joi.object().keys({
   created_at: joi.date(),
   imported_at: joi.date(),
   version: joi.number(),
+  parent_id: joi.string(),
   smf: {
     board_id: joi.number()
   }

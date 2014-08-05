@@ -7,12 +7,7 @@ var smfSubLevel = boardLevel.sublevel('meta-smf');
 var config = require(path.join(__dirname, '..', 'config'));
 var sep = config.sep;
 var modelPrefix = config.boards.prefix;
-var helper = require(path.join(__dirname, '..', 'helper'));
 var validator = require(path.join(__dirname , 'validator'));
-
-// helpers
-var makeHandler = helper.makeHandler;
-
 
 /* IMPORT */
 function importBoard (board, cb) {
@@ -55,7 +50,6 @@ function createBoard (board, cb) {
   var id = board.created_at + uuid.v1({ msecs: board.created_at });
   var key = modelPrefix + sep + id;
   board.id = id;
-
   db.put(key, board, function(err, version) {
     board.version = version;
     return cb(err, board);
@@ -64,7 +58,15 @@ function createBoard (board, cb) {
 
 /* RETRIEVE */
 function findBoard(id, cb) {
-  db.get(modelPrefix + sep + id, cb);
+  allBoards(function(err, boards) {
+    var result = null;
+    boards.forEach(function(board) {
+      if (board.id === id) {
+        result = board;
+      }
+    });
+    cb(err, result);
+  });
 }
 
 /*  UPDATE */
@@ -127,12 +129,32 @@ function boardByOldId(oldId, cb) {
 
 /* QUERY: get all boards */
 function allBoards(cb) {
-  var entries = [];
-  var handler = makeHandler(entries, cb);
+  var boards = [];
+  var childBoards = [];
+  var handler = function() {
+    boards.forEach(function(board) {
+      var boardChildren = childBoards[board.value.id];
+      if (boardChildren) {
+        board.value.child_boards = boardChildren;
+      }
+    });
+    return cb(null, boards.map(function(board) {
+        return board.value;
+      }));
+  };
+
   var searchKey = modelPrefix + sep;
   db.createReadStream({reverse: true, start: searchKey, end: searchKey + '\xff'})
-  .on('data', function(entry) {
-    entries.push(entry);
+  .on('data', function(board) {
+    if (board.value.parent_id) {
+      if (!childBoards[board.value.parent_id]) {
+        childBoards[board.value.parent_id] = [];
+      }
+      childBoards[board.value.parent_id].push(board.value);
+    }
+    else {
+      boards.push(board);
+    }
   })
   .on('error', cb)
   .on('close', handler)
@@ -152,7 +174,6 @@ function deleteSMFKeyMapping(oldId, cb) {
     }
   });
 }
-
 
 module.exports = {
   import: function(board, cb) {
