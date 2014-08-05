@@ -1,1 +1,1 @@
-# Epochcore [![Build Status](http://img.shields.io/travis/epochtalk/epochtalk.svg?style=flat)](https://travis-ci.org/epochtalk/epochtalk)
+# Epochcore [![Build Status](http://img.shields.io/travis/epochtalk/core.svg?style=flat)](https://travis-ci.org/epochtalk/core)
