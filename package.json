@@ -20,10 +20,10 @@
     "async": "^0.9.0",
     "joi": "^4.6.1",
     "level-lock": "^1.0.1",
-    "level-sublevel": "^6.1.8",
+    "level-sublevel": "^6.2.2",
     "level-version": "^0.4.0",
     "leveldown": "^0.10.2",
-    "levelup": "^0.18.5",
+    "levelup": "=0.18.5",
     "node-uuid": "^1.4.1",
     "replify": "^1.2.0",
     "replpad": "^0.11.9"
