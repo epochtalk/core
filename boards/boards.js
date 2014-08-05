@@ -64,6 +64,14 @@ function findBoard(id, cb) {
       if (board.id === id) {
         result = board;
       }
+      else if (board.child_boards) {
+        // TODO: Refactor this so we dont have a nested loop
+        board.child_boards.forEach(function(childBoard) {
+          if (childBoard.id === id) {
+            result = childBoard;
+          }
+        });
+      }
     });
     cb(err, result);
   });
