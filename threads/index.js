@@ -12,7 +12,7 @@ var threadPrefix = config.threads.prefix;
 var threadIndexPrefix = config.threads.indexPrefix;
 var helper = require(path.join(__dirname, '..', 'helper'));
 var validator = require(path.join(__dirname, 'validator'));
-var core = require(path.join(__dirname, '..', 'index'));
+var posts = require(path.join(__dirname, '..', 'posts'));
 
 /* IMPORT: 
   Creates
@@ -72,7 +72,7 @@ function importThread(thread, cb) {
       thread.thread_id = threadId;
       delete thread.created_at;
       delete thread.imported_at;
-      core.posts.import(thread, cb);
+      posts.import(thread, cb);
     }
   });
 }
@@ -120,7 +120,7 @@ function createThread(firstPost, cb) {
       // configuring post
       firstPost.thread_id = threadId;
       delete firstPost.created_at;
-      core.posts.create(firstPost, cb);
+      posts.create(firstPost, cb);
     }
   });
 }
@@ -251,12 +251,12 @@ function threadFirstPost(threadId, cb) {
     return cb(err, undefined);
   })
   .on('close', function() {
-    core.posts.find(postId, function(err, post) {
+    posts.find(postId, function(err, post) {
       return cb(null, post);
     });
   })
   .on('end', function() {
-    core.posts.find(postId, function(err, post) {
+    posts.find(postId, function(err, post) {
       return cb(null, post);
     });
   });

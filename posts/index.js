@@ -8,9 +8,9 @@ var config = require(path.join(__dirname, '..', 'config'));
 var sep = config.sep;
 var postPrefix = config.posts.prefix;
 var postIndexPrefix = config.posts.indexPrefix;
+var threadPrefix = config.threads.prefix;
 var helper = require(path.join(__dirname, '..', 'helper'));
 var validator = require(path.join(__dirname, 'validator'));
-var core = require(path.join(__dirname, '..', 'index'));
 
 /* IMPORT */
 function importPost(post, cb) {
@@ -60,14 +60,14 @@ function createPost(post, cb) {
   var postKey = postPrefix + sep + postId;
 
   var afterWrite;
-  core.threads.find(threadKey, function(err, thread) {
-    console.log(thread);
-    afterWrite = function(err, cb) {
-      var updateStatsBatch = db.batch();
-      updateStatsBatch.put(threadKey, thread.post_count + 1);
-      updateStatsBatch.write(cb);
-    }
-  });
+  // core.threads.find(threadKey, function(err, thread) {
+  //   console.log(thread);
+  //   afterWrite = function(err, cb) {
+  //     var updateStatsBatch = db.batch();
+  //     updateStatsBatch.put(threadKey, thread.post_count + 1);
+  //     updateStatsBatch.write(cb);
+  //   }
+  // });
 
   var batch = db.batch();
   batch.put(threadPostKey, {id: postId});
