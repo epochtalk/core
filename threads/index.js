@@ -52,6 +52,8 @@ function importThread(thread, cb) {
     post_count: 1,
     smf: thread.smf
   };
+
+  var threadKey = threadPrefix + sep + threadId;
   batch.put(threadKey, threadValue);
 
   // write out
