@@ -10,6 +10,7 @@ var postPrefix = config.posts.prefix;
 var postIndexPrefix = config.posts.indexPrefix;
 var helper = require(path.join(__dirname, '..', 'helper'));
 var validator = require(path.join(__dirname, 'validator'));
+var core = require(path.join(__dirname, '..', 'index'));
 
 /* IMPORT */
 function importPost(post, cb) {
@@ -54,15 +55,35 @@ function createPost(post, cb) {
   var postId = helper.genId(post.created_at);
   post.id = postId;
   var threadId = post.thread_id;
+  var threadKey = threadPrefix + sep + threadId;
   var threadPostKey = postIndexPrefix + sep + threadId + sep + postId;
   var postKey = postPrefix + sep + postId;
+
+  var afterWrite;
+  core.threads.find(threadKey, function(err, thread) {
+    console.log(thread);
+    afterWrite = function(err, cb) {
+      var updateStatsBatch = db.batch();
+      updateStatsBatch.put(threadKey, thread.post_count + 1);
+      updateStatsBatch.write(cb);
+    }
+  });
 
   var batch = db.batch();
   batch.put(threadPostKey, {id: postId});
   batch.put(postKey, post);
   batch.write(function(err) {
-    if (err) { return cb(err, undefined); }
-    else { return cb(null, post); }
+    if (err) {
+      return cb(err, undefined);
+    }
+    else {
+      if (afterWrite) {
+        return afterWrite(null, cb);
+      }
+      else {
+        return cb(null, post);
+      }
+    }
   });
 }
 
@@ -194,7 +215,7 @@ function deleteItr(opts, callback) {
   }
 }
 
-module.exports = {
+exports = module.exports = {
   import: function(post, cb) {
     validator.importPost(post, cb, importPost);
   },
@@ -217,3 +238,4 @@ module.exports = {
     validator.byThread(id, opts, cb, byThread);
   }
 };
+

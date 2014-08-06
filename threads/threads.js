@@ -12,7 +12,7 @@ var threadPrefix = config.threads.prefix;
 var threadIndexPrefix = config.threads.indexPrefix;
 var helper = require(path.join(__dirname, '..', 'helper'));
 var validator = require(path.join(__dirname, 'validator'));
-var posts = require(path.join(__dirname, '..', 'posts', 'posts'));
+var core = require(path.join(__dirname, '..', 'index'));
 
 /* IMPORT: 
   Creates
@@ -40,10 +40,11 @@ function importThread(thread, cb) {
     id: threadId,
     created_at: thread.created_at
   };
+
+
   batch.put(boardThreadKey, threadIndexValue);
   
   // add thread object
-  var threadKey = threadPrefix + sep + threadId;
   var threadValue = {
     id: threadId,
     created_at: thread.created_at,
@@ -71,52 +72,55 @@ function importThread(thread, cb) {
       thread.thread_id = threadId;
       delete thread.created_at;
       delete thread.imported_at;
-      posts.import(thread, cb);
+      core.posts.import(thread, cb);
     }
   });
 }
 
 /* CREATE:
-  Creates
+  Creates thread from first post
   - a index from board id to thread id
-  - a thread value
+  - a first post value
   Then calls posts.import
 */
-function createThread(thread, cb) {
+function createThread(firstPost, cb) {
   // set created_at datetime
-  thread.created_at = Date.now();
+  firstPost.created_at = Date.now();
 
   // batch
   var batch = db.batch();
 
   // add board - thread index
-  var boardId = thread.board_id;
-  var threadId = helper.genId(thread.created_at);
+  var boardId = firstPost.board_id;
+  var threadId = helper.genId(firstPost.created_at);
+  console.log(threadId);
   var boardThreadKey = threadIndexPrefix + sep + boardId + sep + threadId;
   var threadIndexObject = {
     id: threadId,
-    created_at: thread.created_at
+    created_at: firstPost.created_at
   };
+
   batch.put(boardThreadKey, threadIndexObject);
 
   // add thread object
-  var threadKey = threadPrefix + sep + threadId;
   var threadObject = {
     id: threadId,
-    created_at: thread.created_at,
-    imported_at: thread.imported_at,
+    created_at: firstPost.created_at,
+    imported_at: firstPost.imported_at,
     post_count: 1,
-    smf: thread.smf
+    smf: firstPost.smf
   };
+
+  var threadKey = threadPrefix + sep + threadId;
   batch.put(threadKey, threadObject);
 
   batch.write(function(err) {
     if (err) { return cb(err, undefined); }
     else {
       // configuring post
-      thread.thread_id = threadId;
-      delete thread.created_at;
-      posts.create(thread, cb);
+      firstPost.thread_id = threadId;
+      delete firstPost.created_at;
+      core.posts.create(firstPost, cb);
     }
   });
 }
@@ -247,12 +251,12 @@ function threadFirstPost(threadId, cb) {
     return cb(err, undefined);
   })
   .on('close', function() {
-    posts.find(postId, function(err, post) {
+    core.posts.find(postId, function(err, post) {
       return cb(null, post);
     });
   })
   .on('end', function() {
-    posts.find(postId, function(err, post) {
+    core.posts.find(postId, function(err, post) {
       return cb(null, post);
     });
   });
@@ -291,7 +295,7 @@ function deleteItr(opts, callback) {
   }
 }
 
-module.exports = {
+exports = module.exports = {
   import: function(thread, cb) {
     validator.importThread(thread, cb, importThread);
   },
