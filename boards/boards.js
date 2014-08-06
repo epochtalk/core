@@ -14,7 +14,7 @@ function importBoard (board, cb) {
   // set created_at and imported_at datetime
   var ts = Date.now();
   if(!board.created_at) { board.created_at = ts; }
-  else { board.created_at = Date.parse(board.created_at).getTime(); }
+  else { board.created_at = Date.parse(board.created_at) || board.created_ad; }
   board.imported_at = ts;
 
   // genereate board id from created_at

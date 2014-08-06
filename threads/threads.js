@@ -26,7 +26,7 @@ function importThread(thread, cb) {
   // set created_at and imported_at datetime
   var ts = Date.now();
   if(!thread.created_at) { thread.created_at = ts; }
-  else { thread.created_at = Date.parse(thread.created_at).getTime(); }
+  else { thread.created_at = Date.parse(thread.created_at) || thread.created_ad; }
   thread.imported_at = ts;
 
   // batch

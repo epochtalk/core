@@ -8,8 +8,6 @@ var config = require(path.join(__dirname, '..', 'config'));
 var sep = config.sep;
 var postPrefix = config.posts.prefix;
 var postIndexPrefix = config.posts.indexPrefix;
-var threadPrefix = config.threads.prefix;
-var threadIndexPrefix = config.threads.indexPrefix;
 var helper = require(path.join(__dirname, '..', 'helper'));
 var validator = require(path.join(__dirname, 'validator'));
 
@@ -18,7 +16,7 @@ function importPost(post, cb) {
   // set created_at and imported_at datetime
   var ts = Date.now();
   if(!post.created_at) { post.created_at = ts; }
-  else { post.created_at = Date.parse(post.created_at).getTime(); }
+  else { post.created_at = Date.parse(post.created_at) || post.created_ad; }
   post.imported_at = ts;
   
   var postId = helper.genId(post.created_at);
