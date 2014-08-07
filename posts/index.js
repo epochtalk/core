@@ -60,30 +60,33 @@ function createPost(post, cb) {
   var postKey = postPrefix + sep + postId;
 
   var afterWrite;
-  // core.threads.find(threadKey, function(err, thread) {
-  //   console.log(thread);
-  //   afterWrite = function(err, cb) {
-  //     var updateStatsBatch = db.batch();
-  //     updateStatsBatch.put(threadKey, thread.post_count + 1);
-  //     updateStatsBatch.write(cb);
-  //   }
-  // });
-
-  var batch = db.batch();
-  batch.put(threadPostKey, {id: postId});
-  batch.put(postKey, post);
-  batch.write(function(err) {
-    if (err) {
-      return cb(err, undefined);
+  db.get(threadKey, function(err, thread) {
+    // console.log('thread: ' + thread.id + ' with ' + thread.post_count + ' posts');
+    afterWrite = function(err, cb) {
+      thread.post_count += 1;
+      var updateStatsBatch = db.batch();
+      updateStatsBatch.put(threadKey, thread);
+      // console.log('writing post_count: ' + (thread.post_count));
+      updateStatsBatch.write(function(err) {
+        return cb(null, post);
+      });
     }
-    else {
-      if (afterWrite) {
-        return afterWrite(null, cb);
+    var batch = db.batch();
+    batch.put(threadPostKey, {id: postId});
+    batch.put(postKey, post);
+    batch.write(function(err) {
+      if (err) {
+        return cb(err, undefined);
       }
       else {
-        return cb(null, post);
+        if (afterWrite) {
+          return afterWrite(null, cb);
+        }
+        else {
+          return cb(null, post);
+        }
       }
-    }
+    });
   });
 }
 

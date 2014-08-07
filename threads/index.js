@@ -95,7 +95,6 @@ function createThread(firstPost, cb) {
   // add board - thread index
   var boardId = firstPost.board_id;
   var threadId = helper.genId(firstPost.created_at);
-  console.log(threadId);
   var boardThreadKey = threadIndexPrefix + sep + boardId + sep + threadId;
   var threadIndexObject = {
     id: threadId,
@@ -109,7 +108,7 @@ function createThread(firstPost, cb) {
     id: threadId,
     created_at: firstPost.created_at,
     imported_at: firstPost.imported_at,
-    post_count: 1,
+    post_count: 0,
     smf: firstPost.smf
   };
 
