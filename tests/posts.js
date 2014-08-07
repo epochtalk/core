@@ -14,7 +14,8 @@ describe('posts', function() {
   describe('#CREATE', function() {
     it('should create a post', function(done) {
       seed.init(1, 2, 0, function() {
-        boards.all(function(err, allBoards) {
+        boards.all()
+        .then(function(allBoards) {
           savedBoardId = allBoards[0].id;
           threads.threads(allBoards[0].id, {}, function(err, allThreads) {
             savedThreadId = allThreads[0].id;
@@ -238,7 +239,8 @@ describe('posts', function() {
             assert.equal(err.message, expectedErr);
 
             // tear down
-            boards.all(function(err, allBoards) {
+            boards.all()
+            .then(function(allBoards) {
               deleteAllBoards(allBoards, done);
             });
           });
@@ -252,7 +254,7 @@ function deleteAllBoards(allBoards, callback) {
   // for each board
   async.each(allBoards, function(board, bCallback) {
     // delete the board
-    boards.delete(savedBoardId, function() {});
+    boards.delete(savedBoardId);
     
     // get all the threads for this board
     threads.threads(board.id, {}, function(err, allThreads) {

@@ -10,16 +10,18 @@ describe('boards', function() {
   describe('#ALL', function() {
     it('should return all board records in db', function(done) {
       seed.createBoards(25, function() {
-        boards.all(function(err, allBoards) {
-          if (!err) {
-            for (var i = 0; i < allBoards.length; i++) {
-              var end = allBoards.length - i - 1;
-              assert.equal('Board ' + i, allBoards[end].name);
-              assert.equal('Hello World! This is board ' + i + ' in a popular forum.', allBoards[end].description);
-              boards.delete(allBoards[end].id, emptyCb);
-            }
-            done();
+        boards.all()
+        .then(function(allBoards) {
+          for (var i = 0; i < allBoards.length; i++) {
+            assert.equal('Board ' + i, allBoards[i].name);
+            assert.equal('Hello World! This is board ' + i + ' in a popular forum.', allBoards[i].description);
+            boards.delete(allBoards[i].id, emptyCb);
           }
+          done();
+        })
+        .catch(function(err) {
+          console.log(err);
+          done();
         });
       });
     });
@@ -33,13 +35,16 @@ describe('boards', function() {
         name: 'Test Board',
         description: 'Test Board Description'
       };
-      boards.create(testBoard, function(err, board) {
-        if (!err) {
-          assert.equal(board.name, testBoard.name);
-          assert.equal(board.description, testBoard.description);
-          savedBoard = board;
-          done();
-        }
+      boards.create(testBoard)
+      .then(function(board) {
+        assert.equal(board.name, testBoard.name);
+        assert.equal(board.description, testBoard.description);
+        savedBoard = board;
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+        done();
       });
     });
   });
@@ -48,12 +53,15 @@ describe('boards', function() {
 describe('boards', function() {
   describe('#FIND', function() {
     it('should find specified board', function(done) {
-      boards.find(savedBoard.id, function(err, board) {
-        if (!err) {
-          assert.equal(board.name, savedBoard.name);
-          assert.equal(board.description, savedBoard.description);
-          done();
-        }
+      boards.find(savedBoard.id)
+      .then(function(board){
+        assert.equal(board.name, savedBoard.name);
+        assert.equal(board.description, savedBoard.description);
+        done();
+      })
+      .catch(function(err) {
+        console.log('FIND ERROR: ' + err);
+        done();
       });
     });
   });
@@ -66,18 +74,21 @@ describe('boards', function() {
       var newDesc = 'Update Check 2';
       savedBoard.name = newName;
       savedBoard.description = newDesc;
-      boards.update(savedBoard, function(err, board) {
-        if (!err) {
-          assert.equal(board.name, newName);
-          assert.equal(board.description, newDesc);
-          boards.find(savedBoard.id, function(err) {
-            if (!err) {
-              assert.equal(board.name, newName);
-              assert.equal(board.description, newDesc);
-              done();
-            }
-          });
-        }
+      boards.update(savedBoard)
+      .then(function(board) {
+        assert.equal(board.name, newName);
+        assert.equal(board.description, newDesc);
+        return savedBoard.id;
+      })
+      .then(boards.find)
+      .then(function(board) {
+        assert.equal(board.name, newName);
+        assert.equal(board.description, newDesc);
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+        done();
       });
     });
   });
@@ -95,12 +106,17 @@ describe('boards', function() {
         }
       };
 
-      boards.import(importBoard, function(err, board) {
+      boards.import(importBoard)
+      .then(function(board) {
         assert.equal(board.name, importBoard.name);
         assert.equal(board.description, importBoard.description);
         assert.equal(board.smf.board_id, importBoard.smf.board_id);
         assert.notEqual(board.id, undefined);
         newBoardId = board.id;
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
         done();
       });
     });
@@ -110,8 +126,13 @@ describe('boards', function() {
 describe('boards', function() {
   describe('#IMPORT_GET', function() {
     it('should verify key mapping for imported boards', function(done) {
-      boards.boardByOldId(oldBoardId, function(err, board) {
-        assert.equal(board.id, newBoardId);
+      boards.boardByOldId(oldBoardId)
+      .then(function(newId) {
+        assert.equal(newId, newBoardId);
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
         done();
       });
     });
@@ -121,12 +142,14 @@ describe('boards', function() {
 describe('boards', function() {
   describe('#IMPORT_DELETE', function() {
     it('should delete all imported boards key mappings', function(done) {
-      boards.delete(newBoardId, function(err, board) {
-        boards.boardByOldId(oldBoardId, function(err, board) {
-          var expectedErr = 'Key not found in database';
-          assert.equal(err.message, expectedErr);
-          done();
-        });
+      boards.delete(newBoardId)
+      .then(function(board) {
+        return board.id;
+      })
+      .then(boards.boardByOldId)
+      .catch(function(err) {
+        assert.notEqual(err, null);
+        done();
       });
     });
   });
@@ -135,16 +158,16 @@ describe('boards', function() {
 describe('boards', function() {
   describe('#DELETE', function() {
     it('should delete the specified board', function(done) {
-      boards.delete(savedBoard.id, function(err, board) {
-        if (!err) {
-          assert.equal(board.name, savedBoard.name);
-          assert.equal(board.description, savedBoard.description);
-          boards.find(savedBoard.id, function(err) {
-            var expectedErr = 'Key not found in database [board~' + savedBoard.id + ']';
-            assert.equal(err.message, expectedErr);
-            done();
-          });
-        }
+      boards.delete(savedBoard.id)
+      .then(function(board) {
+        assert.equal(board.name, savedBoard.name);
+        assert.equal(board.description, savedBoard.description);
+        return board.id;
+      })
+      .then(boards.find)
+      .catch(function(err) {
+        assert.notEqual(err, null);
+        done();
       });
     });
   });

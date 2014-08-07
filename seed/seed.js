@@ -6,15 +6,15 @@ var posts = core.posts;
 var threads = core.threads;
 
 var createBoards = function (numBoards, finishedCb) {
-  var createBoard = function(n, cb) {
+  async.times(numBoards, function(n, next) {
     boards.create({
       name: 'Board ' + n,
       description: 'Hello World! This is board ' + n + ' in a popular forum.'
-    }, cb);
-  };
-
-  async.times(numBoards, function(n, next) {
-    createBoard(n, function(err) {
+    })
+    .then(function(board) {
+      next(null);
+    })
+    .catch(function(err) {
       next(err);
     });
   }, function(err) {
@@ -45,7 +45,8 @@ var createThreadsAndPosts = function (numThreads, numPosts, finishedCb) {
     });
   };
 
-  boards.all(function(err, allBoards) {
+  boards.all()
+  .then(function(allBoards) {
     async.times(allBoards.length, function(n, nextBoard) {
       createThread(allBoards[n], function(err) {
         nextBoard(err);
@@ -54,6 +55,9 @@ var createThreadsAndPosts = function (numThreads, numPosts, finishedCb) {
     function(err) {
       finishedCb(err);
     });
+  })
+  .catch(function(err) {
+    console.log(err);
   });
 };
 

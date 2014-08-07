@@ -1,8 +1,7 @@
 var validator = {};
-var path = require('path');
 var joi = require('joi');
-var helper = require(path.join(__dirname, '..', 'helper'));
-
+var Promise = require('bluebird');
+var validate = Promise.promisify(joi.validate);
 
 var importSchema = joi.object().keys({
   name: joi.string().required(),
@@ -13,15 +12,8 @@ var importSchema = joi.object().keys({
     board_id: joi.number()
   }
 });
-validator.importBoard = function(board, cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printBoard(); }
-
-  // validate board
-  joi.validate(board, importSchema, function(err, value) {
-    if (err) { return cb(err, undefined); }
-    else { return next(value, cb); }
-  });
+validator.importBoard = function(board, next) {
+  return validate(board, importSchema).then(next);
 };
 
 
@@ -30,15 +22,8 @@ var createSchema = joi.object().keys({
   description: joi.string(),
   parent_id: joi.string()
 });
-validator.createBoard = function(board, cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printBoard(); }
-
-  // validate board
-  joi.validate(board, createSchema, function(err, value) {
-    if (err) { return cb(err, undefined); }
-    else { return next(value, cb); }
-  });
+validator.createBoard = function(board, next) {
+  return validate(board, createSchema).then(next);
 };
 
 
@@ -54,35 +39,14 @@ var updateSchema = joi.object().keys({
     board_id: joi.number()
   }
 });
-validator.updateBoard = function(board, cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printBoard(); }
-
-  // validate board
-  joi.validate(board, updateSchema, function(err, value) {
-    if (err) { return cb(err, undefined); }
-    else { return next(value, cb); }
-  });
-};
-
-
-validator.callback = function(cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printBoard(); }
-  return next(cb);
+validator.updateBoard = function(board, next) {
+  return validate(board, updateSchema).then(next);
 };
 
 
 var findSchema = joi.any().required();
-validator.id = function(id, cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printBoard(); }
-
-  // validate board
-  joi.validate(id, findSchema, function(err, value) {
-    if (err) { return cb(err, undefined); }
-    else { return next(value, cb); }
-  });
+validator.id = function(id, next) {
+  return validate(id, findSchema).then(next);
 };
 
 module.exports = validator;
