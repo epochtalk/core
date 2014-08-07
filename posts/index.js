@@ -63,14 +63,26 @@ function createPost(post, cb) {
   db.get(threadKey, function(err, thread) {
     // console.log('thread: ' + thread.id + ' with ' + thread.post_count + ' posts');
     afterWrite = function(err, cb) {
-      thread.post_count += 1;
-      var updateStatsBatch = db.batch();
-      updateStatsBatch.put(threadKey, thread);
-      // console.log('writing post_count: ' + (thread.post_count));
-      updateStatsBatch.write(function(err) {
-        return cb(null, post);
-      });
-    }
+      var startKey = postIndexPrefix + sep + threadId + sep;
+      var endKey = startKey + '\xff';
+      var postCount = 0;
+
+      var handler = function() {
+        thread.post_count = postCount;
+        var updateStatsBatch = db.batch();
+        updateStatsBatch.put(threadKey, thread);
+        updateStatsBatch.write(function(err) {
+          return cb(null, post);
+        });
+      };
+      db.createReadStream({start: startKey, end: endKey})
+      .on('data', function (entry) {
+        postCount += 1;
+      })
+      .on('error', cb)
+      .on('close', handler)
+      .on('end', handler);
+    };
     var batch = db.batch();
     batch.put(threadPostKey, {id: postId});
     batch.put(postKey, post);
