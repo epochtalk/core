@@ -8,28 +8,6 @@ var threadIndexPrefix = config.threads.indexPrefix;
 var sep = config.sep;
 
 module.exports = {
-  makeHandler: function(entries, cb) {
-    return function() {
-      cb(null, entries.map(function(entry) {
-        return entry.value;
-      }));
-    };
-  },
-  printThread: function(err, thread) {
-    if (err) { console.log(err); }
-    if (thread) { console.log(thread); }
-    // logging?
-  },
-  printPost: function(err, post) {
-    if (err) { console.log(err); }
-    if (post) { console.log(post); }
-    // logging?
-  },
-  printBoard: function(err, board) {
-    if (err) { console.error(err); }
-    if (board) { console.log(board); }
-    // logging?
-  },
   genId: function(timestamp) {
     var id = timestamp + uuid.v1({ msecs: timestamp });
     return id;

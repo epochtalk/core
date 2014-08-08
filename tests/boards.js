@@ -21,7 +21,7 @@ describe('boards', function() {
         })
         .catch(function(err) {
           console.log(err);
-          done();
+          done(err);
         });
       });
     });
@@ -44,7 +44,7 @@ describe('boards', function() {
       })
       .catch(function(err) {
         console.log(err);
-        done();
+        done(err);
       });
     });
   });
@@ -60,8 +60,8 @@ describe('boards', function() {
         done();
       })
       .catch(function(err) {
-        console.log('FIND ERROR: ' + err);
-        done();
+        console.log(err);
+        done(err);
       });
     });
   });
@@ -88,7 +88,7 @@ describe('boards', function() {
       })
       .catch(function(err) {
         console.log(err);
-        done();
+        done(err);
       });
     });
   });
@@ -117,7 +117,7 @@ describe('boards', function() {
       })
       .catch(function(err) {
         console.log(err);
-        done();
+        done(err);
       });
     });
   });
@@ -133,7 +133,7 @@ describe('boards', function() {
       })
       .catch(function(err) {
         console.log(err);
-        done();
+        done(err);
       });
     });
   });
@@ -149,7 +149,7 @@ describe('boards', function() {
       .then(boards.boardByOldId)
       .catch(function(err) {
         assert.notEqual(err, null);
-        done();
+        done(null); // expecting an error
       });
     });
   });
@@ -167,7 +167,7 @@ describe('boards', function() {
       .then(boards.find)
       .catch(function(err) {
         assert.notEqual(err, null);
-        done();
+        done(null); // expecting an error
       });
     });
   });

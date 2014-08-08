@@ -14,27 +14,37 @@ describe('posts', function() {
   describe('#CREATE', function() {
     it('should create a post', function(done) {
       seed.init(1, 2, 0, function() {
+
+        var testPost = {
+            title: 'Test Post Title',
+            body: 'Test Post Body',
+          };
+
         boards.all()
         .then(function(allBoards) {
           savedBoardId = allBoards[0].id;
-          threads.threads(allBoards[0].id, {}, function(err, allThreads) {
-            savedThreadId = allThreads[0].id;
-            var testPost = {
-              title: 'Test Post Title',
-              body: 'Test Post Body',
-              thread_id: savedThreadId
-            };
-            posts.create(testPost, function(err, post) {
-              if (err) console.log(err);
-              savedPost = post;
-              assert.equal(post.title, testPost.title);
-              assert.equal(post.body, testPost.body);
-              assert.equal(post.thread_id, testPost.thread_id);
-              assert.equal(post.board_id, testPost.board_id);
-              done();
-            });
-          });
+          return [savedBoardId, {}];
+        })
+        .spread(threads.threads)
+        .then(function(allThreads) {
+          savedThreadId = allThreads[0].id;
+          testPost.thread_id = savedThreadId;
+          return testPost;
+        })
+        .then(posts.create)
+        .then(function(post) {
+          savedPost = post;
+          assert.equal(post.title, testPost.title);
+          assert.equal(post.body, testPost.body);
+          assert.equal(post.thread_id, testPost.thread_id);
+          assert.equal(post.board_id, testPost.board_id);
+          done();
+        })
+        .catch(function(err) {
+          console.log(err);
+          done(err);
         });
+
       });
     });
   });
@@ -43,14 +53,17 @@ describe('posts', function() {
 describe('posts', function() {
   describe('#FIND', function() {
     it('should find specified post', function(done) {
-      posts.find(savedPost.id, function(err, post) {
-        if (!err) {
-          assert.equal(post.title, savedPost.title);
-          assert.equal(post.body, savedPost.body);
-          assert.equal(post.thread_id, savedPost.thread_id);
-          assert.equal(post.board_id, savedPost.board_id);
-          done();
-        }
+      posts.find(savedPost.id)
+      .then(function(post) {
+        assert.equal(post.title, savedPost.title);
+        assert.equal(post.body, savedPost.body);
+        assert.equal(post.thread_id, savedPost.thread_id);
+        assert.equal(post.board_id, savedPost.board_id);
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+        done(err);
       });
     });
   });
@@ -63,17 +76,23 @@ describe('posts', function() {
       var newBody = 'Test Post Body Modified';
       savedPost.title = newTitle;
       savedPost.body = newBody;
-      posts.update(savedPost, function(err, post) {
-        if (err) console.log(err);
+      posts.update(savedPost)
+      .then(function(post) {
         assert.equal(post.title, newTitle);
         assert.equal(post.body, newBody);
-        posts.find(post.id, function(err, retrievedPost) {
-          assert.equal(retrievedPost.title, newTitle);
-          assert.equal(retrievedPost.body, newBody);
-          assert.equal(retrievedPost.thread_id, savedPost.thread_id);
-          assert.equal(retrievedPost.board_id, savedPost.board_id);
-          done();
-        });
+        return post.id;
+      })
+      .then(posts.find)
+      .then(function(retrievedPost) {
+        assert.equal(retrievedPost.title, newTitle);
+        assert.equal(retrievedPost.body, newBody);
+        assert.equal(retrievedPost.thread_id, savedPost.thread_id);
+        assert.equal(retrievedPost.board_id, savedPost.board_id);
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+        done(err);
       });
     });
   });
@@ -82,18 +101,19 @@ describe('posts', function() {
 describe('posts', function() {
   describe('#THREADS', function() {
     it('should return all threads for a board', function(done) {
-      threads.threads(savedBoardId, { startThreadId: savedThreadId }, function(err, threadsForBoard) {
-        if(err) console.log(err);
-        if (!err) {
-          assert.equal(threadsForBoard.length, 1);
-          threads.threads(savedBoardId, { limit: 1 }, function(err, threadsForBoard) {
-            if (err) console.log(err);
-            if (!err) {
-              assert.equal(threadsForBoard.length, 1);
-              done();
-            }
-          });
-        }
+      threads.threads(savedBoardId, { startThreadId: savedThreadId })
+      .then(function(threadsForBoard) {
+        assert.equal(threadsForBoard.length, 1);
+        return [savedBoardId, { limit: 1}];
+      })
+      .spread(threads.threads)
+      .then(function(threadsForBoard) {
+        assert.equal(threadsForBoard.length, 1);
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+        done(err);
       });
     });
   });
@@ -102,26 +122,31 @@ describe('posts', function() {
 describe('posts', function() {
   describe('#BYTHREAD', function() {
     it('should return all posts for a thread', function(done) {
-      posts.byThread(savedThreadId, { }, function(err, postsForThread) {
-        if (!err) {
-          assert.equal(postsForThread.length, 2);
-          posts.byThread(savedThreadId, { limit: 1 }, function(err, postsForThread) {
-            if (!err) {
-              assert.equal(postsForThread.length, 1);
-              posts.byThread(savedThreadId, { startPostId: postsForThread[0].id  }, function(err, postsForThread) {
-                if (!err) {
-                  assert.equal(postsForThread.length, 1);
-                  assert.equal(postsForThread[0].title, savedPost.title);
-                  assert.equal(postsForThread[0].body, savedPost.body);
-                  assert.equal(postsForThread[0].board_id, savedPost.board_id);
-                  assert.equal(postsForThread[0].thread_id, savedPost.thread_id);
-                  done();
-                }
-              });
-            }
-          });
-        }
+
+      posts.byThread(savedThreadId, {})
+      .then(function(postsForThread) {
+        assert.equal(postsForThread.length, 2);
+        return [savedThreadId, { limit: 1 }];
+      })
+      .spread(posts.byThread)
+      .then(function(postsForThread) {
+        assert.equal(postsForThread.length, 1);
+        return [savedThreadId, { startPostId: postsForThread[0].id }];
+      })
+      .spread(posts.byThread)
+      .then(function(postsForThread) {
+        assert.equal(postsForThread.length, 1);
+        assert.equal(postsForThread[0].title, savedPost.title);
+        assert.equal(postsForThread[0].body, savedPost.body);
+        assert.equal(postsForThread[0].board_id, savedPost.board_id);
+        assert.equal(postsForThread[0].thread_id, savedPost.thread_id);
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+        done(err);
       });
+
     });
   });
 });
@@ -129,6 +154,7 @@ describe('posts', function() {
 describe('posts', function() {
   describe('#IMPORT', function() {
     it('should import a post', function(done) {
+
       // thread starting post with prior thread_id and post_id
       oldThreadId = 222;
       oldFirstPostId = 111;
@@ -141,10 +167,18 @@ describe('posts', function() {
           thread_id: oldThreadId
         }
       };
+      // import second post with only post_id
+      oldSecondPostId = 112;
+      var secondImportPost = {
+        title: 'second title',
+        body: 'second body',
+        smf: {
+          post_id: oldSecondPostId
+        }
+      };
 
-      threads.import(importNewThreadPost, function(err, post) {
-        if(err) console.log(err);
-
+      threads.import(importNewThreadPost)
+      .then(function(post) {
         // validate thread import -- only returns imported post
         assert.notEqual(post.id, undefined);
         assert.equal(post.title, importNewThreadPost.title);
@@ -155,28 +189,25 @@ describe('posts', function() {
         importThreadId = post.thread_id;
         importThreadPostId = post.id;
 
-        // import second post with only post_id
-        oldSecondPostId = 112;
-        var secondImportPost = {
-          title: 'second title',
-          body: 'second body',
-          thread_id: post.thread_id,
-          smf: {
-            post_id: oldSecondPostId
-          }
-        };
-
-        posts.import(secondImportPost, function(err, secondPost) {
-          // validate post import
-          assert.notEqual(secondPost.id, undefined);
-          assert.equal(secondPost.title, secondImportPost.title);
-          assert.equal(secondPost.body, secondImportPost.body);
-          assert.equal(secondPost.thread_id, secondImportPost.thread_id);
-          assert.equal(secondPost.smf.post_id, secondImportPost.smf.post_id);
-          importPostId = secondPost.id;
-          done();
-        });
+        secondImportPost.thread_id = post.thread_id;
+        return secondImportPost;
+      })
+      .then(posts.import)
+      .then(function(secondPost) {
+        // validate post import
+        assert.notEqual(secondPost.id, undefined);
+        assert.equal(secondPost.title, secondImportPost.title);
+        assert.equal(secondPost.body, secondImportPost.body);
+        assert.equal(secondPost.thread_id, secondImportPost.thread_id);
+        assert.equal(secondPost.smf.post_id, secondImportPost.smf.post_id);
+        importPostId = secondPost.id;
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+        done(err);
       });
+
     });
   });
 });
@@ -184,17 +215,23 @@ describe('posts', function() {
 describe('posts', function() {
   describe('#IMPORT_GET', function() {
     it('should verify key mapping for imported posts/threads', function() {
-      threads.threadByOldId(oldThreadId, function(err, thread) {
-        assert.equal(thread.id, importThreadId);
-      });
+      threads.threadByOldId(oldThreadId)
+      .then(function(threadId) {
+        assert.equal(threadId, importThreadId);
+      })
+      .catch(function(err) { console.log(err); });
 
-      posts.postByOldId(oldFirstPostId, function(err, firstPost) {
-        assert.equal(firstPost.id, importThreadPostId);
-      });
+      posts.postByOldId(oldFirstPostId)
+      .then(function(firstPostId) {
+        assert.equal(firstPostId, importThreadPostId);
+      })
+      .catch(function(err) { console.log(err); });
 
-      posts.postByOldId(oldSecondPostId, function(err, secondPost) {
-        assert.equal(secondPost.id, importPostId);
-      });
+      posts.postByOldId(oldSecondPostId)
+      .then(function(secondPostId) {
+        assert.equal(secondPostId, importPostId);
+      })
+      .catch(function(err) { console.log(err); });
     });
   });
 });
@@ -203,26 +240,30 @@ describe('posts', function() {
   describe('#IMPORT_DELETE', function() {
     it('should delete all imported posts/threads key mappings', function(done) {
 
-      posts.delete(importThreadPostId, function(err, post) {
-        threads.threadByOldId(oldThreadId, function(err, thread) {
-          var expectedErr = 'Key not found in database';
-          assert.equal(err.message, expectedErr);
+      posts.delete(importThreadPostId)
+      .then(function(post) {
+        return threads.threadByOldId(oldThreadId)
+        .catch(function(err) {
+          assert.notEqual(err, undefined);
         });
-
-        posts.postByOldId(oldFirstPostId, function(err, firstPost) {
-          var expectedErr = 'Key not found in database';
-          assert.equal(err.message, expectedErr);
+      })
+      .then(function(){
+        return posts.postByOldId(oldFirstPostId)
+        .catch(function(err) {
+          assert.notEqual(err, null);
         });
-
-        posts.delete(importPostId, function(err, secondPost) {
-          posts.postByOldId(oldSecondPostId, function(err, secondPost) {
-            var expectedErr = 'Key not found in database';
-            assert.equal(err.message, expectedErr);
+      })
+      .then(function() {
+        return posts.delete(importPostId)
+        .then(function(secondPost) {
+          return posts.postByOldId(oldSecondPostId)
+          .catch(function(err) {
+            assert.notEqual(err, null);
             done();
           });
         });
-
       });
+
     });
   });
 });
@@ -230,22 +271,23 @@ describe('posts', function() {
 describe('posts', function() {
   describe('#DELETE', function() {
     it('should delete specified post', function(done) {
-      posts.delete(savedPost.id, function(err, post) {
-        if (!err) {
-          assert.equal(post.title, savedPost.title);
-          assert.equal(post.body, savedPost.body);
-          posts.find(post.id, function(err) {
-            var expectedErr = 'Key not found in database [post~' + savedPost.id + ']';
-            assert.equal(err.message, expectedErr);
-
-            // tear down
-            boards.all()
-            .then(function(allBoards) {
-              deleteAllBoards(allBoards, done);
-            });
-          });
-        }
+      posts.delete(savedPost.id)
+      .then(function(post) {
+        assert.equal(post.title, savedPost.title);
+        assert.equal(post.body, savedPost.body);
+        return post.id;
+      })
+      .then(posts.find)
+      .catch(function(err) {
+        assert.notEqual(err, null); // expecting error
+        
+        // tear down
+        return boards.all()
+        .then(function(allBoards) {
+          deleteAllBoards(allBoards, done);
+        });
       });
+
     });
   });
 });
@@ -257,8 +299,12 @@ function deleteAllBoards(allBoards, callback) {
     boards.delete(savedBoardId);
     
     // get all the threads for this board
-    threads.threads(board.id, {}, function(err, allThreads) {
+    threads.threads(board.id, {})
+    .then(function(allThreads){
       deleteAllThreads(allThreads, bCallback);
+    })
+    .catch(function(err) {
+      bCallback(err);
     });
   },
   function(err) {
@@ -270,10 +316,14 @@ function deleteAllThreads(allThreads, callback) {
   // for each thread
   async.each(allThreads, function(thread, tCallback) {
     // get all the posts for this thread
-    posts.byThread(thread.id, {}, function(err, allPosts) {
+    posts.byThread(thread.id, {})
+    .then(function(allPosts) {
       deleteAllPosts(allPosts, function(err) {
         tCallback(err);
       });
+    })
+    .catch(function(err) {
+      tCallback(err);
     });
   },
   function(err) {
@@ -283,7 +333,11 @@ function deleteAllThreads(allThreads, callback) {
 
 function deleteAllPosts(allPosts, callback) {
   async.each(allPosts, function(post, cb) {
-    posts.delete(post.id, function(err, post) {
+    posts.delete(post.id)
+    .then(function(post) {
+      cb(null);
+    })
+    .catch(function(err) {
       cb(err);
     });
   },

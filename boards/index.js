@@ -67,10 +67,11 @@ function findBoard(id) {
   var key = modelPrefix + sep + id;
 
   return db.getAsync(key)
-  .then(function(board) {
+  .then(function(values) {
+    board = values[0];
     if (board.parent_id) { return board; }
     else {
-      allBoards()
+      return allBoards()
       .then(function(boards){
         var result = null;
         boards.forEach(function(board) {

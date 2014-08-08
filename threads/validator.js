@@ -1,8 +1,7 @@
 var validator = {};
-var path = require('path');
 var joi = require('joi');
-var helper = require(path.join(__dirname, '..', 'helper'));
-
+var Promise = require('bluebird');
+var validate = Promise.promisify(joi.validate);
 
 var importSchema = joi.object().keys({
   title: joi.string().required(),
@@ -14,15 +13,8 @@ var importSchema = joi.object().keys({
     post_id: joi.number()
   }
 });
-validator.importThread = function(thread, cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printThread(); }
-
-  // validate thread
-  joi.validate(thread, importSchema, function(err, value) {
-    if (err) { return cb(err, undefined); }
-    else { return next(value, cb); }
-  });
+validator.importThread = function(thread, next) {
+  return validate(thread, importSchema).then(next);
 };
 
 
@@ -31,15 +23,8 @@ var createSchema = joi.object().keys({
   body: joi.string().required(),
   board_id: joi.string().required()
 });
-validator.createThread = function(thread, cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printThread(); }
-
-  // validate thread
-  joi.validate(thread, createSchema, function(err, value) {
-    if (err) { return cb(err, undefined); }
-    else { return next(value, cb); }
-  });
+validator.createThread = function(thread, next) {
+  return validate(thread, createSchema).then(next);
 };
 
 
@@ -54,35 +39,14 @@ var updateSchema = joi.object().keys({
     post_id: joi.number()
   }
 });
-validator.updateThread = function(thread, cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printThread(); }
-
-  // validate thread
-  joi.validate(thread, updateSchema, function(err, value) {
-    if (err) { return cb(err, undefined); }
-    else { return next(value, cb); }
-  });
-};
-
-
-validator.callback = function(cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printThread(); }
-  return next(cb);
+validator.updateThread = function(thread, next) {
+  return validate(thread, updateSchema).then(next);
 };
 
 
 var findSchema = joi.any().required();
-validator.id = function(id, cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printThread(); }
-
-  // validate board
-  joi.validate(id, findSchema, function(err, value) {
-    if (err) { return cb(err, undefined); }
-    else { return next(value, cb); }
-  });
+validator.id = function(id, next) {
+  return validate(id, findSchema).then(next);
 };
 
 
@@ -93,20 +57,19 @@ var threadsSchema = joi.object().keys({
     startThreadId: joi.string()
   }
 });
-validator.threads = function(boardId, opts, cb, next) {
-  // validate cb 
-  if (cb === undefined) { cb = helper.printThread(); }
-
-  // validation object
+validator.threads = function(boardId, opts, next) {
+  // merge inputs
   var validationObject = {
     id: boardId,
-    opts: opts
+    opts: {
+      limit: opts.limit,
+      startThreadId: opts.startThreadId
+    }
   };
 
-  // validate opts
-  joi.validate(validationObject, threadsSchema, function(err, value) {
-    if (err) { return cb(err, undefined); }
-    else { return next(boardId, opts, cb); }
+  return validate(validationObject, threadsSchema)
+  .then(function(value) {
+    return next(value.id, value.opts);
   });
 };
 
