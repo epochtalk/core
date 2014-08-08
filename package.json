@@ -29,6 +29,7 @@
     "replpad": "^0.11.9"
   },
   "devDependencies": {
+    "benchmark": "^1.0.0",
     "charlatan": "^0.1.9",
     "mocha": "^1.21.0"
   }
