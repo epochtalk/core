@@ -70,6 +70,10 @@ function createPost(post) {
     var thread = value[0];
     var version = value[1];
 
+    if (thread.deleted) {
+      throw new Error('Key has been deleted: ' + threadKey);
+    }
+
     afterWrite = function() {
       return new Promise(function(fulfill, reject) {
         var startKey = postIndexPrefix + sep + threadId + sep;
@@ -87,8 +91,8 @@ function createPost(post) {
           });
         };
 
-        db.createReadStream({start: startKey, end: endKey})
-        .on('data', function (entry) { postCount += 1; })
+        db.createReadStream({start: startKey, end: endKey}) //TODO: No version for indexes, so no versionLimi?
+        .on('data', function () { postCount += 1; }) //TODO: What do we do if its deleted?
         .on('error', reject)
         .on('close', handler)
         .on('end', handler);
@@ -117,6 +121,10 @@ function findPost(postId) {
   return db.getAsync(key)
   .then(function(value) {
     // [0] post, [1] version
+    var post = value[0];
+    if (post.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
     return value[0];
   });
 }
@@ -129,18 +137,18 @@ function updatePost(post) {
   return db.getAsync(key)
   .then(function(value) {
     var oldPost = value[0];
-    var version = value[1];
-
+    if (oldPost.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
     // update old post
     oldPost.title = post.title;
     oldPost.body = post.body;
 
     // input options
-    var opts = { version: version };
-    return [key, oldPost, opts];
+    return [key, oldPost];
   })
-  .spread(function(key, oldPost, opts) {
-    return db.putAsync(key, oldPost, opts)
+  .spread(function(key, oldPost) {
+    return db.putAsync(key, oldPost)
     .then(function(version) {
       return [oldPost, version];
     });
@@ -159,14 +167,16 @@ function deletePost(postId) {
   .then(function(value) {
     // [0] post, [1] version
     var post = value[0];
+    if (post.deleted) {
+      throw new Error('Key has been deleted: ' + postKey);
+    }
     post.version = value[1];
-
     // collect all associated post indexes
     var associatedKeys = helper.associatedKeys(post);
 
     // delete each key and return post
     return Promise.all(associatedKeys.map(deleteItr))
-    .then(function(value) { return post; });
+    .then(function() { return post; });
   });
 }
 
@@ -175,6 +185,9 @@ function postByOldId(oldId) {
   var key = postPrefix + sep + oldId;
   return smfSubLevel.getAsync(key)
   .then(function(value) {
+    if (value.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
     return value.id;
   });
 }
@@ -215,12 +228,13 @@ function byThread(threadId, opts) {
     var queryOptions = {
       limit: limit,
       end: endIndexKey,
-      start: startPostKey
+      start: startPostKey,
+      versionLimit: 1
     };
 
     // query for all posts fir this threadId
     db.createValueStream(queryOptions)
-    .on('data', function (entry) { entries.push(entry); })
+    .on('data', function (entry) { if (!entry.value.deleted) { entries.push(entry); } })
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
@@ -232,7 +246,12 @@ function deleteItr(opts) {
     // delete from smf sublevel
     return smfSubLevel.getAsync(opts.key)
     .then(function(value) {
-      return smfSubLevel.delAsync(opts.key);
+      var obj = value;
+      obj.deleted = true;
+      return [opts.key, obj];
+    })
+    .spread(function(key, obj) {
+      return smfSubLevel.putAsync(key, obj);
     });
   }
   else {
@@ -240,12 +259,12 @@ function deleteItr(opts) {
     return db.getAsync(opts.key)
     .then(function(value) {
       // [0] value, [1] version
-      var version = value[1];
-      var delOpts = { version: version };
-      return delOpts;
+      var obj = value[0];
+      obj.deleted = true;
+      return [opts.key, obj, { version: value[1] }];
     })
-    .then(function(delOpts) {
-      return db.delAsync(opts.key, delOpts);
+    .spread(function(key, obj, versionObj) {
+      return db.putAsync(key, obj, versionObj);
     });
   }
 }

@@ -130,7 +130,11 @@ function findThread(threadId) {
   return db.getAsync(key)
   .then(function(value) {
     // [0] thread, [1] version
-    return value[0];
+    var thread = value[0];
+    if (thread.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
+    return thread;
   });
 }
 
@@ -143,16 +147,14 @@ function updateThread(thread) {
   .then(function(value) {
     // [0] thread, [1] version
     var oldThread = value[0];
-    var version = value[1];
-
+    if (oldThread.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
     // update old thread
     oldThread.post_count = thread.post_count;
 
-    // input options
-    var opts = { version: version };
-    
     // update old post
-    return db.putAsync(key, oldThread, opts)
+    return db.putAsync(key, oldThread)
     .then(function(newVersion) {
       oldThread.version = newVersion;
       return oldThread;
@@ -168,14 +170,15 @@ function deleteThread(threadId) {
   .then(function(value) {
     // [0] thread, [1] version
     var thread = value[0];
-    var version = value[1];
-
+    if (thread.deleted) {
+      throw new Error('Key has been deleted: ' + threadKey);
+    }
     // collect all associated thread indexes
     var associatedKeys = helper.associatedKeys(thread);
 
     // delete each key and return post
     return Promise.all(associatedKeys.map(deleteItr))
-    .then(function(value) { return thread; });
+    .then(function() { return thread; });
   });
 }
 
@@ -184,6 +187,9 @@ function threadByOldId(oldId) {
   var key = threadPrefix + sep + oldId;
   return smfSubLevel.getAsync(key)
   .then(function(value) {
+    if (value.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
     return value.id;
   });
 }
@@ -204,9 +210,6 @@ function threads(boardId, opts) {
             entryObject.title = post.title;
             entryObject.created_at = entry.value.created_at;
             return callback(null, entryObject);
-          })
-          .catch(function(err) {
-            return callback(err, undefined);
           });
         },
         function(err, threads) {
@@ -230,12 +233,13 @@ function threads(boardId, opts) {
       limit: limit,
       reverse: true,
       start: startThreadKey + '\x00',
-      end: endIndexKey
+      end: endIndexKey,
+      versionLimit: 1
     };
 
     // query thread Index
     db.createReadStream(queryOptions)
-    .on('data', function (entry) { entries.push(entry); })
+    .on('data', function (entry) { if (!entry.value.deleted) { entries.push(entry);} })
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
@@ -254,25 +258,34 @@ function threadFirstPost(threadId) {
     var postIndexOpts = {
       limit: 1,
       start: postIndexKey + sep,
-      end: postIndexKey + sep + '\xff'
+      end: postIndexKey + sep + '\xff',
+      versionLimit: 1
     };
 
     // search the postIndex
     db.createReadStream(postIndexOpts)
     .on('data', function(postIndex) {
-      postId = postIndex.value.id;
+      if (!postIndex.value.deleted) {
+        postId = postIndex.value.id;
+      }
     })
     .on('error', reject)
     .on('close', function() {
       posts.find(postId)
       .then(function(post){
         return fulfill(post);
+      })
+      .catch(function(err) {
+        return reject(err);
       });
     })
     .on('end', function() {
       posts.find(postId)
       .then(function(post) {
         return fulfill(post);
+      })
+      .catch(function(err) {
+        return reject(err);
       });
     });
   });
@@ -283,7 +296,12 @@ function deleteItr(opts) {
     // delete from smf sublevel
     return smfSubLevel.getAsync(opts.key)
     .then(function(value) {
-      return smfSubLevel.delAsync(opts.key);
+      var obj = value;
+      obj.deleted = true;
+      return [opts.key, obj];
+    })
+    .spread(function(key, obj) {
+      return smfSubLevel.putAsync(key, obj);
     });
   }
   else {
@@ -291,12 +309,12 @@ function deleteItr(opts) {
     return db.getAsync(opts.key)
     .then(function(value) {
       // [0] value, [1] version
-      var version = value[1];
-      var delOpts = { version: version };
-      return delOpts;
+      var obj = value[0];
+      obj.deleted = true;
+      return [opts.key, obj, { version: value[1] }];
     })
-    .then(function(delOpts) {
-      return db.delAsync(opts.key, delOpts);
+    .spread(function(key, obj, versionObj) {
+      return db.putAsync(key, obj, versionObj);
     });
   }
 }

@@ -296,10 +296,11 @@ function deleteAllBoards(allBoards, callback) {
   // for each board
   async.each(allBoards, function(board, bCallback) {
     // delete the board
-    boards.delete(savedBoardId);
-    
-    // get all the threads for this board
-    threads.threads(board.id, {})
+    boards.delete(board.id)
+    .then(function(delBoard) {
+      return [delBoard.id, {}];
+    })
+    .spread(threads.threads)
     .then(function(allThreads){
       deleteAllThreads(allThreads, bCallback);
     })

@@ -69,7 +69,9 @@ function findBoard(id) {
   return db.getAsync(key)
   .then(function(values) {
     board = values[0];
-    if (board.deleted) { throw new Error('Key has been deleted: ' + key); }
+    if (board.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
     else if (board.parent_id) { return board; }
     else {
       return allBoards()
@@ -95,6 +97,9 @@ function updateBoard(board) {
   .then(function(value) {
     // update board values
     var oldBoard = value[0];
+    if (oldBoard.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
     oldBoard.name = board.name;
     oldBoard.description = board.description;
     
@@ -143,6 +148,9 @@ function boardByOldId(oldId) {
   var key = modelPrefix + sep + oldId;
   return smfSubLevel.getAsync(key)
   .then(function(value) {
+    if (value.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
     return value.id;
   });
 }
@@ -197,9 +205,10 @@ function deleteSMFKeyMapping(oldId) {
   var board = null;
   return smfSubLevel.getAsync(oldKey)
   .then(function(value) {
-    return smfSubLevel.delAsync(oldKey);
+    value.deleted = true;
+    return smfSubLevel.putAsync(oldKey, value);
   })
-  .then(function(value) {
+  .then(function() {
     return oldKey;
   });
 }
