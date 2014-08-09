@@ -20,3 +20,5 @@ test/coverage/
 /public/.bundle.js
 
 /epoch.db
+/test-epoch.db
+/benchmark-epoch.db

@@ -1,6 +1,8 @@
 var assert = require('assert');
 var async = require('async');
 var path = require('path');
+var config = require(path.join(__dirname, '..', 'config'));
+config.dbPath = 'test-' + config.dbPath; // Do not use default database
 var posts = require(path.join(__dirname, '..', 'posts'));
 var threads = require(path.join(__dirname, '..', 'threads'));
 var boards = require(path.join(__dirname, '..', 'boards'));

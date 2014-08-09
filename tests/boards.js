@@ -1,5 +1,7 @@
 var assert = require('assert');
 var path = require('path');
+var config = require(path.join(__dirname, '..', 'config'));
+config.dbPath = 'test-' + config.dbPath; // Do not use default database
 var boards = require(path.join(__dirname, '..', 'boards'));
 var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var emptyCb = function() {};
