@@ -65,11 +65,12 @@ function createBoard (board) {
 /* RETRIEVE */
 function findBoard(id) {
   var key = modelPrefix + sep + id;
-
+  var board = null;
   return db.getAsync(key)
   .then(function(values) {
     board = values[0];
-    if (board.parent_id) { return board; }
+    if (board.deleted) { throw new Error('Key has been deleted: ' + key); }
+    else if (board.parent_id) { return board; }
     else {
       return allBoards()
       .then(function(boards){
@@ -98,8 +99,7 @@ function updateBoard(board) {
     oldBoard.description = board.description;
     
     // insert back into db
-    var opts = { version: value[1] };
-    return db.putAsync(key, oldBoard, opts)
+    return db.putAsync(key, oldBoard)
     .then(function(version) {
       oldBoard.version = version;
       return oldBoard;
@@ -118,11 +118,12 @@ function deleteBoard(boardId) {
   .then(function(value) {
     // board and version 
     board = value[0];
+    board.deleted = true;
     var opts = { version: value[1] };
-    return [key, opts];
+    return [key, board, opts];
   })
-  .spread(function(key, opts) {
-    return db.delAsync(key, opts);
+  .spread(function(key, boardObj, opts) {
+    return db.putAsync(key, boardObj, opts);
   })
   .then(function(version) {
     board.version = version;
@@ -152,14 +153,17 @@ function allBoards() {
     var boards = [];
     var childBoards = {};
     var sortBoards = function(board) {
-      var parentId = board.value.parent_id;
-      if (parentId) {
-        if (!childBoards[parentId]) {
-          childBoards[parentId] = [board.value];
+      board.value.version = board.version;
+      if (!board.value.deleted) { // do not return deleted boards
+        var parentId = board.value.parent_id;
+        if (parentId) {
+          if (!childBoards[parentId]) {
+            childBoards[parentId] = [board.value];
+          }
         }
-      }
-      else {
-        boards.push(board);
+        else {
+          boards.push(board);
+        }
       }
     };
     var handler = function() {
@@ -176,7 +180,8 @@ function allBoards() {
     var searchKey = modelPrefix + sep;
     var query = {
       start: searchKey,
-      end: searchKey + '\xff'
+      end: searchKey + '\xff',
+      versionLimit: 1
     };
     db.createReadStream(query)
     .on('data', sortBoards)
