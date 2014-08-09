@@ -63,8 +63,8 @@ function importThread(thread) {
     if (thread.smf) {
       var smfId = thread.smf.thread_id.toString();
       var key = threadPrefix + sep  + smfId;
-      var value = { id: threadId };
-      return smfSubLevel.putAsync(key, value)
+      var smfValue = { id: threadId };
+      return smfSubLevel.putAsync(key, smfValue)
       .then(function(value) {
         thread.thread_id = threadId;
         delete thread.created_at;

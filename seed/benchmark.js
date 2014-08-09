@@ -22,11 +22,9 @@ suite.add('Boards#Create', {
     boards.create({
       name: 'Board',
       description: 'Hello World! This is a board in a popular forum.'
-    },
-    function(err, board) {
-      if (!err) {
-        boardIds.push(board.id);
-      }
+    })
+    .then(function(board) {
+      boardIds.push(board.id);
       deferred.resolve();
     });
   }
@@ -38,8 +36,8 @@ suite.add('Boards#Create', {
       name: 'Board Update!',
       description: 'Updated! Hello World! This is a board in a popular forum.',
       id: boardIds[boardUpdateIndex++]
-    },
-    function() {
+    })
+    .then(function() {
       deferred.resolve();
     });
   }
@@ -51,12 +49,10 @@ suite.add('Boards#Create', {
       title: 'Thread',
       body: 'Hello World! This is a thread in a board on a popular forum.',
       board_id: boardIds[boardIndex++]
-    },
-    function(err, thread) {
-      if (!err) {
-        threadIds.push(thread.thread_id);
-        threadIndexIds.push(thread.id);
-      }
+    })
+    .then(function(thread) {
+      threadIds.push(thread.thread_id);
+      threadIndexIds.push(thread.thread_id);
       deferred.resolve();
     });
   }
@@ -64,14 +60,16 @@ suite.add('Boards#Create', {
 .add('Threads#Update', {
   defer: true,
   fn: function(deferred) {
+    var threadId = threadIndexIds[threadUpdateIndex++];
     threads.update({
       post_count: 99,
-      id: threadIndexIds[threadUpdateIndex++],
-    },
-    function(err, thread) {
-      if (!err) {
-        threadIds.push(thread.thread_id);
-      }
+      id: threadId
+    })
+    .then(function(thread) {
+      threadIds.push(thread.thread_id);
+      deferred.resolve();
+    })
+    .catch(function(err) {
       deferred.resolve();
     });
   }
@@ -83,11 +81,12 @@ suite.add('Boards#Create', {
       title: 'Post',
       body: 'Hello World! This is a post in a thread on a popular forum.',
       thread_id: threadIds[threadIndex++]
-    },
-    function(err, post) {
-      if (!err) {
-        postIds.push(post.id);
-      }
+    })
+    .then(function(post) {
+      postIds.push(post.id);
+      deferred.resolve();
+    })
+    .catch(function(err) {
       deferred.resolve();
     });
   }
@@ -99,8 +98,11 @@ suite.add('Boards#Create', {
       title: 'Post Updated!',
       body: 'Updated! Hello World! This is a post in a thread on a popular forum.',
       id: postIds[postUpdateIndex++]
-    },
-    function() {
+    })
+    .then(function() {
+      deferred.resolve();
+    })
+    .catch(function(err) {
       deferred.resolve();
     });
   }
@@ -108,20 +110,21 @@ suite.add('Boards#Create', {
 .add('Posts#Delete', {
   defer: true,
   fn: function(deferred) {
-    posts.delete(postIds[postDeleteIndex++], function(err) {
-      if (!err) {
-        deferred.resolve();
-      }
+    posts.delete(postIds[postDeleteIndex++])
+    .then(function() {
+      deferred.resolve();
+    })
+    .catch(function(err) {
+      deferred.resolve();
     });
   }
 })
 .add('Boards#Delete', {
   defer: true,
   fn: function(deferred) {
-    boards.delete(boardIds[boardDeleteIndex++], function(err) {
-      if (!err) {
-        deferred.resolve();
-      }
+    boards.delete(boardIds[boardDeleteIndex++])
+    .then(function(board) {
+      deferred.resolve();
     });
   }
 })
@@ -131,6 +134,7 @@ suite.add('Boards#Create', {
 .on('complete', function() {
   console.log('Fastest is ' + this.filter('fastest').pluck('name'));
   console.log('Slowest is ' + this.filter('slowest').pluck('name'));
+  console.log('Remember to clear your DB!')
 })
 // run async
 .run({ 'async': true });

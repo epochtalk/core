@@ -17,23 +17,28 @@ var createBoards = function (numBoards, finishedCb) {
     .catch(function(err) {
       next(err);
     });
-  }, function(err) {
+  },
+  function(err) {
     finishedCb(err);
   });
 };
 
-var createThreadsAndPosts = function (numThreads, numPosts, finishedCb) {
-  var createPost = function(threadId, j, cb) {
-    var post = {
-      title: 'Post ' + j,
-      body: 'Hello World! This is post ' + j,
-      thread_id: threadId
-    };
-    posts.create(post)
-    .then(function(post) {
-      return cb(null, post);
-    });
+var createPost = function(threadId, j, cb) {
+  var post = {
+    title: 'Post ' + j,
+    body: 'Hello World! This is post ' + j,
+    thread_id: threadId
   };
+  posts.create(post)
+  .then(function(post) {
+    return cb(null, post);
+  })
+  .catch(function(err) {
+    return cb(err, undefined);
+  });
+};
+
+var createThreadsAndPosts = function (numThreads, numPosts, finishedCb) {
 
   var createThread = function(board, cb) {
     async.times(numThreads, function(n, nextThread) {

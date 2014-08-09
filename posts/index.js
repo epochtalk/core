@@ -41,8 +41,8 @@ function importPost(post) {
     if (post.smf) {
       var smfId = post.smf.post_id.toString();
       var key = postPrefix + sep  + smfId;
-      var value = { id: postId };
-      return smfSubLevel.putAsync(key, value)
+      var smfValue = { id: postId };
+      return smfSubLevel.putAsync(key, smfValue)
       .then(function(value) {
         return post;
       });
@@ -246,7 +246,7 @@ function deleteItr(opts) {
     })
     .then(function(delOpts) {
       return db.delAsync(opts.key, delOpts);
-    })
+    });
   }
 }
 
