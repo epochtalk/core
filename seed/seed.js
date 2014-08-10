@@ -1,6 +1,7 @@
 var async = require('async');
 var path = require('path');
 var core = require(path.join(__dirname, '..'));
+var users = core.users;
 var boards = core.boards;
 var posts = core.posts;
 var threads = core.threads;

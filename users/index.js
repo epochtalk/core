@@ -1,14 +1,24 @@
 var uuid = require('node-uuid');
 var path = require('path');
-var db = require(path.join(__dirname, 'db'));
+var db = require(path.join(__dirname, '..', 'db'));
+var config = require(path.join(__dirname, '..', 'config'));
+var sep = confg.
 var users = {};
-var modelPrefix = 'user\x00';
+var modelPrefix = 'user';
+
+var Promise = require('bluebird');
+db = Promise.promisifyAll(db);
 
 users.create = function(user, cb) {
-  var id = uuid.v4();
-  var key = modelPrefix + id;
+  user.created_at = Date.now();
+  var id = uuid.v1({msecs: user.created_at});
+  var key = modelPrefix + sep + id;
   user.id = id;
-  db.put(key, user, cb);
+  db.putAsync(key, user)
+  .then(function(version) {
+    user.version = version;
+    return user;
+  });
 };
 
 users.find = function(id, cb) {
