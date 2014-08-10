@@ -168,6 +168,9 @@ function allBoards() {
           if (!childBoards[parentId]) {
             childBoards[parentId] = [board.value];
           }
+          else {
+            childBoards[parentId].push(board.value);
+          }
         }
         else {
           boards.push(board);
