@@ -12,5 +12,9 @@ module.exports = {
   threads: {
     prefix: 'thread',
     indexPrefix: 'threads'
+  },
+  users: {
+    prefix: 'user',
+    indexPrefix: 'users'
   }
 };
