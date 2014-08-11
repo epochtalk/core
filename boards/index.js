@@ -126,6 +126,9 @@ function deleteBoard(boardId) {
   .then(function(value) {
     // board and version 
     board = value[0];
+    if (board.deleted) {
+      throw new Error('Key has been deleted: ' + key);
+    }
     board.deleted = true;
     var opts = { version: value[1] };
     return [key, board, opts];
