@@ -13,7 +13,7 @@ users.create = function(user) {
   var id = uuid.v1({msecs: user.created_at});
   var key = modelPrefix + sep + id;
   user.id = id;
-  db.putAsync(key, user)
+  return db.putAsync(key, user)
   .then(function(version) {
     user.version = version;
     return user;
