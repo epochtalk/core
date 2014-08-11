@@ -10,8 +10,10 @@ describe('users', function() {
   describe('#CREATE', function() {
     it('should create and return the created user', function(done) {
       var testUser = {
-        name: 'Test User',
-        description: 'Test User Description'
+        username: 'testuser',
+        email: 'testuser@randomdomain1234.org',
+        password: 'asdf1234',
+        confirmation: 'asdf1234',
       };
       users.create(testUser)
       .then(function(user) {
