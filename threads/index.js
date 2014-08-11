@@ -1,3 +1,6 @@
+var threads = {};
+module.exports = threads;
+
 var async = require('async');
 var path = require('path');
 var sublevel = require('level-sublevel');
@@ -195,7 +198,7 @@ function threadByOldId(oldId) {
 }
 
 /* QUERY: All the threads in one board */
-function threads(boardId, opts) {
+function getThreads(boardId, opts) {
   return new Promise(function(fulfill, reject) {
     var entries = [];
     // return map of entries as an threadId and title
@@ -212,9 +215,9 @@ function threads(boardId, opts) {
             return callback(null, entryObject);
           });
         },
-        function(err, threads) {
+        function(err, allThreads) {
           if (err) { return reject(err); }
-          if (threads) { return fulfill(threads); }
+          if (allThreads) { return fulfill(allThreads); }
         }
       );
     };
@@ -319,26 +322,30 @@ function deleteItr(opts) {
   }
 }
 
-exports = module.exports = {
-  import: function(thread) {
-    return validator.importThread(thread, importThread);
-  },
-  create: function(thread) {
-    return validator.createThread(thread, createThread);
-  },
-  find: function(id) {
-    return validator.id(id, findThread);
-  },
-  update: function(thread) {
-    return validator.updateThread(thread, updateThread);
-  },
-  delete: function(id) {
-    return validator.id(id, deleteThread);
-  },
-  threadByOldId: function(id) {
-    return validator.id(id, threadByOldId);
-  },
-  threads: function(id, opts) {
-    return validator.threads(id, opts, threads);
-  }
+threads.import = function(thread) {
+  return validator.importThread(thread, importThread);
+};
+
+threads.create = function(thread) {
+  return validator.createThread(thread, createThread);
+};
+  
+threads.find = function(id) {
+  return validator.id(id, findThread);
+};
+
+threads.update = function(thread) {
+  return validator.updateThread(thread, updateThread);
+};
+
+threads.delete = function(id) {
+  return validator.id(id, deleteThread);
+};
+
+threads.threadByOldId = function(id) {
+  return validator.id(id, threadByOldId);
+};
+
+threads.threads = function(id, opts) {
+  return validator.threads(id, opts, getThreads);
 };

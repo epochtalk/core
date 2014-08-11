@@ -1,3 +1,6 @@
+var posts = {};
+module.exports = posts;
+
 var async = require('async');
 var path = require('path');
 var sublevel = require('level-sublevel');
@@ -211,7 +214,7 @@ function byThread(threadId, opts) {
           });
         },
         // return all posts
-        function(err, posts) { return fulfill(posts); });
+        function(err, allPosts) { return fulfill(allPosts); });
     };
 
     // query vars
@@ -269,27 +272,30 @@ function deleteItr(opts) {
   }
 }
 
-exports = module.exports = {
-  import: function(post) {
-    return validator.importPost(post, importPost);
-  },
-  create: function(post) {
-    return validator.createPost(post, createPost);
-  },
-  find: function(id) {
-    return validator.id(id, findPost);
-  },
-  update: function(post) {
-    return validator.updatePost(post, updatePost);
-  },
-  delete: function(id) {
-    return validator.id(id, deletePost);
-  },
-  postByOldId: function(id) {
-    return validator.id(id, postByOldId);
-  },
-  byThread: function(id, opts) {
-    return validator.byThread(id, opts, byThread);
-  }
+posts.import = function(post) {
+  return validator.importPost(post, importPost);
 };
 
+posts.create = function(post) {
+  return validator.createPost(post, createPost);
+};
+
+posts.find = function(id) {
+  return validator.id(id, findPost);
+};
+
+posts.update = function(post) {
+  return validator.updatePost(post, updatePost);
+};
+
+posts.delete = function(id) {
+  return validator.id(id, deletePost);
+};
+
+posts.postByOldId = function(id) {
+  return validator.id(id, postByOldId);
+};
+
+posts.byThread = function(id, opts) {
+  return validator.byThread(id, opts, byThread);
+};

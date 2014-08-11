@@ -1,3 +1,6 @@
+var boards = {};
+module.exports = boards;
+
 var uuid = require('node-uuid');
 var path = require('path');
 var sublevel = require('level-sublevel');
@@ -75,9 +78,9 @@ function findBoard(id) {
     else if (board.parent_id) { return board; }
     else {
       return allBoards()
-      .then(function(boards){
+      .then(function(allBoards){
         var result = null;
-        boards.forEach(function(board) {
+        allBoards.forEach(function(board) {
           if (board.id === id) {
             result = board;
           }
@@ -158,7 +161,7 @@ function boardByOldId(oldId) {
 /* QUERY: get all boards */
 function allBoards() {
   return new Promise(function(fulfill, reject) {
-    var boards = [];
+    var allBoards = [];
     var childBoards = {};
     var sortBoards = function(board) {
       board.value.version = board.version;
@@ -173,12 +176,12 @@ function allBoards() {
           }
         }
         else {
-          boards.push(board);
+          allBoards.push(board);
         }
       }
     };
     var handler = function() {
-      var boardValues = boards.map(function(board) {
+      var boardValues = allBoards.map(function(board) {
         var boardChildren = childBoards[board.value.id];
         if (boardChildren) {
           board.value.child_boards = boardChildren;
@@ -216,25 +219,31 @@ function deleteSMFKeyMapping(oldId) {
   });
 }
 
-module.exports = {
-  import: function(board) {
-    return validator.importBoard(board, importBoard);
-  },
-  create: function(board) {
-    return validator.createBoard(board, createBoard);
-  },
-  find: function(id) {
-    return validator.id(id, findBoard);
-  },
-  update: function(board) {
-    return validator.updateBoard(board, updateBoard);
-  },
-  delete: function(id) {
-    return validator.id(id, deleteBoard);
-  },
-  boardByOldId: function(id) {
-    return validator.id(id, boardByOldId);
-  },
-  all: allBoards
+
+boards.import = function(board) {
+  return validator.importBoard(board, importBoard);
 };
+
+boards.create = function(board) {
+  return validator.createBoard(board, createBoard);
+};
+
+boards.find = function(id) {
+  return validator.id(id, findBoard);
+};
+
+boards.update = function(board) {
+  return validator.updateBoard(board, updateBoard);
+};
+
+boards.delete = function(id) {
+  return validator.id(id, deleteBoard);
+};
+
+boards.boardByOldId = function(id) {
+  return validator.id(id, boardByOldId);
+};
+
+boards.all = allBoards;
+
 
