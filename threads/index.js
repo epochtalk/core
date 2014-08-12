@@ -3,10 +3,7 @@ module.exports = threads;
 
 var async = require('async');
 var path = require('path');
-var sublevel = require('level-sublevel');
 var db = require(path.join(__dirname, '..', 'db'));
-var threadLevel = sublevel(db);
-var smfSubLevel = threadLevel.sublevel('meta-smf');
 var config = require(path.join(__dirname, '..', 'config'));
 var sep = config.sep;
 var postPrefix = config.posts.prefix;
@@ -16,10 +13,6 @@ var threadIndexPrefix = config.threads.indexPrefix;
 var helper = require(path.join(__dirname, '..', 'helper'));
 var validator = require(path.join(__dirname, 'validator'));
 var posts = require(path.join(__dirname, '..', 'posts'));
-
-var Promise = require('bluebird');
-db = Promise.promisifyAll(db);
-smfSubLevel = Promise.promisifyAll(smfSubLevel);
 
 /* IMPORT: 
   Creates
@@ -60,14 +53,14 @@ function importThread(thread) {
     { type: 'put', key: threadKey, value: threadValue }
   ];
 
-  return db.batchAsync(batchArray)
+  return db.content.batchAsync(batchArray)
   .then(function(value) {
     // handle smf thread id mapping
     if (thread.smf) {
       var smfId = thread.smf.thread_id.toString();
       var key = threadPrefix + sep  + smfId;
       var smfValue = { id: threadId };
-      return smfSubLevel.putAsync(key, smfValue)
+      return db.legacy.putAsync(key, threadId)
       .then(function(value) {
         thread.thread_id = threadId;
         delete thread.created_at;
@@ -119,7 +112,7 @@ function createThread(firstPost) {
     { type: 'put', key: boardThreadKey, value: threadIndexObject },
     { type: 'put', key: threadKey, value: threadObject }
   ];
-  return db.batchAsync(batchArray)
+  return db.content.batchAsync(batchArray)
   .then(function() {
     firstPost.thread_id = threadId; // append threadId
     delete firstPost.created_at;    // remove created_at
@@ -130,70 +123,57 @@ function createThread(firstPost) {
 /* RETRIEVE THREAD */
 function findThread(threadId) {
   var key = threadPrefix + sep + threadId;
-  return db.getAsync(key)
-  .then(function(value) {
-    // [0] thread, [1] version
-    var thread = value[0];
-    if (thread.deleted) {
-      throw new Error('Key has been deleted: ' + key);
-    }
+  return db.content.getAsync(key)
+  .then(function(thread) {
     return thread;
   });
 }
 
 /* UPDATE */
-function updateThread(thread) {
-  // see if thread already exists
-  var key = threadPrefix + sep + thread.id;
-
-  return db.getAsync(key)
-  .then(function(value) {
-    // [0] thread, [1] version
-    var oldThread = value[0];
-    if (oldThread.deleted) {
-      throw new Error('Key has been deleted: ' + key);
-    }
-    // update old thread
-    oldThread.post_count = thread.post_count;
-
-    // update old post
-    return db.putAsync(key, oldThread)
-    .then(function(newVersion) {
-      oldThread.version = newVersion;
-      return oldThread;
-    });
-  });
-}
+// revisit later
+// function updateThread(thread) {
+//   // see if thread already exists
+//   var key = threadPrefix + sep + thread.id;
+//
+//   return db.content.getAsync(key)
+//   .then(function(oldThread) {
+//     // update old thread
+//     oldThread.post_count = thread.post_count;
+//
+//     // update old post
+//     return db.putAsync(key, oldThread)
+//     .then(function(newVersion) {
+//       oldThread.version = newVersion;
+//       return oldThread;
+//     });
+//   });
+// }
 
 /* DELETE */
 function deleteThread(threadId) {
   // delete thread with given threadId
   var threadKey = threadPrefix + sep + threadId;
-  return db.getAsync(threadKey)
-  .then(function(value) {
-    // [0] thread, [1] version
-    var thread = value[0];
-    if (thread.deleted) {
-      throw new Error('Key has been deleted: ' + threadKey);
-    }
+  return db.content.getAsync(threadKey)
+  .then(function(thread) {
     // collect all associated thread indexes
     var associatedKeys = helper.associatedKeys(thread);
 
     // delete each key and return post
     return Promise.all(associatedKeys.map(deleteItr))
     .then(function() { return thread; });
-  });
+  })
+  .then(function(thread) {
+    return db.deleted.put(threadKey, thread)
+    .then(function() { return thread });
+  });;
 }
 
 /* QUERY: thread using old id */
 function threadByOldId(oldId) {
   var key = threadPrefix + sep + oldId;
-  return smfSubLevel.getAsync(key)
-  .then(function(value) {
-    if (value.deleted) {
-      throw new Error('Key has been deleted: ' + key);
-    }
-    return value.id;
+  return db.legacy.getAsync(key)
+  .then(function(threadId) {
+    return threadId;
   });
 }
 
@@ -236,13 +216,14 @@ function getThreads(boardId, opts) {
       limit: limit,
       reverse: true,
       start: startThreadKey + '\x00',
-      end: endIndexKey,
-      versionLimit: 1
+      end: endIndexKey
     };
 
     // query thread Index
-    db.createReadStream(queryOptions)
-    .on('data', function (entry) { if (!entry.value.deleted) { entries.push(entry);} })
+    db.content.createReadStream(queryOptions)
+    .on('data', function (entry) {
+      entries.push(entry);
+    })
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
@@ -261,16 +242,13 @@ function threadFirstPost(threadId) {
     var postIndexOpts = {
       limit: 1,
       start: postIndexKey + sep,
-      end: postIndexKey + sep + '\xff',
-      versionLimit: 1
+      end: postIndexKey + sep + '\xff'
     };
 
     // search the postIndex
-    db.createReadStream(postIndexOpts)
+    db.content.createReadStream(postIndexOpts)
     .on('data', function(postIndex) {
-      if (!postIndex.value.deleted) {
-        postId = postIndex.value.id;
-      }
+      postId = postIndex.id;
     })
     .on('error', reject)
     .on('close', function() {
@@ -295,31 +273,32 @@ function threadFirstPost(threadId) {
 }
 
 function deleteItr(opts) {
-  if (opts.smf) {
-    // delete from smf sublevel
-    return smfSubLevel.getAsync(opts.key)
-    .then(function(value) {
-      var obj = value;
-      obj.deleted = true;
-      return [opts.key, obj];
-    })
-    .spread(function(key, obj) {
-      return smfSubLevel.putAsync(key, obj);
-    });
-  }
-  else {
-    // delete from db
-    return db.getAsync(opts.key)
-    .then(function(value) {
-      // [0] value, [1] version
-      var obj = value[0];
-      obj.deleted = true;
-      return [opts.key, obj, { version: value[1] }];
-    })
-    .spread(function(key, obj, versionObj) {
-      return db.putAsync(key, obj, versionObj);
-    });
-  }
+  // fix later - use new design
+  // if (opts.smf) {
+  //   // delete from smf sublevel
+  //   return smfSubLevel.getAsync(opts.key)
+  //   .then(function(value) {
+  //     var obj = value;
+  //     obj.deleted = true;
+  //     return [opts.key, obj];
+  //   })
+  //   .spread(function(key, obj) {
+  //     return smfSubLevel.putAsync(key, obj);
+  //   });
+  // }
+  // else {
+  //   // delete from db
+  //   return db.getAsync(opts.key)
+  //   .then(function(value) {
+  //     // [0] value, [1] version
+  //     var obj = value[0];
+  //     obj.deleted = true;
+  //     return [opts.key, obj, { version: value[1] }];
+  //   })
+  //   .spread(function(key, obj, versionObj) {
+  //     return db.putAsync(key, obj, versionObj);
+  //   });
+  // }
 }
 
 threads.import = function(thread) {
@@ -329,7 +308,7 @@ threads.import = function(thread) {
 threads.create = function(thread) {
   return validator.createThread(thread, createThread);
 };
-  
+
 threads.find = function(id) {
   return validator.id(id, findThread);
 };
@@ -349,3 +328,4 @@ threads.threadByOldId = function(id) {
 threads.threads = function(id, opts) {
   return validator.threads(id, opts, getThreads);
 };
+

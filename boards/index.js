@@ -3,18 +3,12 @@ module.exports = boards;
 
 var uuid = require('node-uuid');
 var path = require('path');
-var sublevel = require('level-sublevel');
+var Promise = require('bluebird');
 var db = require(path.join(__dirname, '..', 'db'));
-var boardLevel = sublevel(db);
-var smfSubLevel = boardLevel.sublevel('meta-smf');
 var config = require(path.join(__dirname, '..', 'config'));
 var sep = config.sep;
 var modelPrefix = config.boards.prefix;
 var validator = require(path.join(__dirname , 'validator'));
-
-var Promise = require('bluebird');
-db = Promise.promisifyAll(db);
-smfSubLevel = Promise.promisifyAll(smfSubLevel);
 
 /* IMPORT */
 function importBoard (board) {
@@ -31,7 +25,7 @@ function importBoard (board) {
   var key = modelPrefix + sep + board.id;
 
   // insert board into db
-  return db.putAsync(key, board)
+  return db.content.putAsync(key, board)
   .then(function(version) {
     board.version = version;
 
@@ -39,9 +33,8 @@ function importBoard (board) {
       // insert the board mapping of old id to new id
       var smfId = board.smf.board_id.toString();
       var key = modelPrefix + sep  + smfId;
-      var value = { id: board.id };
-      return smfSubLevel.putAsync(key, value)
-      .then(function(val) {
+      return db.indexes.putAsync(key, board.id)
+      .then(function() {
         return board;
       });
     }
@@ -50,7 +43,7 @@ function importBoard (board) {
 }
 
 /* CREATE */
-function createBoard (board) {
+function createBoard(board) {
   // set created_at datetime
   board.created_at = Date.now();
   var id = board.created_at + uuid.v1({ msecs: board.created_at });
@@ -58,9 +51,8 @@ function createBoard (board) {
   board.id = id;
 
   // insert into db
-  return db.putAsync(key, board)
-  .then(function(version) {
-    board.version = version;
+  return db.content.putAsync(key, board)
+  .then(function() {
     return board;
   });
 }
@@ -69,9 +61,8 @@ function createBoard (board) {
 function findBoard(id) {
   var key = modelPrefix + sep + id;
   var board = null;
-  return db.getAsync(key)
-  .then(function(values) {
-    board = values[0];
+  return db.content.getAsync(key)
+  .then(function(board) {
     if (board.deleted) {
       throw new Error('Key has been deleted: ' + key);
     }
@@ -96,10 +87,9 @@ function updateBoard(board) {
   // generate db key
   var key = modelPrefix + sep + board.id;
   // get old board from db
-  return db.getAsync(key)
-  .then(function(value) {
+  return db.content.getAsync(key)
+  .then(function(oldBoard) {
     // update board values
-    var oldBoard = value[0];
     if (oldBoard.deleted) {
       throw new Error('Key has been deleted: ' + key);
     }
@@ -107,9 +97,8 @@ function updateBoard(board) {
     oldBoard.description = board.description;
     
     // insert back into db
-    return db.putAsync(key, oldBoard)
-    .then(function(version) {
-      oldBoard.version = version;
+    return db.content.putAsync(key, oldBoard)
+    .then(function() {
       return oldBoard;
     });
   });
@@ -122,22 +111,18 @@ function deleteBoard(boardId) {
 
   // see if board already exists
   var board = null;
-  return db.getAsync(key)
-  .then(function(value) {
-    // board and version 
-    board = value[0];
+  return db.content.getAsync(key)
+  .then(function(board) {
     if (board.deleted) {
       throw new Error('Key has been deleted: ' + key);
     }
     board.deleted = true;
-    var opts = { version: value[1] };
-    return [key, board, opts];
+    return [key, board];
   })
-  .spread(function(key, boardObj, opts) {
-    return db.putAsync(key, boardObj, opts);
+  .spread(function(key, boardObj) {
+    return db.putAsync(key, boardObj);
   })
-  .then(function(version) {
-    board.version = version;
+  .then(function() {
     // delete smf Id Mapping
     if (board.smf) {
       return deleteSMFKeyMapping(board.smf.board_id)
@@ -152,12 +137,11 @@ function deleteBoard(boardId) {
 /*  QUERY: board using old id */
 function boardByOldId(oldId) {
   var key = modelPrefix + sep + oldId;
-  return smfSubLevel.getAsync(key)
-  .then(function(value) {
-    if (value.deleted) {
-      throw new Error('Key has been deleted: ' + key);
-    }
-    return value.id;
+  return db.indexes.getAsync(key)
+  .then(function(boardId) {
+    // doesn't work correctly at the moment
+    // deleted board ids should be indexed.
+    return boardId;
   });
 }
 
@@ -167,29 +151,26 @@ function allBoards() {
     var allBoards = [];
     var childBoards = {};
     var sortBoards = function(board) {
-      board.value.version = board.version;
-      if (!board.value.deleted) { // do not return deleted boards
-        var parentId = board.value.parent_id;
-        if (parentId) {
-          if (!childBoards[parentId]) {
-            childBoards[parentId] = [board.value];
-          }
-          else {
-            childBoards[parentId].push(board.value);
-          }
+      var parentId = board.parent_id;
+      if (parentId) {
+        if (!childBoards[parentId]) {
+          childBoards[parentId] = board;
         }
         else {
-          allBoards.push(board);
+          childBoards[parentId].push(board);
         }
+      }
+      else {
+        allBoards.push(board);
       }
     };
     var handler = function() {
       var boardValues = allBoards.map(function(board) {
-        var boardChildren = childBoards[board.value.id];
+        var boardChildren = childBoards[board.id];
         if (boardChildren) {
-          board.value.child_boards = boardChildren;
+          board.child_boards = boardChildren;
         }
-        return board.value;
+        return board;
       });
       fulfill(boardValues);
     };
@@ -200,7 +181,7 @@ function allBoards() {
       end: searchKey + '\xff',
       versionLimit: 1
     };
-    db.createReadStream(query)
+    db.content.createReadStream(query)
     .on('data', sortBoards)
     .on('error', reject)
     .on('close', handler)
@@ -208,20 +189,20 @@ function allBoards() {
   });
 }
 
-function deleteSMFKeyMapping(oldId) {
-  var oldKey = modelPrefix + sep + oldId;
-
-  var board = null;
-  return smfSubLevel.getAsync(oldKey)
-  .then(function(value) {
-    value.deleted = true;
-    return smfSubLevel.putAsync(oldKey, value);
-  })
-  .then(function() {
-    return oldKey;
-  });
-}
-
+// smf keys need to be stored in a separate legacy support db
+//
+// function deleteSMFKeyMapping(oldId) {
+//   var oldKey = modelPrefix + sep + oldId;
+//
+//   var board = null;
+//   return db.indexes.getAsync(oldKey)
+//   .then(function(boardId) {
+//     return smfSubLevel.putAsync(oldKey, value);
+//   })
+//   .then(function() {
+//     return oldKey;
+//   });
+// }
 
 boards.import = function(board) {
   return validator.importBoard(board, importBoard);
@@ -248,5 +229,4 @@ boards.boardByOldId = function(id) {
 };
 
 boards.all = allBoards;
-
 

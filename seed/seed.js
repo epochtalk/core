@@ -85,6 +85,7 @@ var createThreadsAndPosts = function (numThreads, numPosts, finishedCb) {
 };
 
 var init = function(numBoards, numThreads, numPosts, finishedCb) {
+  initDb();
   createBoards(numBoards, function (err) {
     if (!err) {
       createThreadsAndPosts(numThreads, numPosts, finishedCb);
