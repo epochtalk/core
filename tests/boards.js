@@ -23,7 +23,6 @@ describe('boards', function() {
           done();
         })
         .catch(function(err) {
-          console.log(err);
           done(err);
         });
       });
@@ -46,7 +45,6 @@ describe('boards', function() {
         done();
       })
       .catch(function(err) {
-        console.log(err);
         done(err);
       });
     });
@@ -163,6 +161,7 @@ describe('boards', function() {
     it('should delete the specified board', function(done) {
       boards.delete(savedBoard.id)
       .then(function(board) {
+        console.log('board: ' + board.id);
         assert.equal(board.name, savedBoard.name);
         assert.equal(board.description, savedBoard.description);
         return board.id;

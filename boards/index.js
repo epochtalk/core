@@ -63,22 +63,7 @@ function findBoard(id) {
   var board = null;
   return db.content.getAsync(key)
   .then(function(board) {
-    if (board.deleted) {
-      throw new Error('Key has been deleted: ' + key);
-    }
-    else if (board.parent_id) { return board; }
-    else {
-      return allBoards()
-      .then(function(allBoards){
-        var result = null;
-        allBoards.forEach(function(board) {
-          if (board.id === id) {
-            result = board;
-          }
-        });
-        return result;
-      });
-    }
+    return board;
   });
 }
 
@@ -95,7 +80,6 @@ function updateBoard(board) {
     }
     oldBoard.name = board.name;
     oldBoard.description = board.description;
-    
     // insert back into db
     return db.content.putAsync(key, oldBoard)
     .then(function() {
@@ -113,24 +97,24 @@ function deleteBoard(boardId) {
   var board = null;
   return db.content.getAsync(key)
   .then(function(board) {
-    if (board.deleted) {
-      throw new Error('Key has been deleted: ' + key);
-    }
-    board.deleted = true;
     return [key, board];
   })
-  .spread(function(key, boardObj) {
-    return db.putAsync(key, boardObj);
+  .spread(function(key, board) {
+    return db.deleted.putAsync(key, board)
+    .then(function() {
+      return board;
+    });
   })
-  .then(function() {
-    // delete smf Id Mapping
-    if (board.smf) {
-      return deleteSMFKeyMapping(board.smf.board_id)
-      .then(function() {
-        return board;
-      });
-    }
-    else { return board; }
+  .then(function(board) {
+    // TODO: delete smf Id Mapping
+    // if (board.smf) {
+    //   return deleteSMFKeyMapping(board.smf.board_id)
+    //   .then(function() {
+    //     return board;
+    //   });
+    // }
+    // else { return board; }
+    return board;
   });
 }
 
@@ -149,37 +133,17 @@ function boardByOldId(oldId) {
 function allBoards() {
   return new Promise(function(fulfill, reject) {
     var allBoards = [];
-    var childBoards = {};
     var sortBoards = function(board) {
-      var parentId = board.parent_id;
-      if (parentId) {
-        if (!childBoards[parentId]) {
-          childBoards[parentId] = board;
-        }
-        else {
-          childBoards[parentId].push(board);
-        }
-      }
-      else {
-        allBoards.push(board);
-      }
+      allBoards.push(board.value);
     };
     var handler = function() {
-      var boardValues = allBoards.map(function(board) {
-        var boardChildren = childBoards[board.id];
-        if (boardChildren) {
-          board.child_boards = boardChildren;
-        }
-        return board;
-      });
-      fulfill(boardValues);
+      fulfill(allBoards);
     };
 
     var searchKey = modelPrefix + sep;
     var query = {
       start: searchKey,
-      end: searchKey + '\xff',
-      versionLimit: 1
+      end: searchKey + '\xff'
     };
     db.content.createReadStream(query)
     .on('data', sortBoards)
