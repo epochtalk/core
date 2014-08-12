@@ -97,9 +97,15 @@ function deleteBoard(boardId) {
   var board = null;
   return db.content.getAsync(key)
   .then(function(board) {
-    return [key, board];
+    return board;
   })
-  .spread(function(key, board) {
+  .then(function(board) {
+    return db.content.delAsync(key)
+    .then(function() {
+      return board;
+    });
+  })
+  .then(function(board) {
     return db.deleted.putAsync(key, board)
     .then(function() {
       return board;

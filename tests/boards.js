@@ -161,7 +161,6 @@ describe('boards', function() {
     it('should delete the specified board', function(done) {
       boards.delete(savedBoard.id)
       .then(function(board) {
-        console.log('board: ' + board.id);
         assert.equal(board.name, savedBoard.name);
         assert.equal(board.description, savedBoard.description);
         return board.id;
@@ -169,7 +168,7 @@ describe('boards', function() {
       .then(boards.find)
       .catch(function(err) {
         assert.notEqual(err, null);
-        done(null); // expecting an error
+        done(null); // error, because board should have been deleted
       });
     });
   });
