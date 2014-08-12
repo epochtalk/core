@@ -6,13 +6,10 @@ var path = require('path');
 var bcrypt = require('bcrypt');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
-var sep = config.users.prefix;
-var modelPrefix = 'user';
+var modelPrefix = config.users.prefix;
+var sep = config.sep;
 
 var validator = require(path.join(__dirname, 'validator'));
-
-var Promise = require('bluebird');
-db = Promise.promisifyAll(db);
 
 var create = function(user) {
   user.created_at = Date.now();
@@ -26,9 +23,8 @@ var create = function(user) {
   delete user.password;
   delete user.confirm_password;
 
-  return db.putAsync(key, user)
-  .then(function(version) {
-    user.version = version;
+  return db.content.putAsync(key, user)
+  .then(function() {
     return user;
   });
 };
@@ -40,13 +36,9 @@ users.create = function(user) {
 
 var find = function(id) {
   var key = modelPrefix + sep + id;
-  return db.getAsync(key)
-  .then(function(value) {
-    var user = value[0];
-    if (user.deleted) {
-      throw new Error('Key has been deleted: ' + key);
-    }
-    return value[0];
+  return db.content.getAsync(key)
+  .then(function(user) {
+    return user;
   });
 };
 
