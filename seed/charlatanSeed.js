@@ -1,10 +1,11 @@
 var path = require('path');
-var boardsCore = require(path.join(__dirname, '..', 'boards'));
-var threads = require(path.join(__dirname, '..', 'threads'));
-var posts = require(path.join(__dirname, '..', 'posts'));
 var Charlatan = require('charlatan');
 var async = require('async');
 var seed = {};
+var core = require(path.join(__dirname, '..'))();
+var boardsCore = core.boards;
+var threads = core.threads;
+var posts = core.posts;
 module.exports = seed;
 
 //var numUsers = 25;

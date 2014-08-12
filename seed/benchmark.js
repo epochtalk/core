@@ -1,11 +1,10 @@
 var path = require('path');
 var Benchmark = require('benchmark');
 var suite = new Benchmark.Suite;
-var config = require(path.join(__dirname, '..', 'config'));
-config.dbPath = 'benchmark-' + config.dbPath; // Do not use default database
-var boards = require(path.join(__dirname, '..', 'boards'));
-var threads = require(path.join(__dirname, '..', 'threads'));
-var posts = require(path.join(__dirname, '..', 'posts'));
+var core = require(path.join(__dirname, '..')('benchmark-epoch.db');
+var boards = core.boards;
+var threads = core.threads;
+var posts = core.posts;
 var threadIds = [];
 var threadIndexIds = [];
 var boardIds = [];

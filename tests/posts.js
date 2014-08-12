@@ -1,16 +1,17 @@
 var assert = require('assert');
 var async = require('async');
 var path = require('path');
-var config = require(path.join(__dirname, '..', 'config'));
-config.dbPath = 'test-' + config.dbPath; // Do not use default database
-var posts = require(path.join(__dirname, '..', 'posts'));
-var threads = require(path.join(__dirname, '..', 'threads'));
-var boards = require(path.join(__dirname, '..', 'boards'));
+var core = require(path.join(__dirname, '..'))('test-epoch.db');
+var posts = core.posts;
+var threads = core.threads;
+var boards = core.boards;
 var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var emptyCb = function() {};
 var savedPost, savedBoardId, savedThreadId;
 var importThreadId, importThreadPostId, importPostId;
 var oldThreadId, oldFirstPostId, oldSecondPostId;
+
+seed.initDb('test-epoch.db');
 
 describe('posts', function() {
   describe('#CREATE', function() {

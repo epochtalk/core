@@ -1,10 +1,9 @@
 var async = require('async');
 var path = require('path');
-var core = require(path.join(__dirname, '..'));
-var users = core.users;
-var boards = core.boards;
-var posts = core.posts;
-var threads = core.threads;
+var users = null;
+var boards = null;
+var posts = null;
+var threads = null;
 
 var createBoards = function (numBoards, finishedCb) {
   async.times(numBoards, function(n, next) {
@@ -96,8 +95,25 @@ var init = function(numBoards, numThreads, numPosts, finishedCb) {
   });
 };
 
+var initDb = function(dbPath) {
+  var core;
+
+  if (dbPath) {
+    core = require(path.join(__dirname, '..'))(dbPath);
+  }
+  else {
+    core = require(path.join(__dirname, '..'))();
+  }
+
+  users = core.users;
+  boards = core.boards;
+  posts = core.posts;
+  threads = core.threads;
+};
+
 module.exports = {
   init: init,
+  initDb: initDb,
   createBoards: createBoards,
   createThreadsAndPosts: createThreadsAndPosts
 };

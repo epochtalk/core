@@ -1,10 +1,11 @@
 var assert = require('assert');
 var path = require('path');
-var config = require(path.join(__dirname, '..', 'config'));
-config.dbPath = 'test-' + config.dbPath; // Do not use default database
-var users = require(path.join(__dirname, '..', 'users'));
+var core = require(path.join(__dirname, '..'))('test-epoch.db');
+var users = core.users;
 var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var emptyCb = function() {};
+
+seed.initDb('test-epoch.db');
 
 describe('users', function() {
   describe('#CREATE', function() {
