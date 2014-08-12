@@ -3,6 +3,7 @@ module.exports = threads;
 
 var async = require('async');
 var path = require('path');
+var Promise = require('bluebird');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 var sep = config.sep;
@@ -197,7 +198,9 @@ function getThreads(boardId, opts) {
         },
         function(err, allThreads) {
           if (err) { return reject(err); }
-          if (allThreads) { return fulfill(allThreads); }
+          if (allThreads) {
+            return fulfill(allThreads);
+          }
         }
       );
     };

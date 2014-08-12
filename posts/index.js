@@ -3,6 +3,7 @@ module.exports = posts;
 
 var async = require('async');
 var path = require('path');
+var Promise = require('bluebird');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 var sep = config.sep;

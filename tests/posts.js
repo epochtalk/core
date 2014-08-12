@@ -17,7 +17,6 @@ describe('posts', function() {
   describe('#CREATE', function() {
     it('should create a post', function(done) {
       seed.init(1, 2, 0, function() {
-
         var testPost = {
             title: 'Test Post Title',
             body: 'Test Post Body',
@@ -47,7 +46,6 @@ describe('posts', function() {
           console.log(err);
           done(err);
         });
-
       });
     });
   });
