@@ -3,7 +3,8 @@ module.exports = {
   // sep: '\x00'
   sep: '~',
   boards: {
-    prefix: 'board'
+    prefix: 'board',
+    indexPrefix: 'boards'
   },
   posts: {
     prefix: 'post',
