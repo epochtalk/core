@@ -1,15 +1,45 @@
 var _ = require('lodash');
+var joi = require('joi');
 var Promise = require('bluebird');
 var uuid = require('node-uuid');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 
+// validation 
+var validate = Promise.promisify(joi.validate);
+var boardSchema = joi.object().keys({
+  created_at: joi.date(),
+  updated_at: joi.date(),
+  imported_at: joi.date(),
+  id: joi.string(),
+  name: joi.string().required(),
+  description: joi.string(),
+  parent_id: joi.string(),
+  children_ids: joi.array(joi.string()),
+  smf: {
+    board_id: joi.number()
+  }
+});
+
+// helper functions
 var keyForBoard = function(id) {
   return config.boards.prefix + config.sep + id;
-}
+};
 
-function Board(data) {
+var legacyKeyForBoard = function(legacyId) {
+  legacyId = legacyId.toString();
+  return config.boards.prefix + config.sep + legacyId;
+};
+
+// Constructor
+function Board(board) {
+  // input validation
+  var data = null;
+  var validData = validate(board, boardSchema); // blocking
+  if (validData.isFulfilled()) { data = validData.value(); }
+  else { throw new Error(validData.reason()); }
+
   // to base model
   var timestamp = Date.now();
   this.created_at = timestamp;
@@ -25,6 +55,15 @@ function Board(data) {
 Board.prototype.getKey = function() {
   var self = this;
   return keyForBoard(self.id);
+};
+
+Board.prototype.getLegacyKey = function() {
+  var self = this;
+  var legacyKey = undefined;
+  if (self.smf.board_id) {
+    legacyKey = keyForBoard(self.smf.board_id);
+  }
+  return legacyKey;
 };
 
 // children in database stored in relation to board index
