@@ -23,29 +23,16 @@ function Board(data) {
   self.name = data.name;
   self.description = data.description;
   self.parent_id = data.parent_id;
+  self.children_ids = data.children_ids;
 
   // children in database stored in relation to board index
   self.getChildren = function() {
-    return new Promise(function(fulfill, reject) {
-      var children = [];
-      var query = {
-        start: config.boards.indexPrefix + config.sep + self.id,
-        end: config.boards.indexPrefix + config.sep + self.id + '\xff'
-      };
-      var done = function() {
-        fulfill(children);
-      };
-      db.indexes.createValueStream(query)
-      .on('data', function(childBoardId) {
-        db.content.getAsync(childBoardId)
-        .then(function(childBoardData) {
-          children.push(new Board(childBoardData));
-        });
-      })
-      .on('error', reject)
-      .on('close', done)
-      .on('end', done);
-    });
+    return Promise.all(self.children_ids.map(function(childId) {
+      return db.content.getAsync(childId)
+      .then(function(childBoardData) {
+        return new Board(childBoardData);
+      });
+    }));
   };
 
   // parent defined in actual board stored object
@@ -62,3 +49,8 @@ function Board(data) {
 var board = new Board({name: 'Board 1', description: 'Board 1 Description'});
 console.log(board);
 
+
+// 1. get all boards period (childboards along with parent boards)
+// 2. boards with children_ids are parent boards
+// 3. parent_ids for going back to parent from child board
+//
