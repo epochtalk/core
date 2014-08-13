@@ -10,47 +10,46 @@ var keyForBoard = function(id) {
 }
 
 function Board(data) {
-  self = {};
   // to base model
   var timestamp = Date.now();
-  self.created_at = timestamp;
-  self.updated_at = timestamp;
-  self.id = timestamp + uuid.v1({ msecs: timestamp });
-  self.getKey = function() {
-    return keyForBoard(self.id);
-  };
+  this.created_at = timestamp;
+  this.updated_at = timestamp;
+  this.id = timestamp + uuid.v1({ msecs: timestamp });
   // specific to board
-  self.name = data.name;
-  self.description = data.description;
-  self.parent_id = data.parent_id;
-  self.children_ids = data.children_ids;
-
-  // children in database stored in relation to board index
-  self.getChildren = function() {
-    return Promise.all(self.children_ids.map(function(childId) {
-      return db.content.getAsync(childId)
-      .then(function(childBoardData) {
-        return new Board(childBoardData);
-      });
-    }));
-  };
-
-  // parent defined in actual board stored object
-  self.getParent = function() {
-    return db.content.getAsync(self.parent_id)
-    .then(function(parentBoardData) {
-      return new Board(parentBoardData);
-    });
-  };
-
-  return self;
+  this.name = data.name;
+  this.description = data.description;
+  this.parent_id = data.parent_id;
+  this.children_ids = data.children_ids;
 }
 
-var board = new Board({name: 'Board 1', description: 'Board 1 Description'});
-console.log(board);
+Board.prototype.getKey = function() {
+  var self = this;
+  return keyForBoard(self.id);
+};
 
+// children in database stored in relation to board index
+Board.prototype.getChildren = function() {
+  var self = this;
+  return Promise.all(self.children_ids.map(function(childId) {
+    return db.content.getAsync(childId)
+    .then(function(childBoardData) {
+      return new Board(childBoardData);
+    });
+  }));
+};
+
+// parent defined in actual board stored object
+Board.prototype.getParent = function() {
+  var self = this;
+  return db.content.getAsync(self.parent_id)
+  .then(function(parentBoardData) {
+    return new Board(parentBoardData);
+  });
+};
 
 // 1. get all boards period (childboards along with parent boards)
 // 2. boards with children_ids are parent boards
 // 3. parent_ids for going back to parent from child board
-//
+
+var board = new Board({name: 'Board 1', description: 'Board 1 Description'});
+console.log(board);
