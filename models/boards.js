@@ -53,12 +53,9 @@ function Board(board) {
   // specific to board
   this.name = data.name;
   this.description = data.description;
-  if (data.parent_id) {
-    this.parent_id = data.parent_id;
-  }
-  if (data.children_ids) {
-    this.children_ids = data.children_ids;
-  }
+  this.smf = data.smf;
+  this.parent_id = data.parent_id;
+  this.children_ids = data.children_ids;
 }
 
 Board.prototype.getKey = function() {

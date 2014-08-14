@@ -47,7 +47,6 @@ describe('Board', function() {
           boards.update(parentBoard) // Update parent board with child boards
           .then(function(updatedParentBoard) {
             parentBoard = updatedParentBoard;
-            console.log('once');
             done();
           });
         });
@@ -134,6 +133,20 @@ describe('Board', function() {
       assert.equal(key, boardPrefix + sep + board.id);
     });
   });
+
+  describe('#getLegacyKey', function() {
+    it('should return the board\'s legacy key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      boardObj.smf = { board_id: '0123456789' };
+      var board = new Board(boardObj);
+      var key = board.getLegacyKey();
+      assert.isDefined(key);
+      assert.isString(key);
+      assert.equal(key, boardPrefix + sep + board.smf.board_id);
+    });
+  });
+
 
   describe('#getChildren', function() {
     it('should return the board\'s children', function(done) {
