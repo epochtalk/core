@@ -35,6 +35,9 @@ var legacyKeyForBoard = function(legacyId) {
 
 // Constructor
 function Board(board) {
+  if (!(this instanceof Board)) {
+    return new Board(board);
+  }
   // input validation
   var data = null;
 
