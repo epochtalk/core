@@ -27,35 +27,35 @@ var parentBoard;
 var childBoards = [];
 
 describe('Board', function() {
-  describe('#new', function() {
-
-    // THIS WILL CHANGE
-    // Once the Board model is implemented into the CRUD routes.
-    before(function(done) {
-      boards.create(boardObj) // Create parent board
-      .then(function(dbParentBoard) {
-        parentBoard = dbParentBoard;
-        childBoardObjA.parent_id = parentBoard.id;
-        childBoardObjB.parent_id = parentBoard.id;
-        boards.create(childBoardObjA) // Create child board a
-        .then(function(dbChildBoardA) {
-          childBoards.push(dbChildBoardA);
-          parentBoard.children_ids = [];
-          parentBoard.children_ids.push(dbChildBoardA.id);
-          boards.create(childBoardObjB) // Create child board b
-          .then(function(dbChildBoardB) {
-            childBoards.push(dbChildBoardB);
-            parentBoard.children_ids.push(dbChildBoardB.id);
-            boards.update(parentBoard) // Update parent board with child boards
-            .then(function(updatedParentBoard) {
-              parentBoard = updatedParentBoard;
-              done();
-            });
+  // THIS WILL CHANGE
+  // Once the Board model is implemented into the CRUD routes.
+  before(function(done) {
+    boards.create(boardObj) // Create parent board
+    .then(function(dbParentBoard) {
+      parentBoard = dbParentBoard;
+      childBoardObjA.parent_id = parentBoard.id;
+      childBoardObjB.parent_id = parentBoard.id;
+      boards.create(childBoardObjA) // Create child board a
+      .then(function(dbChildBoardA) {
+        childBoards.push(dbChildBoardA);
+        parentBoard.children_ids = [];
+        parentBoard.children_ids.push(dbChildBoardA.id);
+        boards.create(childBoardObjB) // Create child board b
+        .then(function(dbChildBoardB) {
+          childBoards.push(dbChildBoardB);
+          parentBoard.children_ids.push(dbChildBoardB.id);
+          boards.update(parentBoard) // Update parent board with child boards
+          .then(function(updatedParentBoard) {
+            parentBoard = updatedParentBoard;
+            console.log('once');
+            done();
           });
         });
       });
     });
+  });
 
+  describe('#new', function() {
     it('should create a Board object', function() {
       var board = new Board(boardObj);
       assert.isObject(board);
@@ -77,7 +77,6 @@ describe('Board', function() {
       assert.isNumber(board.created_at);
       assert.isNumber(board.updated_at);
     });
-
     it('should create a parent Board object', function() {
       var board = new Board(parentBoard);
       assert.isObject(board);
@@ -99,7 +98,6 @@ describe('Board', function() {
       assert.isNumber(board.updated_at);
       assert.isArray(board.children_ids);
     });
-
     it('should create a child Board object', function() {
       var childBoard = childBoards[0];
       var board = new Board(childBoards[0]);
@@ -144,7 +142,7 @@ describe('Board', function() {
       .then(function(children) {
         assert.isDefined(children);
         assert.isArray(children);
-
+        assert.lengthOf(children, 2);
         assert.isDefined(children[0]);
         assert.isObject(children[0]);
         assert.equal(children[0].name, childBoards[0].name);

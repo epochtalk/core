@@ -68,9 +68,9 @@ Board.prototype.getKey = function() {
 
 Board.prototype.getLegacyKey = function() {
   var self = this;
-  var legacyKey = undefined;
+  var legacyKey;
   if (self.smf.board_id) {
-    legacyKey = keyForBoard(self.smf.board_id);
+    legacyKey = legacyKeyForBoard(self.smf.board_id);
   }
   return legacyKey;
 };
