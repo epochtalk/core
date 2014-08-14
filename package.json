@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "benchmark": "^1.0.0",
+    "chai": "^1.9.1",
     "charlatan": "^0.1.9",
     "mocha": "^1.21.0"
   }

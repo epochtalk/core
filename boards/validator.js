@@ -34,6 +34,7 @@ var updateSchema = joi.object().keys({
   created_at: joi.date(),
   imported_at: joi.date(),
   version: joi.number(),
+  children_ids: joi.array(),
   parent_id: joi.string(),
   smf: {
     board_id: joi.number()

@@ -1,3 +1,4 @@
+module.exports = Board;
 var _ = require('lodash');
 var joi = require('joi');
 var Promise = require('bluebird');
@@ -36,20 +37,25 @@ var legacyKeyForBoard = function(legacyId) {
 function Board(board) {
   // input validation
   var data = null;
+
   var validData = validate(board, boardSchema); // blocking
   if (validData.isFulfilled()) { data = validData.value(); }
   else { throw new Error(validData.reason()); }
-
   // to base model
   var timestamp = Date.now();
-  this.created_at = timestamp;
-  this.updated_at = timestamp;
-  this.id = timestamp + uuid.v1({ msecs: timestamp });
+  // TODO: Joi validation is converting timestamps to dates.
+  this.created_at = data.created_at ? data.created_at.getTime() : timestamp;
+  this.updated_at = data.updated_at ? data.updated_at.getTime() : timestamp;
+  this.id = data.id ? data.id : timestamp + uuid.v1({ msecs: timestamp });
   // specific to board
   this.name = data.name;
   this.description = data.description;
-  this.parent_id = data.parent_id;
-  this.children_ids = data.children_ids;
+  if (data.parent_id) {
+    this.parent_id = data.parent_id;
+  }
+  if (data.children_ids) {
+    this.children_ids = data.children_ids;
+  }
 }
 
 Board.prototype.getKey = function() {
@@ -70,7 +76,7 @@ Board.prototype.getLegacyKey = function() {
 Board.prototype.getChildren = function() {
   var self = this;
   return Promise.all(self.children_ids.map(function(childId) {
-    return db.content.getAsync(childId)
+    return db.content.getAsync(keyForBoard(childId))
     .then(function(childBoardData) {
       return new Board(childBoardData);
     });
@@ -80,7 +86,7 @@ Board.prototype.getChildren = function() {
 // parent defined in actual board stored object
 Board.prototype.getParent = function() {
   var self = this;
-  return db.content.getAsync(self.parent_id)
+  return db.content.getAsync(keyForBoard(self.parent_id))
   .then(function(parentBoardData) {
     return new Board(parentBoardData);
   });
@@ -90,5 +96,5 @@ Board.prototype.getParent = function() {
 // 2. boards with children_ids are parent boards
 // 3. parent_ids for going back to parent from child board
 
-var board = new Board({name: 'Board 1', description: 'Board 1 Description'});
-console.log(board);
+// var board = new Board({name: 'Board 1', description: 'Board 1 Description'});
+// console.log(board);

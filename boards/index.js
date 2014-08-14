@@ -80,6 +80,9 @@ function updateBoard(board) {
     }
     oldBoard.name = board.name;
     oldBoard.description = board.description;
+    if (board.children_ids && board.children_ids.length > 0) {
+      oldBoard.children_ids = board.children_ids;
+    }
     // insert back into db
     return db.content.putAsync(key, oldBoard)
     .then(function() {

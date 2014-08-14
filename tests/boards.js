@@ -1,6 +1,8 @@
 var assert = require('assert');
+var rimraf = require('rimraf');
 var path = require('path');
-var core = require(path.join(__dirname, '..'))('test-epoch.db');
+var dbName = 'test-epoch.db';
+var core = require(path.join(__dirname, '..'))(dbName);
 var boards = core.boards;
 var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var emptyCb = function() {};
@@ -173,3 +175,11 @@ describe('boards', function() {
     });
   });
 });
+
+after(function(done) {
+  rimraf(path.join(__dirname, '..', dbName), function(err) {
+    if (err) { console.log(err); }
+    done();
+  });
+});
+
