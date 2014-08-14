@@ -30,9 +30,7 @@ describe('boards', function() {
       });
     });
   });
-});
 
-describe('boards', function() {
   describe('#CREATE', function() {
     it('should create and return the created board', function(done) {
       var testBoard = {
@@ -51,9 +49,7 @@ describe('boards', function() {
       });
     });
   });
-});
 
-describe('boards', function() {
   describe('#FIND', function() {
     it('should find specified board', function(done) {
       boards.find(savedBoard.id)
@@ -68,9 +64,7 @@ describe('boards', function() {
       });
     });
   });
-});
 
-describe('boards', function() {
   describe('#UPDATE', function() {
     it('should update specified board', function(done) {
       var newName = 'Update Check 1';
@@ -95,9 +89,7 @@ describe('boards', function() {
       });
     });
   });
-});
 
-describe('boards', function() {
   describe('#IMPORT', function() {
     it('should import a board', function(done) {
       oldBoardId = 111;
@@ -124,9 +116,7 @@ describe('boards', function() {
       });
     });
   });
-});
 
-describe('boards', function() {
   describe('#IMPORT_GET', function() {
     it('should verify key mapping for imported boards', function(done) {
       boards.boardByOldId(oldBoardId)
@@ -140,9 +130,7 @@ describe('boards', function() {
       });
     });
   });
-});
 
-describe('boards', function() {
   describe('#IMPORT_DELETE', function() {
     it('should delete all imported boards key mappings', function(done) {
       boards.delete(newBoardId)
@@ -156,9 +144,7 @@ describe('boards', function() {
       });
     });
   });
-});
 
-describe('boards', function() {
   describe('#DELETE', function() {
     it('should delete the specified board', function(done) {
       boards.delete(savedBoard.id)
@@ -174,12 +160,11 @@ describe('boards', function() {
       });
     });
   });
-});
 
-after(function(done) {
-  rimraf(path.join(__dirname, '..', dbName), function(err) {
-    if (err) { console.log(err); }
-    done();
+  after(function(done) {
+    rimraf(path.join(__dirname, '..', dbName), function(err) {
+      if (err) { console.log(err); }
+      done();
+    });
   });
 });
-
