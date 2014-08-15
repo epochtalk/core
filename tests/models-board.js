@@ -35,22 +35,25 @@ describe('Board', function() {
       parentBoard = dbParentBoard;
       childBoardObjA.parent_id = parentBoard.id;
       childBoardObjB.parent_id = parentBoard.id;
-      boards.create(childBoardObjA) // Create child board a
-      .then(function(dbChildBoardA) {
-        childBoards.push(dbChildBoardA);
-        parentBoard.children_ids = [];
-        parentBoard.children_ids.push(dbChildBoardA.id);
-        boards.create(childBoardObjB) // Create child board b
-        .then(function(dbChildBoardB) {
-          childBoards.push(dbChildBoardB);
-          parentBoard.children_ids.push(dbChildBoardB.id);
-          boards.update(parentBoard) // Update parent board with child boards
-          .then(function(updatedParentBoard) {
-            parentBoard = updatedParentBoard;
-            done();
-          });
-        });
-      });
+      return childBoardObjA;
+    })
+    .then(boards.create) // Create child board a
+    .then(function(dbChildBoardA) {
+      childBoards.push(dbChildBoardA);
+      parentBoard.children_ids = [];
+      parentBoard.children_ids.push(dbChildBoardA.id);
+      return childBoardObjB;
+    })
+    .then(boards.create) // Create child board b
+    .then(function(dbChildBoardB) {
+      childBoards.push(dbChildBoardB);
+      parentBoard.children_ids.push(dbChildBoardB.id);
+      return parentBoard;
+    })
+    .then(boards.update) // Update parent board with child boards
+    .then(function(updatedParentBoard) {
+      parentBoard = updatedParentBoard;
+      done();
     });
   });
 
