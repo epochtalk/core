@@ -5,7 +5,7 @@ var path = require('path');
 var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
-var Board = require(path.join(__dirname, '..', 'models', 'boards'));
+var Board = require(path.join(__dirname, 'model'));
 
 /* IMPORT */
 boards.import = function(board) {

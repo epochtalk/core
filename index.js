@@ -9,7 +9,7 @@ module.exports = function(dbPath) {
   }
 
   core.users = require(path.join(__dirname, 'users'));
-  core.boards = require(path.join(__dirname, 'controllers', 'boards'));
+  core.boards = require(path.join(__dirname, 'boards', 'db'));
   core.posts = require(path.join(__dirname, 'posts'));
   core.threads = require(path.join(__dirname, 'threads'));
 

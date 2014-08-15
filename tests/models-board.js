@@ -6,7 +6,7 @@ var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 var config = require(path.join(__dirname, '..', 'config'));
 var boards = core.boards;
-var Board = require(path.join(__dirname, '..', 'models', 'boards'));
+var Board = require(path.join(__dirname, '..', 'boards', 'model'));
 
 var boardObj = {
   name: 'Board',
