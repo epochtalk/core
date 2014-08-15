@@ -16,6 +16,13 @@ posts.insert = function(post) {
   });
 }
 
-posts.delete = function(post) {
+posts.remove = function(post) {
+  return db.content.delAsync(post.getKey())
+  .then(function() {
+    db.deleted.putAsync(post.getKey, post);
+  })
+  .then(function() {
+    return post;
+  });
 }
 

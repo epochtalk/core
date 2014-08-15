@@ -6,8 +6,16 @@ var Post = require(path.join(__dirname, 'model'));
 
 posts.create = function(data) {
   var newPost = new Post(data);
-  postsDb.insert(newPost)
+  return postsDb.insert(newPost)
   .then(function(post) {
-    console.log(post);
+    return post;
+  });
+}
+
+posts.delete = function(data) {
+  var postToDelete = new Post(data);
+  return postsDb.remove(postToDelete)
+  .then(function(post) {
+    return post;
   });
 }
