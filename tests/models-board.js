@@ -67,7 +67,7 @@ describe('Board', function() {
       assert.property(board, 'id');
       assert.property(board, 'name');
       assert.property(board, 'description');
-      assert.isUndefined(board.children_ids);
+      assert.isArray(board.children_ids);
       assert.isUndefined(board.parent_id);
 
       assert.isString(board.id);

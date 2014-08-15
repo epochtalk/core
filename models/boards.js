@@ -10,9 +10,9 @@ var db = require(path.join(__dirname, '..', 'db'));
 // validation 
 var validate = Promise.promisify(joi.validate);
 var boardSchema = joi.object().keys({
-  created_at: joi.date(),
-  updated_at: joi.date(),
-  imported_at: joi.date(),
+  created_at: joi.number(),
+  updated_at: joi.number(),
+  imported_at: joi.number(),
   id: joi.string(),
   name: joi.string().required(),
   description: joi.string(),
@@ -35,27 +35,34 @@ var legacyKeyForBoard = function(legacyId) {
 
 // Constructor
 function Board(board) {
+  // object creation validation
   if (!(this instanceof Board)) {
     return new Board(board);
   }
+
   // input validation
   var data = null;
-
   var validData = validate(board, boardSchema); // blocking
   if (validData.isFulfilled()) { data = validData.value(); }
-  else { throw new Error(validData.reason()); }
+  else {
+    // catch the error first so it doesn't propagate
+    validData.catch(function(err) {});
+    // assign error and return
+    this.error = validData.reason();
+    return;
+  }
+
   // to base model
   var timestamp = Date.now();
-  // TODO: Joi validation is converting timestamps to dates.
-  this.created_at = data.created_at ? data.created_at.getTime() : timestamp;
-  this.updated_at = data.updated_at ? data.updated_at.getTime() : timestamp;
-  this.id = data.id ? data.id : timestamp + uuid.v1({ msecs: timestamp });
+  this.created_at = data.created_at || timestamp;
+  this.updated_at = data.updated_at || timestamp;
+  this.id = data.id || timestamp + uuid.v1({ msecs: timestamp });
   // specific to board
   this.name = data.name;
   this.description = data.description;
   this.smf = data.smf;
   this.parent_id = data.parent_id;
-  this.children_ids = data.children_ids;
+  this.children_ids = data.children_ids || [];
 }
 
 Board.prototype.getKey = function() {
@@ -92,9 +99,13 @@ Board.prototype.getParent = function() {
   });
 };
 
-// 1. get all boards period (childboards along with parent boards)
-// 2. boards with children_ids are parent boards
-// 3. parent_ids for going back to parent from child board
+// Static Methods
+Board.getKeyFromId = function(id) {
+  return keyForBoard(id);
+};
 
-// var board = new Board({name: 'Board 1', description: 'Board 1 Description'});
-// console.log(board);
+Board.getLegacyKeyFromId = function(legacyId) {
+  return legacyKeyForBoard(legacyId);
+};
+
+Board.prefix = config.boards.prefix;

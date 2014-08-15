@@ -120,8 +120,8 @@ describe('boards', function() {
   describe('#IMPORT_GET', function() {
     it('should verify key mapping for imported boards', function(done) {
       boards.boardByOldId(oldBoardId)
-      .then(function(newId) {
-        assert.equal(newId, newBoardId);
+      .then(function(board) {
+        assert.equal(board.id, newBoardId);
         done();
       })
       .catch(function(err) {
