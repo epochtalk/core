@@ -6,22 +6,8 @@ var uuid = require('node-uuid');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
-
-// validation 
-var validate = Promise.promisify(joi.validate);
-var boardSchema = joi.object().keys({
-  created_at: joi.number(),
-  updated_at: joi.number(),
-  imported_at: joi.number(),
-  id: joi.string(),
-  name: joi.string().required(),
-  description: joi.string(),
-  parent_id: joi.string(),
-  children_ids: joi.array(joi.string()),
-  smf: {
-    board_id: joi.number()
-  }
-});
+var schema = require(path.join(__dirname, 'schema'));
+var helper = require(path.join(__dirname, '..', 'helper'));
 
 // helper functions
 var keyForBoard = function(id) {
@@ -40,29 +26,18 @@ function Board(board) {
     return new Board(board);
   }
 
-  // input validation
-  var data = null;
-  var validData = validate(board, boardSchema); // blocking
-  if (validData.isFulfilled()) { data = validData.value(); }
-  else {
-    // catch the error first so it doesn't propagate
-    validData.catch(function(err) {});
-    // assign error and return
-    this.error = validData.reason();
-    return;
-  }
-
   // to base model
+  this.id = board.id;
   var timestamp = Date.now();
-  this.created_at = data.created_at || timestamp;
-  this.updated_at = data.updated_at || timestamp;
-  this.id = data.id || timestamp + uuid.v1({ msecs: timestamp });
+  this.created_at = board.created_at || timestamp;
+  this.updated_at = board.updated_at || timestamp;
+  this.imported_at = board.imported_at;
   // specific to board
-  this.name = data.name;
-  this.description = data.description;
-  this.smf = data.smf;
-  this.parent_id = data.parent_id;
-  this.children_ids = data.children_ids || [];
+  this.name = board.name;
+  this.description = board.description;
+  this.smf = board.smf;
+  this.parent_id = board.parent_id;
+  this.children_ids = board.children_ids || [];
 }
 
 Board.prototype.getKey = function() {
@@ -97,6 +72,31 @@ Board.prototype.getParent = function() {
   .then(function(parentBoardData) {
     return new Board(parentBoardData);
   });
+};
+
+Board.prototype.validate = function() {
+  var self = this;
+  var board = this.toObject();
+
+  // input validation
+  var data = null;
+  return schema.validate(board); // blocking
+};
+
+Board.prototype.toObject = function() {
+  var board = {};
+  var self = this;
+
+  board.id = self.id;
+  board.name = self.name;
+  board.description = self.description;
+  board.created_at = self.created_at;
+  board.updated_at = self.updated_at;
+  board.imported_at = self.imported_at;
+  board.parent_id = self.parent_id;
+  board.children_ids = self.children_ids;
+  board.smf = self.smf;
+  return board;
 };
 
 // Static Methods

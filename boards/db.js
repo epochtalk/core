@@ -6,29 +6,26 @@ var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Board = require(path.join(__dirname, 'model'));
+var helper = require(path.join(__dirname, '..', 'helper'));
 
 /* IMPORT */
 boards.import = function(board) {
-  board = new Board(board);
-  if (board.error) { return Promise.reject(board.error); }
-
-  if (board.smf) {
-    var legacyBoardKey = board.getLegacyKey();
-    db.legacy.putAsync(legacyBoardKey, board.id)
-    .catch(function(err) { console.log(err); });
-  }
-
-  return boards.create(board);
+  return boards.create(board) // create board first to handle id
+  .then(function(board) {
+    if (board.smf) {
+      var legacyBoardKey = board.getLegacyKey();
+      db.legacy.putAsync(legacyBoardKey, board.id)
+      .catch(function(err) { console.log(err); });
+    }
+  });
 };
 
 /* CREATE */
 boards.create = function(board) {
-  board = new Board(board);
-  if (board.error) { return Promise.reject(board.error); }
-
   // insert into db
+  board.id = helper.genId();
   var boardKey = board.getKey();
-  return db.content.putAsync(boardKey, JSON.stringify(board))
+  return db.content.putAsync(boardKey, board.toObject())
   .then(function() { return board; });
 };
 
@@ -44,15 +41,11 @@ boards.find = function(id) {
 
 /*  UPDATE */
 boards.update = function(board) {
-  board = new Board(board);
-  if (board.error) { return Promise.reject(board.error); }
-
   // get old board from db
   var boardKey = board.getKey();
   return db.content.getAsync(boardKey)
   .then(function(oldBoard) {
     oldBoard = new Board(oldBoard);
-    if (oldBoard.error) { return Promise.reject(oldBoard.error); }
 
     // update board values
     oldBoard.name = board.name;
@@ -60,7 +53,7 @@ boards.update = function(board) {
     oldBoard.parent_id = board.parent_id;
     oldBoard.children_ids = board.children_ids;
     // insert back into db
-    return db.content.putAsync(boardKey, JSON.stringify(oldBoard))
+    return db.content.putAsync(boardKey, board.toObject())
     .then(function() { return oldBoard; });
   });
 };
@@ -117,12 +110,7 @@ boards.all = function() {
   return new Promise(function(fulfill, reject) {
     var allBoards = [];
     var sortBoards = function(board) {
-      board = new Board(board.value);
-      if (board.error) {
-        console.log(error);
-        return;
-      }
-      allBoards.push(board);
+      allBoards.push(board.value);
     };
     var handler = function() {
       fulfill(allBoards);

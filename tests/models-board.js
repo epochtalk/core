@@ -67,13 +67,13 @@ describe('Board', function() {
 
       assert.property(board, 'created_at');
       assert.property(board, 'updated_at');
-      assert.property(board, 'id');
+      // ID is generated on insertion into db
       assert.property(board, 'name');
       assert.property(board, 'description');
       assert.isArray(board.children_ids);
       assert.isUndefined(board.parent_id);
 
-      assert.isString(board.id);
+      // ID is generated on insertion into db
       assert.isString(board.name);
       assert.isString(board.description);
       assert.isNumber(board.created_at);
@@ -198,6 +198,16 @@ describe('Board', function() {
       });
     });
   });
+
+
+  // TODO: validate
+
+  // TODO: toObject
+
+  // TODO: getKeyFromId
+
+  // TODO: getLegacyKeyFromId
+
 
   after(function(done) {
     rimraf(path.join(__dirname, '..', dbName), function(err) {
