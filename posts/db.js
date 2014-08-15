@@ -3,6 +3,7 @@ module.exports = posts;
 var path = require('path');
 var uuid = require('node-uuid');
 var db = require(path.join(__dirname, '..', 'db'));
+var config = require(path.join(__dirname, '..', 'config'));
 
 posts.insert = function(post) {
   var timestamp = Date.now();
@@ -26,3 +27,9 @@ posts.remove = function(post) {
   });
 }
 
+posts.find = function(id) {
+  return db.content.getAsync(config.posts.prefix + config.sep + id)
+  .then(function(post) {
+    return post;
+  });
+}

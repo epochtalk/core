@@ -12,7 +12,7 @@ var createdPost;
 
 describe('posts', function() {
   describe('#create', function() {
-    it('should create a post object into the db', function() {
+    it('should create a post in the db', function() {
       core.posts.create(newPost)
       .then(function(post) {
         assert.property(post, 'created_at');
@@ -24,8 +24,22 @@ describe('posts', function() {
       });
     });
   });
+  describe('#find', function() {
+    it('should find a post from the db', function() {
+      var postIdToFind = createdPost.id;
+      core.posts.find(postIdToFind)
+      .then(function(post) {
+        console.log('found post:');
+        console.log(post);
+        assert.equal(post.id, createdPost.id);
+        assert.equal(post.created_at, createdPost.created_at);
+        assert.equal(post.updated_at, createdPost.updated_at);
+        assert.equal(post.body, createdPost.body);
+      });
+    });
+  });
   describe('#delete', function() {
-    it('should delete a post object from the db', function() {
+    it('should delete a post from the db', function() {
       core.posts.delete(createdPost)
       .then(function(post) {
         console.log('deleted post:');
