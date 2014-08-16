@@ -8,8 +8,6 @@ var threads = core.threads;
 var posts = core.posts;
 module.exports = seed;
 
-//var numUsers = 25;
-//var numMods = 10;
 var numBoards = 15;
 var maxPosts = 50;
 
@@ -17,36 +15,14 @@ function randomDate(start, end) {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 }
 
-// var generateUser = function() {
-//   var name = Charlatan.Internet.userName();
-//   var email = Charlatan.Internet.freeEmail(name);
-//   var createdDate = randomDate(new Date(2012, 0, 1), new Date());
-//   var password = 'epochtalk';
-//   var timestamps = {
-//     created: createdDate.getTime(),
-//     updated: Charlatan.Helpers.rand(10, 0) > 8 ? randomDate(createdDate, new Date()).getTime() : null
-//   };
-//   var user = {
-//     username: name,
-//     email: email,
-//     password: password,
-//     confirm_password: password,
-//     timestamps: timestamps,
-//     type: 'user'
-//   };
-//   return user;
-// };
-
 var generateBoard = function() {
   var words = Charlatan.Lorem.words(Charlatan.Helpers.rand(8, 1));
   words[0] = Charlatan.Helpers.capitalize(words[0]);
   var name = words.join(' ');
   var description = Charlatan.Lorem.paragraph(Charlatan.Helpers.rand(10, 3));
-  // var createdDate = parentBoard ? randomDate(new Date(parentBoard.timestamps.created), new Date()) : randomDate(new Date(2012, 0, 1), new Date());
   var board = {
     name: name,
     description: description,
-    // created_at: createdDate.getTime(),
   };
   return board;
 };
@@ -69,8 +45,6 @@ var generatePost = function(authorId, previousPostTime, threadId, boardId) {
   var post = {
     title: title,
     body: body,
-    // author_id: authorId,
-    // created_at: createdDate.getTime(),
   };
   if (boardId) {
     post.board_id = boardId;
@@ -81,38 +55,7 @@ var generatePost = function(authorId, previousPostTime, threadId, boardId) {
   return post;
 };
 
-// function seedUsers(seedUsersCallback) {
-//   var users = [];
-//   var i = 0;
-//   async.whilst(
-//     function() {
-//       return i < numUsers;
-//     },
-//     function (cb) {
-//       var user = generateUser();
-//       db.users.register(user, function(err, body) {
-//         user._id = body.id;
-//         process.stdout.write('Generating Users: ' + user._id + '\r');
-//         users.push(user);
-//         i++;
-//         cb(err);
-//       });
-//     },
-//     function (err) {
-//       if (err) {
-//         console.log('Error generating users.');
-//       }
-//       seedUsersCallback(err, users);
-//     }
-//   );
-// }
-
 function seedBoards(users, parentBoard, seedBoardsCallback) {
-  // var mods = users.slice(0, numMods);
-  // var moderatorIds = [];
-  // mods.forEach(function(mod){
-  //   moderatorIds.push(mod._id);
-  // });
   if (parentBoard) {
     var subBoardCount = Charlatan.Helpers.rand(6, 0);
     var randNum = Charlatan.Helpers.rand(10, 0);
@@ -126,8 +69,6 @@ function seedBoards(users, parentBoard, seedBoardsCallback) {
       return i < loopCount;
     },
     function (cb) {
-      // var randModIds = Charlatan.Helpers.shuffle(moderatorIds);
-      // var modsSubset = randModIds.slice(0, Charlatan.Helpers.rand(randModIds.length, 0));
       var board = generateBoard();
       if (parentBoard) {
         board.parent_id = parentBoard.id;
@@ -137,8 +78,15 @@ function seedBoards(users, parentBoard, seedBoardsCallback) {
         process.stdout.write('Generating Boards: ' + createdBoard.id + '\r');
         if (parentBoard) {
           boards.push(createdBoard);
-          i++;
-          cb();
+          parentBoard.children_ids.push(createdBoard.id);
+          boardsCore.update(parentBoard)
+          .then(function() {
+            i++;
+            cb();
+          })
+          .catch(function(err) {
+            cb(err);
+          });
         }
         else {
           seedBoards(users, createdBoard, function (err, subBoards) {
@@ -170,7 +118,6 @@ function seedPosts(board, users, thread, seedPostsCallback) {
       return i < postCount;
     },
     function (cb) {
-      //var authorId = Charlatan.Helpers.sample(users)._id;
       var post;
       if (thread) { // sub level post
         post = generatePost(null, thread.created_at, thread.thread_id);
@@ -248,10 +195,6 @@ function seedTopLevelPosts(boards, users, seedTopLevelPostsCallback) {
 
 seed.seed = function() {
   async.waterfall([
-      // function(cb) {
-      //   console.log('Seeding users.');
-      //   seedUsers(cb);
-      // },
       function(cb) {
         console.log('\nSeeding boards.');
         seedBoards(null, null, cb);
