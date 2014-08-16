@@ -35,6 +35,7 @@ boards.find = function(id) {
   return db.content.getAsync(boardKey)
   .then(function(board) {
     board = new Board(board);
+    board.children = board.getChildren();
     return board;
   });
 };
@@ -100,6 +101,7 @@ boards.boardByOldId = function(oldId) {
     return db.content.getAsync(boardKey)
     .then(function(board) {
       board = new Board(board);
+      board.children = board.getChildren();
       return board;
     });
   });
@@ -110,7 +112,9 @@ boards.all = function() {
   return new Promise(function(fulfill, reject) {
     var allBoards = [];
     var sortBoards = function(board) {
-      allBoards.push(board.value);
+      var boardModel = new Board(board.value);
+      boardModel.children = boardModel.getChildren();
+      allBoards.push(boardModel.toObject());
     };
     var handler = function() {
       fulfill(allBoards);

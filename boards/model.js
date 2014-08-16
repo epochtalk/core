@@ -96,6 +96,9 @@ Board.prototype.toObject = function() {
   board.parent_id = self.parent_id;
   board.children_ids = self.children_ids;
   board.smf = self.smf;
+  // this is a generated property
+  board.children = board.children;
+
   return board;
 };
 
