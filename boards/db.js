@@ -113,8 +113,11 @@ boards.all = function() {
     var allBoards = [];
     var sortBoards = function(board) {
       var boardModel = new Board(board.value);
-      boardModel.children = boardModel.getChildren();
-      allBoards.push(boardModel.toObject());
+      boardModel.getChildren()
+      .then(function(children) {
+        boardModel.children = children;
+        allBoards.push(boardModel.toObject());
+      });
     };
     var handler = function() {
       fulfill(allBoards);
