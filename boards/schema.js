@@ -14,6 +14,7 @@ var boardSchema = joi.object().keys({
   description: joi.string(),
   parent_id: joi.string(),
   children_ids: joi.array(joi.string()),
+  children: joi.array(joi.object()),
   smf: {
     board_id: joi.number()
   }
