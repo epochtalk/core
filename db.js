@@ -7,7 +7,7 @@ var Promise = require('bluebird');
 var mkdirp = require('mkdirp');
 var config = require(path.join(__dirname, 'config'));
 
-mkdirp.sync(path.join(__dirname, config.dbPath));
+mkdirp.sync(config.dbPath);
 
 var dbPath = config.dbPath;
 var jsonEncoding = {valueEncoding: 'json'};
