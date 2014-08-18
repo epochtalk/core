@@ -2,9 +2,9 @@ var boards = {};
 module.exports = boards;
 
 var path = require('path');
+var Promise = require('bluebird');
 var db = require(path.join(__dirname, 'db'));
 var Board = require(path.join(__dirname, 'model'));
-var schema = require(path.join(__dirname, 'schema'));
 
 boards.import = function(json) {
   var board = new Board(json);
@@ -59,6 +59,13 @@ boards.delete = function(id) {
   });
 };
 
+boards.purge = function(id) {
+  return db.purge(id)
+  .then(function(board) {
+    return board.toObject();
+  });
+}
+
 boards.boardByOldId = function(oldId) {
   return db.boardByOldId(oldId)
   .then(function(board) {
@@ -70,6 +77,15 @@ boards.all = function() {
   return db.all()
   .then(function(allboards) {
     return allboards;
+  });
+};
+
+boards.versions = function(id) {
+  return db.versions(id)
+  .then(function(versions) {
+    return Promise.all(versions.map(function(version) {
+      return version.value;
+    }));
   });
 };
 

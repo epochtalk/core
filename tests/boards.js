@@ -41,6 +41,9 @@ describe('boards', function() {
       .then(function(board) {
         assert.equal(board.name, testBoard.name);
         assert.equal(board.description, testBoard.description);
+        assert.equal(board.parent_id, undefined);
+        // children_ids
+        assert.equal(board.children, undefined);
         savedBoard = board;
         done();
       })
@@ -154,9 +157,68 @@ describe('boards', function() {
         return board.id;
       })
       .then(boards.find)
+      .then(function(board) {
+        assert.equal(board.deleted, true);
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+        done(err);
+      });
+    });
+  });
+
+  describe('#UNDELETE', function() {
+    it('should undelete specified board', function(done) {
+      savedBoard.deleted = false;
+      boards.update(savedBoard)
+      .then(function(board) {
+        assert.equal(board.deleted, false);
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
+    });
+  });
+
+  describe('#VERSIONS', function() {
+    it('should get all versions of a board', function(done) {
+      boards.versions(savedBoard.id)
+      .then(function(versions) {
+        console.log(versions);
+        assert.equal(versions.length, 4);
+        done();
+      })
+      .catch(function(err) {
+        console.log(err);
+        done(null); // error, because board should have been deleted
+      });
+    });
+  });
+
+  describe('#PURGE', function() {
+    it('should purge the specified board', function(done) {
+      boards.purge(savedBoard.id)
+      .then(function(board) {
+        assert.equal(board.name, savedBoard.name);
+        assert.equal(board.description, savedBoard.description);
+        return board.id;
+      })
+      .then(boards.find)
       .catch(function(err) {
         assert.notEqual(err, null);
         done(null); // error, because board should have been deleted
+      })
+      .then(function() {
+        return boards.versions(savedBoard.id)
+        .then(function(versions) {
+          assert.equal(versions.length, 0);
+        });
+      })
+      .catch(function(err) {
+        console.log(err);
+        done(err);
       });
     });
   });

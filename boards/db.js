@@ -25,7 +25,12 @@ boards.create = function(board) {
   // insert into db
   board.id = helper.genId();
   var boardKey = board.getKey();
+  var boardVersionKey = board.getNewVersionKey();
+  // batch?
   return db.content.putAsync(boardKey, board.toObject())
+  .then(function() {
+    return db.content.putAsync(boardVersionKey, board.toObject());
+  })
   .then(function() { return board; });
 };
 
@@ -35,60 +40,123 @@ boards.find = function(id) {
   return db.content.getAsync(boardKey)
   .then(function(board) {
     board = new Board(board);
-    board.children = board.getChildren();
-    return board;
+    return board.getChildren()
+    .then(function(children) {
+      board.children = children;
+    })
+    .then(function() {
+      return board;
+    });
   });
 };
 
 /*  UPDATE */
 boards.update = function(board) {
-  // get old board from db
   var boardKey = board.getKey();
+  var boardVersionKey = board.getNewVersionKey();
+  var updateBoard = null;
+
+  // get old board from db
   return db.content.getAsync(boardKey)
   .then(function(oldBoard) {
-    oldBoard = new Board(oldBoard);
+    updateBoard = new Board(oldBoard);
 
     // update board values
-    oldBoard.name = board.name;
-    oldBoard.description = board.description;
-    oldBoard.parent_id = board.parent_id;
-    oldBoard.children_ids = board.children_ids;
+    updateBoard.name = board.name;
+    updateBoard.description = board.description;
+    updateBoard.parent_id = board.parent_id;
+    updateBoard.children_ids = board.children_ids;
+    updateBoard.deleted = board.deleted;
+    updateBoard.updated_at = Date.now();
+    
     // insert back into db
-    return db.content.putAsync(boardKey, board.toObject())
-    .then(function() { return oldBoard; });
-  });
+    return db.content.putAsync(boardKey, updateBoard.toObject());
+  })
+  .then(function() {
+    return db.content.putAsync(boardVersionKey, updateBoard.toObject());
+  })
+  .then(function() { return updateBoard; });
 };
 
 /* DELETE */
 boards.delete = function(boardId) {
   var boardKey = Board.getKeyFromId(boardId);
-  var board = null;
+  var boardVersionKey = Board.getNewVersionKeyFromId(boardId);
+  var deleteBoard = null;
+
+  // see if board already exists
+  return db.content.getAsync(boardKey)
+  .then(function(boardData) {
+    deleteBoard = new Board(boardData);
+
+    // add deleted: true flag to board
+    deleteBoard.deleted = true;
+    deleteBoard.updated_at = Date.now();
+
+    // insert back into db
+    return db.content.putAsync(boardKey, deleteBoard.toObject());
+  })
+  .then(function() {
+    return db.content.putAsync(boardVersionKey, deleteBoard.toObject());
+  })
+  .then(function() { return deleteBoard; });
+};
+
+boards.purge = function(id) {
+  var boardKey = Board.getKeyFromId(id);
+  var purgeBoard = null;
 
   // see if board already exists
   return db.content.getAsync(boardKey)
   // set board to function scope
   .then(function(boardData) {
-    board = new Board(boardData);
-    return board.getKey();
+    purgeBoard = new Board(boardData);
+    return purgeBoard.getKey();
   })
   // remove board from content
   .then(function(boardKey) {
     return db.content.delAsync(boardKey);
   })
-  // add board to deleted
+  // get board versions
   .then(function() {
-    return db.deleted.putAsync(boardKey, JSON.stringify(board));
+    return boards.versions(purgeBoard.id);
+  })
+  // convert each boardVersion into a batch-able put
+  .then(function(boardVersions) {
+    var batchArray = [];
+    return Promise.all(boardVersions.map(function(boardVersion) {
+      return {
+        type: 'put',
+        key: boardVersion.key,
+        value: boardVersion.value
+      };
+    }));
+  })
+  // add board versions to deleted
+  .then(function(batchArray) {
+    return db.deleted.batchAsync(batchArray)
+    .then(function() { return batchArray; });
+  })
+  // delete all versioned copy of this board from content
+  .then(function(batchArray) {
+    batchArray = batchArray.map(function(batchItem) {
+      batchItem.type = 'del';
+      delete batchItem.value;
+      return batchItem;
+    });
+    return db.content.batch(batchArray);
   })
   // delete any extra indexes/metadata
   .then(function() {
-    if (board.smf) {
-      var legacyKey = board.getLegacyKey();
+    if (purgeBoard.smf) {
+      var legacyKey = purgeBoard.getLegacyKey();
       db.indexes.delAsync(legacyKey)
       .catch(function(err) { console.log(err); });
     }
-
-    return board;
-  });
+    return;
+  })
+  // return this board
+  .then(function() { return purgeBoard; });
 };
 
 /*  QUERY: board using old id */
@@ -107,7 +175,9 @@ boards.boardByOldId = function(oldId) {
   });
 };
 
-/* QUERY: get all boards */
+/* QUERY: get all boards.
+   RETURNS: array of boards as objects
+*/
 boards.all = function() {
   return new Promise(function(fulfill, reject) {
     var allBoards = [];
@@ -124,6 +194,32 @@ boards.all = function() {
     };
 
     var searchKey = Board.prefix + config.sep;
+    var query = {
+      start: searchKey,
+      end: searchKey + '\xff'
+    };
+    db.content.createReadStream(query)
+    .on('data', sortBoards)
+    .on('error', reject)
+    .on('close', handler)
+    .on('end', handler);
+  });
+};
+
+/* QUERY: gets all version of a single board.
+   RETURNS: array of versions, format: { key, value (as object) }
+*/
+boards.versions = function(id) {
+  return new Promise(function(fulfill, reject) {
+    var boardVersions = [];
+    var sortBoards = function(board) {
+      boardVersions.push(board);
+    };
+    var handler = function() {
+      fulfill(boardVersions);
+    };
+
+    var searchKey = config.boards.version + config.sep + id + config.sep;
     var query = {
       start: searchKey,
       end: searchKey + '\xff'

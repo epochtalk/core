@@ -19,6 +19,10 @@ var legacyKeyForBoard = function(legacyId) {
   return config.boards.prefix + config.sep + legacyId;
 };
 
+var versionKeyForBoard = function(id) {
+  return config.boards.version + config.sep + id + config.sep + Date.now();
+};
+
 // Constructor
 function Board(board) {
   // object creation validation
@@ -32,6 +36,7 @@ function Board(board) {
   this.created_at = board.created_at || timestamp;
   this.updated_at = board.updated_at || timestamp;
   this.imported_at = board.imported_at;
+  this.deleted = board.deleted || false;
   // specific to board
   this.name = board.name;
   this.description = board.description;
@@ -95,11 +100,17 @@ Board.prototype.toObject = function() {
   board.imported_at = self.imported_at;
   board.parent_id = self.parent_id;
   board.children_ids = self.children_ids;
+  board.deleted = self.deleted;
   board.smf = self.smf;
   // this is a generated property
   board.children = self.children;
 
   return board;
+};
+
+Board.prototype.getNewVersionKey = function() {
+  var self = this;
+  return versionKeyForBoard(self.id);
 };
 
 // Static Methods
@@ -109,6 +120,10 @@ Board.getKeyFromId = function(id) {
 
 Board.getLegacyKeyFromId = function(legacyId) {
   return legacyKeyForBoard(legacyId);
+};
+
+Board.getNewVersionKeyFromId = function(id) {
+  return versionKeyForBoard(id);
 };
 
 Board.prefix = config.boards.prefix;
