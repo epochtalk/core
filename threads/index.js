@@ -26,3 +26,10 @@ threads.delete = function(data) {
     return thread;
   });
 }
+
+threads.byBoard = function(boardId, opts) {
+  return threadsDb.byBoard(boardId, opts)
+  .then(function(threads) {
+    return threads;
+  });
+}
