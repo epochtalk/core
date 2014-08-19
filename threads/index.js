@@ -21,6 +21,8 @@ threads.find = function(id) {
 
 threads.delete = function(data) {
   var threadToDelete = new Thread(data);
+  console.log('del');
+  console.log(threadToDelete);
   return threadsDb.remove(threadToDelete)
   .then(function(thread) {
     return thread;

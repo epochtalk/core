@@ -1,5 +1,5 @@
-var threads = {};
-module.exports = threads;
+var threadsDb = {};
+module.exports = threadsDb;
 var path = require('path');
 var uuid = require('node-uuid');
 var async = require('async');
@@ -7,19 +7,37 @@ var Promise = require('bluebird');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 
-threads.insert = function(thread) {
-  var timestamp = Date.now();
-  thread.created_at = timestamp;
-  thread.updated_at = timestamp;
-  thread.id = timestamp + uuid.v1({ msecs: timestamp });
-
-  return db.content.putAsync(thread.getKey(), thread)
-  .then(function() {
-    return thread;
+// thread must have a board_id
+threadsDb.insert = function(thread) {
+  return new Promise(function(fulfill, reject) {
+    if (!thread.board_id) {
+      reject();
+    }
+    var timestamp = Date.now();
+    thread.created_at = timestamp;
+    thread.updated_at = timestamp;
+    thread.id = timestamp + uuid.v1({ msecs: timestamp });
+    db.content.putAsync(thread.getKey(), thread)
+    .then(function() {
+      var boardThreadKey = thread.getBoardThreadKey();
+      if (boardThreadKey) {
+        return db.indexes.putAsync(boardThreadKey, thread.id);
+      }
+      else {
+        reject();
+      }
+    })
+    .then(function() {
+      console.log('fulfill');
+      console.log(thread);
+      fulfill(thread);
+    });
   });
 }
 
-threads.remove = function(thread) {
+threadsDb.remove = function(thread) {
+  console.log('remove');
+  console.log(thread);
   return db.content.delAsync(thread.getKey())
   .then(function() {
     db.deleted.putAsync(thread.getKey, thread);
@@ -29,14 +47,14 @@ threads.remove = function(thread) {
   });
 }
 
-threads.find = function(id) {
+threadsDb.find = function(id) {
   return db.content.getAsync(config.threads.prefix + config.sep + id)
   .then(function(thread) {
     return thread;
   });
 }
 
-threads.byBoard = function(boardId, opts) {
+threadsDb.byBoard = function(boardId, opts) {
   return new Promise(function(fulfill, reject) {
     var entries = [];
     // return map of entries as an threadId and title
