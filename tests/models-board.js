@@ -65,19 +65,13 @@ describe('Board', function() {
       assert.equal(board.name, boardObj.name);
       assert.equal(board.description, boardObj.description);
 
-      assert.property(board, 'created_at');
-      assert.property(board, 'updated_at');
       // ID is generated on insertion into db
       assert.property(board, 'name');
       assert.property(board, 'description');
-      assert.isArray(board.children_ids);
-      assert.isUndefined(board.parent_id);
 
       // ID is generated on insertion into db
       assert.isString(board.name);
       assert.isString(board.description);
-      assert.isNumber(board.created_at);
-      assert.isNumber(board.updated_at);
     });
     it('should create a parent Board object', function() {
       var board = new Board(parentBoard);
@@ -129,7 +123,7 @@ describe('Board', function() {
     it('should return the board\'s key', function() {
       var boardPrefix = config.boards.prefix;
       var sep = config.sep;
-      var board = new Board(boardObj);
+      var board = new Board(parentBoard);
       var key = board.getKey();
       assert.isDefined(key);
       assert.isString(key);

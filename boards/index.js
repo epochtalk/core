@@ -64,7 +64,7 @@ boards.purge = function(id) {
   .then(function(board) {
     return board.toObject();
   });
-}
+};
 
 boards.boardByOldId = function(oldId) {
   return db.boardByOldId(oldId)
@@ -79,13 +79,3 @@ boards.all = function() {
     return allboards;
   });
 };
-
-boards.versions = function(id) {
-  return db.versions(id)
-  .then(function(versions) {
-    return Promise.all(versions.map(function(version) {
-      return version.value;
-    }));
-  });
-};
-

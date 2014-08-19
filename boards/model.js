@@ -11,16 +11,18 @@ var helper = require(path.join(__dirname, '..', 'helper'));
 
 // helper functions
 var keyForBoard = function(id) {
-  return config.boards.prefix + config.sep + id;
+  var boardKey;
+  if (id) { boardKey = config.boards.prefix + config.sep + id; }
+  return boardKey;
 };
 
 var legacyKeyForBoard = function(legacyId) {
-  legacyId = legacyId.toString();
-  return config.boards.prefix + config.sep + legacyId;
-};
-
-var versionKeyForBoard = function(id) {
-  return config.boards.version + config.sep + id + config.sep + Date.now();
+  var legacyKey;
+  if (legacyId) {
+    legacyId = legacyId.toString();
+    legacyKey = config.boards.prefix + config.sep + legacyId;
+  }
+  return legacyKey;
 };
 
 // Constructor
@@ -31,18 +33,17 @@ function Board(board) {
   }
 
   // to base model
-  this.id = board.id;
-  var timestamp = Date.now();
-  this.created_at = board.created_at || timestamp;
-  this.updated_at = board.updated_at || timestamp;
-  this.imported_at = board.imported_at;
-  this.deleted = board.deleted || false;
+  if (board.id) { this.id = board.id; }
+  if (board.created_at) { this.created_at = board.created_at; }
+  if (board.updated_at) { this.updated_at = board.updated_at; }
+  if (board.imported_at) { this.imported_at = board.imported_at; }
+  if (board.deleted) { this.deleted = board.deleted; }
   // specific to board
   this.name = board.name;
-  this.description = board.description;
-  this.smf = board.smf;
-  this.parent_id = board.parent_id;
-  this.children_ids = board.children_ids || [];
+  if (board.description) { this.description = board.description; }
+  if (board.smf && board.smf.board_id) { this.smf  = board.smf; }
+  if (board.parent_id) { this.parent_id = board.parent_id; }
+  if (board.children_ids) this.children_ids = board.children_ids;
 }
 
 Board.prototype.getKey = function() {
@@ -62,6 +63,9 @@ Board.prototype.getLegacyKey = function() {
 // children in database stored in relation to board index
 Board.prototype.getChildren = function() {
   var self = this;
+
+  if (!self.children_ids) { return Promise.resolve([]); }
+
   return Promise.all(self.children_ids.map(function(childId) {
     return db.content.getAsync(keyForBoard(childId))
     .then(function(childBoardData) {
@@ -73,6 +77,9 @@ Board.prototype.getChildren = function() {
 // parent defined in actual board stored object
 Board.prototype.getParent = function() {
   var self = this;
+
+  if (!this.parent_id) { return Promise.reject('No Parent Id Found'); }
+
   return db.content.getAsync(keyForBoard(self.parent_id))
   .then(function(parentBoardData) {
     return new Board(parentBoardData);
@@ -92,25 +99,20 @@ Board.prototype.toObject = function() {
   var board = {};
   var self = this;
 
-  board.id = self.id;
+  if (self.id) { board.id = self.id; }
   board.name = self.name;
-  board.description = self.description;
-  board.created_at = self.created_at;
-  board.updated_at = self.updated_at;
-  board.imported_at = self.imported_at;
-  board.parent_id = self.parent_id;
-  board.children_ids = self.children_ids;
-  board.deleted = self.deleted;
-  board.smf = self.smf;
+  if (self.description) { board.description = self.description; }
+  if (self.created_at) { board.created_at = self.created_at; }
+  if (self.updated_at) { board.updated_at = self.updated_at; }
+  if (self.imported_at) { board.imported_at = self.imported_at; }
+  if (self.parent_id) { board.parent_id = self.parent_id; }
+  if (self.children_ids) { board.children_ids = self.children_ids; }
+  if (self.deleted) { board.deleted = self.deleted; }
+  if (self.smf && self.smf.board_id) { board.smf = self.smf; }
   // this is a generated property
-  board.children = self.children;
+  if (self.children) { board.children = self.children; }
 
   return board;
-};
-
-Board.prototype.getNewVersionKey = function() {
-  var self = this;
-  return versionKeyForBoard(self.id);
 };
 
 // Static Methods
@@ -120,10 +122,6 @@ Board.getKeyFromId = function(id) {
 
 Board.getLegacyKeyFromId = function(legacyId) {
   return legacyKeyForBoard(legacyId);
-};
-
-Board.getNewVersionKeyFromId = function(id) {
-  return versionKeyForBoard(id);
 };
 
 Board.prefix = config.boards.prefix;

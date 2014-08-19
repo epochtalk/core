@@ -171,28 +171,15 @@ describe('boards', function() {
   describe('#UNDELETE', function() {
     it('should undelete specified board', function(done) {
       savedBoard.deleted = false;
+      savedBoard.name = 'undelete check';
       boards.update(savedBoard)
       .then(function(board) {
-        assert.equal(board.deleted, false);
+        assert.equal(board.deleted, undefined);
         done();
       })
       .catch(function(err) {
         console.log(err);
-      });
-    });
-  });
-
-  describe('#VERSIONS', function() {
-    it('should get all versions of a board', function(done) {
-      boards.versions(savedBoard.id)
-      .then(function(versions) {
-        console.log(versions);
-        assert.equal(versions.length, 4);
-        done();
-      })
-      .catch(function(err) {
-        console.log(err);
-        done(null); // error, because board should have been deleted
+        done(err);
       });
     });
   });
@@ -209,16 +196,6 @@ describe('boards', function() {
       .catch(function(err) {
         assert.notEqual(err, null);
         done(null); // error, because board should have been deleted
-      })
-      .then(function() {
-        return boards.versions(savedBoard.id)
-        .then(function(versions) {
-          assert.equal(versions.length, 0);
-        });
-      })
-      .catch(function(err) {
-        console.log(err);
-        done(err);
       });
     });
   });

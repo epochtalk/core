@@ -10,6 +10,7 @@ var helper = require(path.join(__dirname, '..', 'helper'));
 
 /* IMPORT */
 boards.import = function(board) {
+  board.imported_at = Date.now();
   return boards.create(board) // create board first to handle id
   .then(function(board) {
     if (board.smf) {
@@ -24,13 +25,12 @@ boards.import = function(board) {
 boards.create = function(board) {
   // insert into db
   board.id = helper.genId();
+  var timestamp = Date.now();
+  if (!board.created_at) { board.created_at = timestamp; }
+  board.updated_at = timestamp;
   var boardKey = board.getKey();
-  var boardVersionKey = board.getNewVersionKey();
-  // batch?
-  return db.content.putAsync(boardKey, board.toObject())
-  .then(function() {
-    return db.content.putAsync(boardVersionKey, board.toObject());
-  })
+
+  return db.content.putAsync(boardKey, board)
   .then(function() { return board; });
 };
 
@@ -42,18 +42,16 @@ boards.find = function(id) {
     board = new Board(board);
     return board.getChildren()
     .then(function(children) {
-      board.children = children;
+      if (children.length > 0) { board.children = children; }
+      return;
     })
-    .then(function() {
-      return board;
-    });
+    .then(function() { return board; });
   });
 };
 
 /*  UPDATE */
 boards.update = function(board) {
   var boardKey = board.getKey();
-  var boardVersionKey = board.getNewVersionKey();
   var updateBoard = null;
 
   // get old board from db
@@ -68,12 +66,9 @@ boards.update = function(board) {
     updateBoard.children_ids = board.children_ids;
     updateBoard.deleted = board.deleted;
     updateBoard.updated_at = Date.now();
-    
+
     // insert back into db
-    return db.content.putAsync(boardKey, updateBoard.toObject());
-  })
-  .then(function() {
-    return db.content.putAsync(boardVersionKey, updateBoard.toObject());
+    return db.content.putAsync(boardKey, updateBoard);
   })
   .then(function() { return updateBoard; });
 };
@@ -81,7 +76,6 @@ boards.update = function(board) {
 /* DELETE */
 boards.delete = function(boardId) {
   var boardKey = Board.getKeyFromId(boardId);
-  var boardVersionKey = Board.getNewVersionKeyFromId(boardId);
   var deleteBoard = null;
 
   // see if board already exists
@@ -94,10 +88,7 @@ boards.delete = function(boardId) {
     deleteBoard.updated_at = Date.now();
 
     // insert back into db
-    return db.content.putAsync(boardKey, deleteBoard.toObject());
-  })
-  .then(function() {
-    return db.content.putAsync(boardVersionKey, deleteBoard.toObject());
+    return db.content.putAsync(boardKey, deleteBoard);
   })
   .then(function() { return deleteBoard; });
 };
@@ -111,40 +102,14 @@ boards.purge = function(id) {
   // set board to function scope
   .then(function(boardData) {
     purgeBoard = new Board(boardData);
-    return purgeBoard.getKey();
+  })
+  // move board to deleted db
+  .then(function() {
+    return db.content.putAsync(boardKey, purgeBoard);
   })
   // remove board from content
-  .then(function(boardKey) {
-    return db.content.delAsync(boardKey);
-  })
-  // get board versions
   .then(function() {
-    return boards.versions(purgeBoard.id);
-  })
-  // convert each boardVersion into a batch-able put
-  .then(function(boardVersions) {
-    var batchArray = [];
-    return Promise.all(boardVersions.map(function(boardVersion) {
-      return {
-        type: 'put',
-        key: boardVersion.key,
-        value: boardVersion.value
-      };
-    }));
-  })
-  // add board versions to deleted
-  .then(function(batchArray) {
-    return db.deleted.batchAsync(batchArray)
-    .then(function() { return batchArray; });
-  })
-  // delete all versioned copy of this board from content
-  .then(function(batchArray) {
-    batchArray = batchArray.map(function(batchItem) {
-      batchItem.type = 'del';
-      delete batchItem.value;
-      return batchItem;
-    });
-    return db.content.batch(batchArray);
+    return db.content.delAsync(purgeBoard.getKey());
   })
   // delete any extra indexes/metadata
   .then(function() {
@@ -166,12 +131,16 @@ boards.boardByOldId = function(oldId) {
   return db.legacy.getAsync(legacyBoardKey)
   .then(function(boardId) {
     var boardKey = Board.getKeyFromId(boardId);
-    return db.content.getAsync(boardKey)
-    .then(function(board) {
-      board = new Board(board);
-      board.children = board.getChildren();
-      return board;
-    });
+    return db.content.getAsync(boardKey);
+  })
+  .then(function(board) {
+    board = new Board(board);
+    return board.getChildren()
+    .then(function(children) {
+      if (children.length > 0) { board.children = children; }
+      return;
+    })
+    .then(function() { return board; });
   });
 };
 
@@ -183,9 +152,12 @@ boards.all = function() {
     var allBoards = [];
     var sortBoards = function(board) {
       var boardModel = new Board(board.value);
-      boardModel.getChildren()
+      return boardModel.getChildren()
       .then(function(children) {
-        boardModel.children = children;
+        if (children.length > 0) { boardModel.children = children; }
+        return;
+      })
+      .then(function() {
         allBoards.push(boardModel.toObject());
       });
     };
@@ -194,32 +166,6 @@ boards.all = function() {
     };
 
     var searchKey = Board.prefix + config.sep;
-    var query = {
-      start: searchKey,
-      end: searchKey + '\xff'
-    };
-    db.content.createReadStream(query)
-    .on('data', sortBoards)
-    .on('error', reject)
-    .on('close', handler)
-    .on('end', handler);
-  });
-};
-
-/* QUERY: gets all version of a single board.
-   RETURNS: array of versions, format: { key, value (as object) }
-*/
-boards.versions = function(id) {
-  return new Promise(function(fulfill, reject) {
-    var boardVersions = [];
-    var sortBoards = function(board) {
-      boardVersions.push(board);
-    };
-    var handler = function() {
-      fulfill(boardVersions);
-    };
-
-    var searchKey = config.boards.version + config.sep + id + config.sep;
     var query = {
       start: searchKey,
       end: searchKey + '\xff'
