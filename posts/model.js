@@ -7,7 +7,7 @@ var db = require(path.join(__dirname, '..', 'db'));
 
 function Post(data) {
   if (!(this instanceof Post)) {
-    return new Post(json);
+    return new Post(data);
   }
   // data.id signifies existing post
   if (data.id) {
