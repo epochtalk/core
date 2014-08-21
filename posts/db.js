@@ -1,19 +1,25 @@
 var posts = {};
 module.exports = posts;
 var path = require('path');
+var Promise = require('bluebird');
 var uuid = require('node-uuid');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 
 posts.insert = function(post) {
-  var timestamp = Date.now();
-  post.created_at = timestamp;
-  post.updated_at = timestamp;
-  post.id = timestamp + uuid.v1({ msecs: timestamp });
+  return new Promise(function(fulfill, reject) {
+    if (!post.thread_id) {
+      reject('The thread_id isn\'t present for given Post.');
+    }
+    var timestamp = Date.now();
+    post.created_at = timestamp;
+    post.updated_at = timestamp;
+    post.id = timestamp + uuid.v1({ msecs: timestamp });
 
-  return db.content.putAsync(post.getKey(), post)
-  .then(function() {
-    return post;
+    db.content.putAsync(post.getKey(), post)
+    .then(function() {
+      fulfill(post);
+    });
   });
 }
 

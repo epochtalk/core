@@ -15,6 +15,7 @@ function Post(data) {
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
   }
+  this.thread_id = data.thread_id;
   this.body = data.body;
 }
 

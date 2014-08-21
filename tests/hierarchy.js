@@ -18,6 +18,7 @@ describe('hierarchy', function() {
     it('should check board/thread/post relationship', function() {
       var createdThread;
       var createdBoard;
+      var createdPost;
       core.boards.create(newBoard)
       .then(function(board) {
         createdBoard = board;
@@ -28,6 +29,16 @@ describe('hierarchy', function() {
         .then(function(thread) {
           createdThread = thread;
           assert.equal(createdThread.board_id, createdBoard.id);
+          var newPost = {
+            body: 'Test post',
+            thread_id: createdThread.id
+          }
+          core.posts.create(newPost)
+          .then(function(post) {
+            createdPost = post;
+          console.log(newPost);
+            assert.equal(createdPost.thread_id, createdThread.id);
+          })
         });
       });
     });
