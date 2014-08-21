@@ -7,6 +7,7 @@ var core = require(path.join(__dirname, '..'))(dbName);
 
 var newPost = {
   body: 'hello world. testing 1234',
+  thread_id: 'test-thread-id'
 }
 var createdPost;
 
