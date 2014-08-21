@@ -10,14 +10,14 @@ posts.create = function(data) {
   .then(function(post) {
     return post;
   });
-}
+};
 
 posts.find = function(id) {
   return postsDb.find(id)
   .then(function(post) {
     return post;
   });
-}
+};
 
 posts.delete = function(data) {
   var postToDelete = new Post(data);
@@ -25,4 +25,4 @@ posts.delete = function(data) {
   .then(function(post) {
     return post;
   });
-}
+};

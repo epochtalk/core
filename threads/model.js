@@ -1,15 +1,11 @@
 module.exports = Thread;
-var _ = require('lodash');
-var uuid = require('node-uuid');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
-var db = require(path.join(__dirname, '..', 'db'));
 var schema = require(path.join(__dirname, 'schema'));
 var indexPrefix = config.threads.indexPrefix;
 var sep = config.sep;
 
 function Thread(data) {
-  console.log(data);
   if (!(this instanceof Thread)) {
     return new Thread(data);
   }
@@ -29,7 +25,7 @@ Thread.prototype.getKey = function() {
     key = config.threads.prefix + config.sep + this.id;
   }
   return key;
-}
+};
 
 Thread.prototype.getBoardThreadKey = function() {
   var boardThreadKey;
@@ -37,10 +33,10 @@ Thread.prototype.getBoardThreadKey = function() {
     boardThreadKey = indexPrefix + sep + this.board_id + sep + this.id;
   }
   return boardThreadKey;
-}
+};
 
 Thread.prototype.validate = function() {
   // input validation
   return schema.validate(this); // blocking
-}
+};
 

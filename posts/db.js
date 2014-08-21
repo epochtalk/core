@@ -21,7 +21,7 @@ posts.insert = function(post) {
       fulfill(post);
     });
   });
-}
+};
 
 posts.remove = function(post) {
   return db.content.delAsync(post.getKey())
@@ -31,11 +31,11 @@ posts.remove = function(post) {
   .then(function() {
     return post;
   });
-}
+};
 
 posts.find = function(id) {
   return db.content.getAsync(config.posts.prefix + config.sep + id)
   .then(function(post) {
     return post;
   });
-}
+};

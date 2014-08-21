@@ -6,6 +6,7 @@ var async = require('async');
 var Promise = require('bluebird');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
+var postDb = require(path.join(__dirname, '..', 'posts', 'db'));
 
 // thread must have a board_id
 threadsDb.insert = function(thread) {
@@ -31,7 +32,7 @@ threadsDb.insert = function(thread) {
       fulfill(thread);
     });
   });
-}
+};
 
 threadsDb.remove = function(thread) {
   return db.content.delAsync(thread.getKey())
@@ -41,14 +42,14 @@ threadsDb.remove = function(thread) {
   .then(function() {
     return thread;
   });
-}
+};
 
 threadsDb.find = function(id) {
   return db.content.getAsync(config.threads.prefix + config.sep + id)
   .then(function(thread) {
     return thread;
   });
-}
+};
 
 threadsDb.byBoard = function(boardId, opts) {
   return new Promise(function(fulfill, reject) {
@@ -101,5 +102,49 @@ threadsDb.byBoard = function(boardId, opts) {
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
+  });
+};
+
+function threadFirstPost(threadId) {
+  return new Promise(function(fulfill, reject) {
+    // returned post
+    var postId = '';
+
+    // build the postIndexKey
+    var postIndexKey = config.threads.postIndexPrefix + config.sep + threadId;
+    // get the first post from the postIndex by threadId
+    var postIndexOpts = {
+      limit: 1,
+      start: postIndexKey + config.sep,
+      end: postIndexKey + config.sep + '\xff',
+      versionLimit: 1
+    };
+
+    // search the postIndex
+    db.createReadStream(postIndexOpts)
+    .on('data', function(postIndex) {
+      if (!postIndex.value.deleted) {
+        postId = postIndex.value.id;
+      }
+    })
+    .on('error', reject)
+    .on('close', function() {
+      postDb.find(postId)
+      .then(function(post){
+        return fulfill(post);
+      })
+      .catch(function(err) {
+        return reject(err);
+      });
+    })
+    .on('end', function() {
+      postDb.find(postId)
+      .then(function(post) {
+        return fulfill(post);
+      })
+      .catch(function(err) {
+        return reject(err);
+      });
+    });
   });
 }

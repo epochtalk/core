@@ -1,9 +1,6 @@
 module.exports = Post;
-var _ = require('lodash');
-var uuid = require('node-uuid');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
-var db = require(path.join(__dirname, '..', 'db'));
 
 function Post(data) {
   if (!(this instanceof Post)) {
@@ -17,8 +14,9 @@ function Post(data) {
   }
   this.thread_id = data.thread_id;
   this.body = data.body;
+  this.title = data.title;
 }
 
 Post.prototype.getKey = function() {
   return config.posts.prefix + config.sep + this.id;
-}
+};

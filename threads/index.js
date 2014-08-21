@@ -10,28 +10,26 @@ threads.create = function(data) {
   .then(function(thread) {
     return thread;
   });
-}
+};
 
 threads.find = function(id) {
   return threadsDb.find(id)
   .then(function(thread) {
     return thread;
   });
-}
+};
 
 threads.delete = function(data) {
   var threadToDelete = new Thread(data);
-  console.log('del');
-  console.log(threadToDelete);
   return threadsDb.remove(threadToDelete)
   .then(function(thread) {
     return thread;
   });
-}
+};
 
 threads.byBoard = function(boardId, opts) {
   return threadsDb.byBoard(boardId, opts)
   .then(function(threads) {
     return threads;
   });
-}
+};
