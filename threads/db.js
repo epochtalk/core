@@ -28,16 +28,12 @@ threadsDb.insert = function(thread) {
       }
     })
     .then(function() {
-      console.log('fulfill');
-      console.log(thread);
       fulfill(thread);
     });
   });
 }
 
 threadsDb.remove = function(thread) {
-  console.log('remove');
-  console.log(thread);
   return db.content.delAsync(thread.getKey())
   .then(function() {
     db.deleted.putAsync(thread.getKey, thread);

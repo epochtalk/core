@@ -5,31 +5,30 @@ var assert = chai.assert;
 var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 
-var newThread = {
-  board_id: 'board_id_test'
+var newThread = {};
+
+var newBoard = {
+  name: 'new board',
+  description: 'new board desc'
 };
 
-var createdThread;
 
 describe('hierarchy', function() {
-  before(function() {
-    core.threads.create(newThread)
-    .then(function(thread) {
-      createdThread = thread;
-    });
-  });
-
-  describe('#create', function() {
-    it('should create a board/thread/post in the db', function() {
-      core.threads.create(newThread)
-      .then(function(thread) {
-        assert.property(thread, 'created_at');
-        assert.property(thread, 'updated_at');
-        assert.property(thread, 'id');
-        assert.equal(thread.board_id, newThread.board_id);
-      })
-      .catch(function() {
-        fail('Unable to create.');
+  describe('#check', function() {
+    it('should check board/thread/post relationship', function() {
+      var createdThread;
+      var createdBoard;
+      core.boards.create(newBoard)
+      .then(function(board) {
+        createdBoard = board;
+        var newThread = {
+          board_id: createdBoard.id
+        };
+        core.threads.create(newThread)
+        .then(function(thread) {
+          createdThread = thread;
+          assert.equal(createdThread.board_id, createdBoard.id);
+        });
       });
     });
   });
