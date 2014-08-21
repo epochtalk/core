@@ -11,7 +11,7 @@ var sep = config.sep;
 function Thread(data) {
   console.log(data);
   if (!(this instanceof Thread)) {
-    return new Thread(json);
+    return new Thread(data);
   }
   // data.id signifies existing thread
   if (data.id) {
