@@ -17,17 +17,17 @@ posts.insert = function(post) {
     post.updated_at = timestamp;
     post.id = timestamp + uuid.v1({ msecs: timestamp });
     var threadPostCountKey = post.getThreadKey() + config.sep + 'post_count';
-    db.indexes.getAsync(threadPostCountKey)
+    db.metadata.getAsync(threadPostCountKey)
     .then(function(count) {
       count = Number(count);
-      var indexBatch = [
+      var metadataBatch = [
         { type: 'put', key: threadPostCountKey, value: count + 1 },
       ];
       if (count === 0) { // First Post
         var threadFirstPostIdKey = post.getThreadKey() + config.sep + 'first_post_id';
-        indexBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
+        metadataBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
       }
-      return db.indexes.batchAsync(indexBatch)
+      return db.metadata.batchAsync(metadataBatch)
       .then(function() { return { id: post.thread_id, title: post.title }; })
       .then(threadsDb.update)
       .then(function() {

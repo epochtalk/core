@@ -20,13 +20,12 @@ threadsDb.insert = function(thread) {
     var boardThreadKey = thread.getBoardThreadKey();
     var postCountKey = thread.getPostCountKey();
     if (boardThreadKey && postCountKey) {
-      var batchArray = [
-        { type: 'put', key: boardThreadKey, value: thread.id },
-        { type: 'put', key: postCountKey, value: 0 }
-      ];
-      return db.indexes.batchAsync(batchArray)
+      return db.indexes.putAsync(boardThreadKey, thread.id)
       .then(function() {
-        return thread;
+        return db.metadata.putAsync(postCountKey, 0)
+        .then(function() {
+          return thread;
+        });
       });
     }
   });
