@@ -18,12 +18,17 @@ threadsDb.insert = function(thread) {
   return db.content.putAsync(thread.getKey(), thread)
   .then(function() {
     var boardThreadKey = thread.getBoardThreadKey();
-    if (boardThreadKey) {
-      return db.indexes.putAsync(boardThreadKey, thread.id);
+    var postCountKey = thread.getPostCountKey();
+    if (boardThreadKey && postCountKey) {
+      var batchArray = [
+        { type: 'put', key: boardThreadKey, value: thread.id },
+        { type: 'put', key: postCountKey, value: 0 }
+      ];
+      return db.indexes.batchAsync(batchArray)
+      .then(function() {
+        return thread;
+      });
     }
-  })
-  .then(function() {
-    return thread;
   });
 };
 
@@ -41,6 +46,20 @@ threadsDb.find = function(id) {
   return db.content.getAsync(config.threads.prefix + config.sep + id)
   .then(function(thread) {
     return thread;
+  });
+};
+
+threadsDb.update = function(thread) {
+  var updatedThread;
+  var threadKey = config.threads.prefix + config.sep + thread.id;
+  return db.content.getAsync(threadKey)
+  .then(function(threadFromDb) {
+    threadFromDb.title = thread.title;
+    updatedThread = threadFromDb;
+    db.content.putAsync(threadKey, updatedThread)
+    .then(function() {
+      return updatedThread;
+    });
   });
 };
 

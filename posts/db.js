@@ -5,6 +5,7 @@ var Promise = require('bluebird');
 var uuid = require('node-uuid');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
+var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
 
 posts.insert = function(post) {
   return new Promise(function(fulfill, reject) {
@@ -15,11 +16,25 @@ posts.insert = function(post) {
     post.created_at = timestamp;
     post.updated_at = timestamp;
     post.id = timestamp + uuid.v1({ msecs: timestamp });
-
-    db.content.putAsync(post.getKey(), post)
-    .then(function() {
-      fulfill(post);
-    });
+    var threadPostCountKey = post.getThreadKey() + config.sep + 'post_count';
+    db.indexes.getAsync(threadPostCountKey)
+    .then(function(count) {
+      count = Number(count);
+      var indexBatch = [
+        { type: 'put', key: threadPostCountKey, value: count + 1 },
+      ];
+      if (count === 0) { // First Post
+        var threadFirstPostIdKey = post.getThreadKey() + config.sep + 'first_post_id';
+        indexBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
+      }
+      return db.indexes.batchAsync(indexBatch)
+      .then(function() { return { id: post.thread_id, title: post.title }; })
+      .then(threadsDb.update)
+      .then(function() {
+        return db.content.putAsync(post.getKey(), post)
+          .then(function() { fulfill(post); });
+        });
+     });
   });
 };
 

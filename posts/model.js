@@ -20,3 +20,7 @@ function Post(data) {
 Post.prototype.getKey = function() {
   return config.posts.prefix + config.sep + this.id;
 };
+
+Post.prototype.getThreadKey = function() {
+  return config.threads.prefix + config.sep + this.thread_id;
+};

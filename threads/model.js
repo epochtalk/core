@@ -27,6 +27,15 @@ Thread.prototype.getKey = function() {
   return key;
 };
 
+Thread.prototype.getPostCountKey = function() {
+  var key;
+  if (this.id) {
+    key = config.threads.prefix + config.sep + this.id + config.sep + 'post_count';
+  }
+  return key;
+};
+
+
 Thread.prototype.getBoardThreadKey = function() {
   var boardThreadKey;
   if (this.id && this.board_id) {
