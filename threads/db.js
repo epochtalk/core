@@ -42,9 +42,16 @@ threadsDb.remove = function(thread) {
 };
 
 threadsDb.find = function(id) {
-  return db.content.getAsync(config.threads.prefix + config.sep + id)
-  .then(function(thread) {
-    return thread;
+  var thread;
+  var threadKey = config.threads.prefix + config.sep + id;
+  return db.content.getAsync(threadKey)
+  .then(function(dbThread) {
+    thread = dbThread;
+    return db.metadata.getAsync(threadKey + config.sep + 'post_count')
+    .then(function(count) {
+      thread.post_count = Number(count);
+      return thread;
+    });
   });
 };
 
@@ -55,7 +62,7 @@ threadsDb.update = function(thread) {
   .then(function(threadFromDb) {
     threadFromDb.title = thread.title;
     updatedThread = threadFromDb;
-    db.content.putAsync(threadKey, updatedThread)
+    return db.content.putAsync(threadKey, updatedThread)
     .then(function() {
       return updatedThread;
     });
