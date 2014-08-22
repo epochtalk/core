@@ -154,11 +154,13 @@ boards.all = function() {
       var boardModel = new Board(board.value);
       return boardModel.getChildren()
       .then(function(children) {
-        if (children.length > 0) { boardModel.children = children; }
+        if (children.length > 0) {
+          boardModel.children = children;
+        }
+        if (!boardModel.parent_id) {
+          allBoards.push(boardModel.toObject());
+        }
         return;
-      })
-      .then(function() {
-        allBoards.push(boardModel.toObject());
       });
     };
     var handler = function() {
