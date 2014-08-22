@@ -2,14 +2,13 @@ var boards = {};
 module.exports = boards;
 
 var path = require('path');
-var Promise = require('bluebird');
 var db = require(path.join(__dirname, 'db'));
 var Board = require(path.join(__dirname, 'model'));
 
 boards.import = function(json) {
   var board = new Board(json);
 
-  // validation 
+  // validation
   return board.validate()
   // import into db
   .then(function() {

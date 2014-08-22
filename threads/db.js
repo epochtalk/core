@@ -2,35 +2,28 @@ var threadsDb = {};
 module.exports = threadsDb;
 var path = require('path');
 var uuid = require('node-uuid');
-var async = require('async');
 var Promise = require('bluebird');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
-var postDb = require(path.join(__dirname, '..', 'posts', 'db'));
 
 // thread must have a board_id
 threadsDb.insert = function(thread) {
-  return new Promise(function(fulfill, reject) {
-    if (!thread.board_id) {
-      reject();
+  if (!thread.board_id) {
+    return Promise.reject('Invalid board id.');
+  }
+  var timestamp = Date.now();
+  thread.created_at = timestamp;
+  thread.updated_at = timestamp;
+  thread.id = timestamp + uuid.v1({ msecs: timestamp });
+  return db.content.putAsync(thread.getKey(), thread)
+  .then(function() {
+    var boardThreadKey = thread.getBoardThreadKey();
+    if (boardThreadKey) {
+      return db.indexes.putAsync(boardThreadKey, thread.id);
     }
-    var timestamp = Date.now();
-    thread.created_at = timestamp;
-    thread.updated_at = timestamp;
-    thread.id = timestamp + uuid.v1({ msecs: timestamp });
-    db.content.putAsync(thread.getKey(), thread)
-    .then(function() {
-      var boardThreadKey = thread.getBoardThreadKey();
-      if (boardThreadKey) {
-        return db.indexes.putAsync(boardThreadKey, thread.id);
-      }
-      else {
-        reject();
-      }
-    })
-    .then(function() {
-      fulfill(thread);
-    });
+  })
+  .then(function() {
+    return thread;
   });
 };
 
@@ -56,95 +49,32 @@ threadsDb.byBoard = function(boardId, opts) {
     var entries = [];
     // return map of entries as an threadId and title
     var handler = function() {
-      async.map(entries,
-        function(entry, callback) {
-          var threadId = entry.value.id;
-          var entryObject = { id: threadId };
-          // get title of first post of each thread
-          threadFirstPost(threadId)
-          .then(function(post) {
-            entryObject.title = post.title;
-            entryObject.created_at = entry.value.created_at;
-            return callback(null, entryObject);
-          });
-        },
-        function(err, allThreads) {
-          if (err) { return reject(err); }
-          if (allThreads) {
-            return fulfill(allThreads);
-          }
-        }
-      );
+      return fulfill(entries);
     };
 
     // query vars
-    var endIndexKey = config.threads.indexPrefix + config.sep + boardId + config.sep;
-    var startThreadKey = endIndexKey;
+    var startThreadKey = config.threads.indexPrefix + config.sep + boardId + config.sep;
+    var endThreadKey = startThreadKey;
     var limit = opts.limit ? Number(opts.limit) : 10;
-    if (opts.startThreadId) {
-      endIndexKey += opts.startThreadId + '\x00';
-    }
-    else {
-      endIndexKey += '\xff';
-    }
+    startThreadKey += '\xff';
+    endThreadKey += '\x00';
     var queryOptions = {
       limit: limit,
       reverse: true,
-      start: startThreadKey + '\x00',
-      end: endIndexKey
+      start: startThreadKey,
+      end: endThreadKey
     };
 
     // query thread Index
-    db.content.createReadStream(queryOptions)
-    .on('data', function (entry) {
-      entries.push(entry);
+    db.indexes.createValueStream(queryOptions)
+    .on('data', function(value) {
+      threadsDb.find(value).
+      then(function(thread) {
+        entries.push(thread);
+      });
     })
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
   });
 };
-
-function threadFirstPost(threadId) {
-  return new Promise(function(fulfill, reject) {
-    // returned post
-    var postId = '';
-
-    // build the postIndexKey
-    var postIndexKey = config.threads.postIndexPrefix + config.sep + threadId;
-    // get the first post from the postIndex by threadId
-    var postIndexOpts = {
-      limit: 1,
-      start: postIndexKey + config.sep,
-      end: postIndexKey + config.sep + '\xff',
-      versionLimit: 1
-    };
-
-    // search the postIndex
-    db.createReadStream(postIndexOpts)
-    .on('data', function(postIndex) {
-      if (!postIndex.value.deleted) {
-        postId = postIndex.value.id;
-      }
-    })
-    .on('error', reject)
-    .on('close', function() {
-      postDb.find(postId)
-      .then(function(post){
-        return fulfill(post);
-      })
-      .catch(function(err) {
-        return reject(err);
-      });
-    })
-    .on('end', function() {
-      postDb.find(postId)
-      .then(function(post) {
-        return fulfill(post);
-      })
-      .catch(function(err) {
-        return reject(err);
-      });
-    });
-  });
-}
