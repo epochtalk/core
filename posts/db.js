@@ -7,6 +7,17 @@ var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
 
+posts.import = function(post) {
+  post.imported_at = Date.now();
+  return posts.insert(post)
+  .then(function(dbPost) {
+    if (dbPost.smf) {
+      db.legacy.putAsync(post.getLegacyKey(), dbPost.id)
+      .catch(function(err) { console.log(err); });
+    }
+  });
+};
+
 posts.insert = function(post) {
   return new Promise(function(fulfill, reject) {
     if (!post.thread_id) {

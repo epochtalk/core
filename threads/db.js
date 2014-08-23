@@ -6,6 +6,17 @@ var Promise = require('bluebird');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 
+threadsDb.import = function(thread) {
+  thread.imported_at = Date.now();
+  return threadsDb.insert(thread)
+  .then(function(dbThread) {
+    if (dbThread.smf) {
+      db.legacy.putAsync(thread.getLegacyKey(), dbThread.id)
+      .catch(function(err) { console.log(err); });
+    }
+  });
+};
+
 // thread must have a board_id
 threadsDb.insert = function(thread) {
   if (!thread.board_id) {
