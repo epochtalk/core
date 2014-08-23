@@ -1,7 +1,6 @@
 var path = require('path');
 var rimraf = require('rimraf');
-var chai = require('chai');
-var assert = chai.assert;
+var should = require('chai').should();
 var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 
@@ -32,13 +31,13 @@ describe('hierarchy', function() {
           var newPost = {
             body: 'Test post',
             thread_id: createdThread.id
-          }
+          };
           core.posts.create(newPost)
           .then(function(post) {
             createdPost = post;
           console.log(newPost);
             assert.equal(createdPost.thread_id, createdThread.id);
-          })
+          });
         });
       });
     });

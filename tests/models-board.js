@@ -1,214 +1,457 @@
-var path = require('path');
 var rimraf = require('rimraf');
-var chai = require('chai');
-var assert = chai.assert;
+var should = require('chai').should();
 var dbName = 'test-epoch.db';
+var path = require('path');
 var core = require(path.join(__dirname, '..'))(dbName);
-var config = require(path.join(__dirname, '..', 'config'));
 var boards = core.boards;
 var Board = require(path.join(__dirname, '..', 'boards', 'model'));
-
-var boardObj = {
-  name: 'Board',
-  description: 'Board Description',
-};
-
-var childBoardObjA = {
-  name: 'Child A',
-  description: 'Child Description A',
-};
-
-var childBoardObjB = {
-  name: 'Child B',
-  description: 'Child Description B',
-};
-
-var parentBoard;
-var childBoards = [];
+var config = require(path.join(__dirname, '..', 'config'));
 
 describe('Board', function() {
-  // THIS WILL CHANGE
-  // Once the Board model is implemented into the CRUD routes.
-  before(function(done) {
-    boards.create(boardObj) // Create parent board
-    .then(function(dbParentBoard) {
-      parentBoard = dbParentBoard;
-      childBoardObjA.parent_id = parentBoard.id;
-      childBoardObjB.parent_id = parentBoard.id;
-      return childBoardObjA;
-    })
-    .then(boards.create) // Create child board a
-    .then(function(dbChildBoardA) {
-      childBoards.push(dbChildBoardA);
-      parentBoard.children_ids = [];
-      parentBoard.children_ids.push(dbChildBoardA.id);
-      return childBoardObjB;
-    })
-    .then(boards.create) // Create child board b
-    .then(function(dbChildBoardB) {
-      childBoards.push(dbChildBoardB);
-      parentBoard.children_ids.push(dbChildBoardB.id);
-      return parentBoard;
-    })
-    .then(boards.update) // Update parent board with child boards
-    .then(function(updatedParentBoard) {
-      parentBoard = updatedParentBoard;
-      done();
-    });
-  });
 
   describe('#new', function() {
-    it('should create a Board object', function() {
-      var board = new Board(boardObj);
-      assert.isObject(board);
+    var plainBoard = {
+      name: 'Board',
+      description: 'Board Description'
+    };
 
-      assert.equal(board.name, boardObj.name);
-      assert.equal(board.description, boardObj.description);
+    var parentBoard = {
+      name: 'Parent Board',
+      description: 'Parent Board Description'
+    };
 
-      // ID is generated on insertion into db
-      assert.property(board, 'name');
-      assert.property(board, 'description');
+    var childBoardA = {
+      name: 'Child A',
+      description: 'Child A Description'
+    };
 
-      // ID is generated on insertion into db
-      assert.isString(board.name);
-      assert.isString(board.description);
+    var childBoardB = {
+      name: 'Child B',
+      description: 'Child B Description'
+    };
+
+    before(function() {
+      return boards.create(parentBoard) // Create parent board
+      .then(function(board) {
+        parentBoard = board;
+        childBoardA.parent_id = parentBoard.id;
+        childBoardB.parent_id = parentBoard.id;
+        return childBoardA;
+      })
+      .then(boards.create) // Create child board a
+      .then(function(board) {
+        childBoardA = board;
+        parentBoard.children_ids = [];
+        parentBoard.children_ids.push(childBoardA.id);
+        return childBoardB;
+      })
+      .then(boards.create) // Create child board b
+      .then(function(board) {
+        childBoardB = board;
+        parentBoard.children_ids.push(childBoardB.id);
+        return parentBoard;
+      })
+      .then(boards.update) // Update parent board with child boards
+      .then(function(updatedParentBoard) {
+        parentBoard = updatedParentBoard;
+      });
     });
+    
+    it('should create a plain Board object', function() {
+      var board = new Board(plainBoard);
+      board.should.be.a('object');
+      should.not.exist(board.id);
+      should.not.exist(board.created_at);
+      should.not.exist(board.updated_at);
+      should.not.exist(board.imported_at);
+      should.not.exist(board.deleted);
+      board.name.should.equal(plainBoard.name);
+      board.description.should.equal(plainBoard.description);
+      should.not.exist(board.smf);
+      should.not.exist(board.parent_id);
+      should.not.exist(board.children_ids);
+      should.not.exist(board.children);
+    });
+
     it('should create a parent Board object', function() {
       var board = new Board(parentBoard);
-      assert.isObject(board);
-
-      assert.equal(board.name, boardObj.name);
-      assert.equal(board.description, boardObj.description);
-
-      assert.property(board, 'created_at');
-      assert.property(board, 'updated_at');
-      assert.property(board, 'id');
-      assert.property(board, 'name');
-      assert.property(board, 'description');
-      assert.property(board, 'children_ids');
-
-      assert.isString(board.id);
-      assert.isString(board.name);
-      assert.isString(board.description);
-      assert.isNumber(board.created_at);
-      assert.isNumber(board.updated_at);
-      assert.isArray(board.children_ids);
+      board.should.be.a('object');
+      board.id.should.be.ok;
+      board.id.should.be.a('string');
+      board.created_at.should.be.a('number');
+      board.updated_at.should.be.a('number');
+      should.not.exist(board.imported_at);
+      should.not.exist(board.deleted);
+      board.name.should.equal(parentBoard.name);
+      board.description.should.equal(parentBoard.description);
+      should.not.exist(board.smf);
+      should.not.exist(board.parent_id);
+      board.children_ids.should.be.an('array');
+      board.children_ids.should.have.length(2);
+      should.not.exist(board.children);
     });
+
     it('should create a child Board object', function() {
-      var childBoard = childBoards[0];
-      var board = new Board(childBoards[0]);
-      assert.isObject(board);
-
-      assert.equal(board.name, childBoard.name);
-      assert.equal(board.description, childBoard.description);
-      assert.equal(board.parent_id, childBoard.parent_id);
-
-      assert.property(board, 'created_at');
-      assert.property(board, 'updated_at');
-      assert.property(board, 'id');
-      assert.property(board, 'name');
-      assert.property(board, 'description');
-      assert.property(board, 'parent_id');
-
-      assert.isString(board.id);
-      assert.isString(board.name);
-      assert.isString(board.description);
-      assert.isString(board.parent_id);
-      assert.isNumber(board.created_at);
-      assert.isNumber(board.updated_at);
+      var board = new Board(childBoardA);
+      board.should.be.a('object');
+      board.id.should.be.ok;
+      board.id.should.be.a('string');
+      board.created_at.should.be.a('number');
+      board.updated_at.should.be.a('number');
+      should.not.exist(board.imported_at);
+      should.not.exist(board.deleted);
+      board.name.should.equal(childBoardA.name);
+      board.description.should.equal(childBoardA.description);
+      should.not.exist(board.smf);
+      board.parent_id.should.equal(parentBoard.id);
+      should.not.exist(board.children_ids);
+      should.not.exist(board.children);
     });
   });
 
   describe('#getKey', function() {
+    var plainBoard = {
+      name: 'Board',
+      description: 'Board Description'
+    };
+
+    before(function() {
+      return boards.create(plainBoard)
+      .then(function(board) {
+        plainBoard = board;
+      });
+    });
+
     it('should return the board\'s key', function() {
       var boardPrefix = config.boards.prefix;
       var sep = config.sep;
-      var board = new Board(parentBoard);
+
+      var board = new Board(plainBoard);
       var key = board.getKey();
-      assert.isDefined(key);
-      assert.isString(key);
-      assert.equal(key, boardPrefix + sep + board.id);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + board.id);
+    });
+  });
+
+  describe('#getKeyFromId', function() {
+    it('should return the board\'s legacy key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Board.getKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + fakeId);
     });
   });
 
   describe('#getLegacyKey', function() {
+    var plainBoard = {
+      name: 'Board',
+      description: 'Board Description',
+      smf: {
+        board_id: '0123456789'
+      }
+    };
+
+    before(function() {
+      return boards.create(plainBoard)
+      .then(function(board) {
+        plainBoard = board;
+      });
+    });
+
     it('should return the board\'s legacy key', function() {
       var boardPrefix = config.boards.prefix;
       var sep = config.sep;
-      boardObj.smf = { board_id: '0123456789' };
-      var board = new Board(boardObj);
+
+      var board = new Board(plainBoard);
       var key = board.getLegacyKey();
-      assert.isDefined(key);
-      assert.isString(key);
-      assert.equal(key, boardPrefix + sep + board.smf.board_id);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + board.smf.board_id);
     });
   });
 
+  describe('#getLegacyKeyFromId', function() {
+    it('should return the board\'s legacy key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Board.getLegacyKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + fakeId);
+    });
+  });
 
   describe('#getChildren', function() {
-    it('should return the board\'s children', function(done) {
-      var board = new Board(parentBoard);
-      board.getChildren()
-      .then(function(children) {
-        assert.isDefined(children);
-        assert.isArray(children);
-        assert.lengthOf(children, 2);
-        assert.isDefined(children[0]);
-        assert.isObject(children[0]);
-        assert.equal(children[0].name, childBoards[0].name);
-        assert.equal(children[0].description, childBoards[0].description);
-        assert.equal(children[0].id, childBoards[0].id);
-        assert.equal(children[0].created_at, childBoards[0].created_at);
-        assert.equal(children[0].parent_id, childBoards[0].parent_id);
+    var parentBoard = {
+      name: 'Parent Board',
+      description: 'Parent Board Description'
+    };
 
-        assert.isDefined(children[1]);
-        assert.isObject(children[1]);
-        assert.equal(children[1].name, childBoards[1].name);
-        assert.equal(children[1].description, childBoards[1].description);
-        assert.equal(children[1].id, childBoards[1].id);
-        assert.equal(children[1].created_at, childBoards[1].created_at);
-        assert.equal(children[1].parent_id, childBoards[1].parent_id);
-        done();
+    var childBoardA = {
+      name: 'Child A',
+      description: 'Child A Description'
+    };
+
+    var childBoardB = {
+      name: 'Child B',
+      description: 'Child B Description'
+    };
+
+    before(function() {
+      return boards.create(parentBoard) // Create parent board
+      .then(function(board) {
+        parentBoard = board;
+        childBoardA.parent_id = parentBoard.id;
+        childBoardB.parent_id = parentBoard.id;
+        return childBoardA;
+      })
+      .then(boards.create) // Create child board a
+      .then(function(board) {
+        childBoardA = board;
+        parentBoard.children_ids = [];
+        parentBoard.children_ids.push(childBoardA.id);
+        return childBoardB;
+      })
+      .then(boards.create) // Create child board b
+      .then(function(board) {
+        childBoardB = board;
+        parentBoard.children_ids.push(childBoardB.id);
+        return parentBoard;
+      })
+      .then(boards.update) // Update parent board with child boards
+      .then(function(updatedParentBoard) {
+        parentBoard = updatedParentBoard;
+      });
+    });
+
+    it('should return the board\'s children', function() {
+      var board = new Board(parentBoard);
+      return board.getChildren()
+      .then(function(children) {
+
+        children.should.be.ok;
+        children.should.be.an('array');
+        children.should.have.length(2);
+
+        var childA = children[0];
+        childA.should.be.a('object');
+        childA.id.should.be.ok;
+        childA.id.should.be.a('string');
+        childA.created_at.should.be.a('number');
+        childA.updated_at.should.be.a('number');
+        should.not.exist(childA.imported_at);
+        should.not.exist(childA.deleted);
+        childA.name.should.equal(childBoardA.name);
+        childA.description.should.equal(childBoardA.description);
+        should.not.exist(childA.smf);
+        childA.parent_id.should.equal(parentBoard.id);
+        should.not.exist(childA.children_ids);
+        should.not.exist(childA.children);
+
+        var childB = children[1];
+        childB.should.be.a('object');
+        childB.id.should.be.ok;
+        childB.id.should.be.a('string');
+        childB.created_at.should.be.a('number');
+        childB.updated_at.should.be.a('number');
+        should.not.exist(childB.imported_at);
+        should.not.exist(childB.deleted);
+        childB.name.should.equal(childBoardB.name);
+        childB.description.should.equal(childBoardB.description);
+        should.not.exist(childB.smf);
+        childB.parent_id.should.equal(parentBoard.id);
+        should.not.exist(childB.children_ids);
+        should.not.exist(childB.children);
       });
     });
   });
 
   describe('#getParent', function() {
-    it('should return the board\'s parent', function(done) {
-      var board = new Board(childBoards[0]);
-      board.getParent()
+    var parentBoard = {
+      name: 'Parent Board',
+      description: 'Parent Board Description'
+    };
+
+    var childBoardA = {
+      name: 'Child A',
+      description: 'Child A Description'
+    };
+
+    before(function() {
+      return boards.create(parentBoard) // Create parent board
+      .then(function(board) {
+        parentBoard = board;
+        childBoardA.parent_id = parentBoard.id;
+        return childBoardA;
+      })
+      .then(boards.create) // Create child board a
+      .then(function(board) {
+        childBoardA = board;
+        parentBoard.children_ids = [childBoardA.id];
+        return parentBoard;
+      })
+      .then(boards.update) // Update parent board with child boards
+      .then(function(updatedParentBoard) {
+        parentBoard = updatedParentBoard;
+      });
+    });
+
+    it('should return the board\'s parent', function() {
+      var board = new Board(childBoardA);
+      return board.getParent()
       .then(function(parent) {
-        assert.isDefined(parent);
-        assert.isObject(parent);
-        assert.equal(parent.name, parentBoard.name);
-        assert.equal(parent.description, parentBoard.description);
-        assert.equal(parent.id, parentBoard.id);
-        assert.equal(parent.id, board.parent_id);
-        assert.equal(parent.created_at, parentBoard.created_at);
-        assert.equal(parent.parent_id, parentBoard.parent_id);
-        assert.isArray(parent.children_ids);
-        assert.deepEqual(parent.children_ids, parentBoard.children_ids);
-        done();
+        parent.should.be.a('object');
+        parent.id.should.be.ok;
+        parent.id.should.be.a('string');
+        parent.id.should.equal(parentBoard.id);
+        parent.created_at.should.be.a('number');
+        parent.updated_at.should.be.a('number');
+        should.not.exist(parent.imported_at);
+        should.not.exist(parent.deleted);
+        parent.name.should.equal(parentBoard.name);
+        parent.description.should.equal(parentBoard.description);
+        should.not.exist(parent.smf);
+        should.not.exist(parent.parent_id);
+        parent.children_ids.should.be.an('array');
+        parent.children_ids.should.have.length(1);
+        should.not.exist(parent.children);
       });
     });
   });
 
+  describe('#Validate', function() {
 
-  // TODO: validate
+    it('should validate the minimum board model', function() {
+      var minBoard = { name: 'name' };
+      var board = new Board(minBoard);
+      var validBoard = board.validate().value();
+      validBoard.should.exist;
+    });
 
-  // TODO: toObject
+    it('should validate that name is required', function() {
+      var nameBoard = { description: 'hello' };
+      var board = new Board(nameBoard);
+      return board.validate()
+      .catch(function(err) {
+        err.should.exist;
+      });
+    });
 
-  // TODO: getKeyFromId
+    it('should validate dates are numbers', function() {
+      var dateBoard = {
+        name: 'name',
+        created_at: 12312312,
+        updated_at: 13124121,
+        imported_at: 12314124
+      };
+      var board = new Board(dateBoard);
+      var validBoard = board.validate().value();
+    });
 
-  // TODO: getLegacyKeyFromId
+    it('should validate ids are string', function() {
+      var idBoard = {
+        name: 'name',
+        id: '121314',
+        parent_id: '1203234'
+      };
+      var board = new Board(idBoard);
+      var validBoard = board.validate().value();
+      validBoard.should.exist;
+    });
 
-  // TODO: versionkey?
+    it('should validate children and chlidren_ids are arrays', function() {
+      var idBoard = {
+        name: 'name',
+        children: [{ name: 'child' }],
+        children_ids: ['asdasdf']
+      };
+      var board = new Board(idBoard);
+      var validBoard = board.validate().value();
+      validBoard.should.exist;
+    });
+
+    it('should validate deleted is a boolean', function() {
+      var idBoard = {
+        name: 'name',
+        deleted: true
+      };
+      var board = new Board(idBoard);
+      var validBoard = board.validate().value();
+      validBoard.should.exist;
+    });
+
+    it('should validate smf id is a number', function() {
+      var idBoard = {
+        name: 'name',
+        smf: {
+          board_id: 1235
+        }
+      };
+      var board = new Board(idBoard);
+      var validBoard = board.validate().value();
+      validBoard.should.exist;
+    });
+  });
+
+  describe('#simple', function() {
+    var fullBoard = {
+      created_at: 212424525,
+      updated_at: 342523422,
+      imported_at: 2323424234,
+      id: 'asdflkalskdfa',
+      name: 'Board',
+      description: 'Board Description',
+      parent_id: 'alsdkfjlaksdjfa',
+      children_ids: ['asdflkjaslkf', 'alsdkfjasdf'],
+      children: [{ name: 'first' }, { name: 'second' }],
+      deleted: true,
+      smf: {
+        board_id: 234235
+      }
+    };
+
+    it('should return a simple version of the board', function() {
+      var board = new Board(fullBoard);
+      board.children = fullBoard.children;
+      var simpleBoard = board.toObject();
+      simpleBoard.id.should.equal(fullBoard.id);
+      simpleBoard.name.should.equal(fullBoard.name);
+      simpleBoard.description.should.equal(fullBoard.description);
+      simpleBoard.created_at.should.equal(fullBoard.created_at);
+      simpleBoard.updated_at.should.equal(fullBoard.updated_at);
+      simpleBoard.imported_at.should.equal(fullBoard.imported_at);
+      simpleBoard.parent_id.should.equal(fullBoard.parent_id);
+      simpleBoard.children_ids.should.be.an('array');
+      simpleBoard.children_ids[0].should.equal(fullBoard.children_ids[0]);
+      simpleBoard.deleted.should.be.true;
+      simpleBoard.smf.board_id.should.equal(fullBoard.smf.board_id);
+      simpleBoard.children.should.be.an('array');
+
+      should.not.exist(simpleBoard.getKey);
+      should.not.exist(simpleBoard.getLegacyKey);
+      should.not.exist(simpleBoard.getChildren);
+      should.not.exist(simpleBoard.getParent);
+      should.not.exist(simpleBoard.validate);
+      should.not.exist(simpleBoard.toObject);
+      should.not.exist(simpleBoard.getKeyFromId);
+      should.not.exist(simpleBoard.getLegacyKeyFromId);
+      should.not.exist(simpleBoard.prefix);
+    });
+  });
 
   after(function(done) {
-    rimraf(path.join(__dirname, '..', dbName), function(err) {
-      if (err) { console.log(err); }
-      done();
-    });
+    rimraf(path.join(__dirname, '..', dbName), done);
   });
 
 });
