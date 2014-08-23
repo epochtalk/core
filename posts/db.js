@@ -17,31 +17,27 @@ posts.insert = function(post) {
     post.updated_at = timestamp;
     post.id = timestamp + uuid.v1({ msecs: timestamp });
     var threadPostCountKey = post.getThreadKey() + config.sep + 'post_count';
-    db.metadata.getAsync(threadPostCountKey)
+    return db.metadata.getAsync(threadPostCountKey)
     .then(function(count) {
       count = Number(count);
-      var metadataBatch = [
-        { type: 'put', key: threadPostCountKey, value: count + 1 },
-      ];
+      var metadataBatch = [ { type: 'put', key: threadPostCountKey, value: count + 1 } ];
       if (count === 0) { // First Post
         var threadFirstPostIdKey = post.getThreadKey() + config.sep + 'first_post_id';
         metadataBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
       }
-      return db.metadata.batchAsync(metadataBatch)
-      .then(function() { return { id: post.thread_id, title: post.title }; })
-      .then(threadsDb.update)
-      .then(function() {
-        return db.content.putAsync(post.getKey(), post)
-          .then(function() { fulfill(post); });
-        });
-     });
+      return db.metadata.batchAsync(metadataBatch);
+    })
+    .then(function() { return { id: post.thread_id, title: post.title }; })
+    .then(threadsDb.update)
+    .then(function() { return db.content.putAsync(post.getKey(), post); })
+    .then(function() { fulfill(post); });
   });
 };
 
 posts.remove = function(post) {
   return db.content.delAsync(post.getKey())
   .then(function() {
-    db.deleted.putAsync(post.getKey, post);
+    return db.deleted.putAsync(post.getKey, post);
   })
   .then(function() {
     return post;

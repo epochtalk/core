@@ -15,30 +15,18 @@ threadsDb.insert = function(thread) {
   thread.created_at = timestamp;
   thread.updated_at = timestamp;
   thread.id = timestamp + uuid.v1({ msecs: timestamp });
+  var boardThreadKey = thread.getBoardThreadKey();
+  var postCountKey = thread.getPostCountKey();
   return db.content.putAsync(thread.getKey(), thread)
-  .then(function() {
-    var boardThreadKey = thread.getBoardThreadKey();
-    var postCountKey = thread.getPostCountKey();
-    if (boardThreadKey && postCountKey) {
-      return db.indexes.putAsync(boardThreadKey, thread.id)
-      .then(function() {
-        return db.metadata.putAsync(postCountKey, 0)
-        .then(function() {
-          return thread;
-        });
-      });
-    }
-  });
+  .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
+  .then(function() { return db.metadata.putAsync(postCountKey, 0); })
+  .then(function() { return thread; });
 };
 
 threadsDb.remove = function(thread) {
   return db.content.delAsync(thread.getKey())
-  .then(function() {
-    db.deleted.putAsync(thread.getKey, thread);
-  })
-  .then(function() {
-    return thread;
-  });
+  .then(function() { return db.deleted.putAsync(thread.getKey, thread); })
+  .then(function() { return thread; });
 };
 
 threadsDb.find = function(id) {
@@ -47,11 +35,11 @@ threadsDb.find = function(id) {
   return db.content.getAsync(threadKey)
   .then(function(dbThread) {
     thread = dbThread;
-    return db.metadata.getAsync(threadKey + config.sep + 'post_count')
-    .then(function(count) {
-      thread.post_count = Number(count);
-      return thread;
-    });
+    return db.metadata.getAsync(threadKey + config.sep + 'post_count');
+  })
+  .then(function(count) {
+    thread.post_count = Number(count);
+    return thread;
   });
 };
 
@@ -62,11 +50,9 @@ threadsDb.update = function(thread) {
   .then(function(threadFromDb) {
     threadFromDb.title = thread.title;
     updatedThread = threadFromDb;
-    return db.content.putAsync(threadKey, updatedThread)
-    .then(function() {
-      return updatedThread;
-    });
-  });
+    return db.content.putAsync(threadKey, updatedThread);
+  })
+  .then(function() { return updatedThread; });
 };
 
 threadsDb.byBoard = function(boardId, opts) {
