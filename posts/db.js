@@ -6,7 +6,6 @@ var uuid = require('node-uuid');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
-var async = require('async');
 
 posts.insert = function(post) {
   return new Promise(function(fulfill, reject) {
@@ -55,24 +54,15 @@ posts.find = function(id) {
 
 posts.byThread = function(threadId, opts) {
   return new Promise(function(fulfill, reject) {
-    var values = [];
+    var postIds = [];
     var handler = function() {
-      // get post id from each entry
-      var postIds = values.map(function(postId) {
-        return postId;
-      });
-
-
       // get post for each postId
-      async.concat(postIds,
-        function(postId, callback) {
-          posts.find(postId)
-          .then(function(post) {
-            callback(null, post);
-          });
-        },
-        // return all posts
-        function(err, allPosts) { return fulfill(allPosts); });
+      Promise.map(postIds, function(postId) {
+        return posts.find(postId);
+      })
+      .then(function(allPosts) {
+        return fulfill(allPosts);
+      });
     };
 
     // query vars
@@ -94,7 +84,7 @@ posts.byThread = function(threadId, opts) {
 
     // query for all posts fir this threadId
     db.indexes.createValueStream(queryOptions)
-    .on('data', function (value) { values.push(value); })
+    .on('data', function (value) { postIds.push(value); })
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
