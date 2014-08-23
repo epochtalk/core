@@ -18,9 +18,25 @@ function Post(data) {
 }
 
 Post.prototype.getKey = function() {
-  return config.posts.prefix + config.sep + this.id;
+  var key;
+  if (this.id) {
+    key = config.posts.prefix + config.sep + this.id;
+  }
+  return key;
+};
+
+Post.prototype.getThreadPostKey = function() {
+  var key;
+  if (this.id) {
+    key = config.posts.indexPrefix + config.sep + this.thread_id + config.sep + this.id;
+  }
+  return key;
 };
 
 Post.prototype.getThreadKey = function() {
-  return config.threads.prefix + config.sep + this.thread_id;
+  var key;
+  if (this.id) {
+    key = config.threads.prefix + config.sep + this.thread_id;
+  }
+  return key;
 };

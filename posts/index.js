@@ -19,6 +19,13 @@ posts.find = function(id) {
   });
 };
 
+posts.byThread = function(id, opts) {
+  return postsDb.byThread(id, opts)
+  .then(function(posts) {
+    return posts;
+  });
+};
+
 posts.delete = function(data) {
   var postToDelete = new Post(data);
   return postsDb.remove(postToDelete)
