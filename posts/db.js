@@ -12,8 +12,8 @@ posts.import = function(post) {
   return posts.insert(post)
   .then(function(dbPost) {
     if (dbPost.smf) {
-      db.legacy.putAsync(post.getLegacyKey(), dbPost.id)
-      .catch(function(err) { console.log(err); });
+      return db.legacy.putAsync(post.getLegacyKey(), dbPost.id)
+      .then(function() { return dbPost; });
     }
   });
 };

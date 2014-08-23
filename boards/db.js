@@ -12,11 +12,10 @@ var helper = require(path.join(__dirname, '..', 'helper'));
 boards.import = function(board) {
   board.imported_at = Date.now();
   return boards.create(board) // create board first to handle id
-  .then(function(board) {
-    if (board.smf) {
-      var legacyBoardKey = board.getLegacyKey();
-      db.legacy.putAsync(legacyBoardKey, board.id)
-      .catch(function(err) { console.log(err); });
+  .then(function(dbBoard) {
+    if (dbBoard.smf) {
+      db.legacy.putAsync(board.getLegacyKey(), dbBoard.id)
+      .then(function() { return dbBoard; });
     }
   });
 };

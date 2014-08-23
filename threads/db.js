@@ -11,8 +11,8 @@ threadsDb.import = function(thread) {
   return threadsDb.insert(thread)
   .then(function(dbThread) {
     if (dbThread.smf) {
-      db.legacy.putAsync(thread.getLegacyKey(), dbThread.id)
-      .catch(function(err) { console.log(err); });
+      return db.legacy.putAsync(thread.getLegacyKey(), dbThread.id)
+      .then(function() { return dbThread; });
     }
   });
 };
