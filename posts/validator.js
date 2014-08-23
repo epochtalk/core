@@ -18,17 +18,16 @@ validator.importPost = function(post, next) {
   return validate(post, importSchema).then(next);
 };
 
-
 var createSchema = joi.object().keys({
   title: joi.string().required(),
   body: joi.string().required(),
   thread_id: joi.string().required(),
   board_id: joi.string()
 });
+
 validator.createPost = function(post, next) {
   return validate(post, createSchema).then(next);
 };
-
 
 var updateSchema = joi.object().keys({
   id: joi.string(),
@@ -47,12 +46,10 @@ validator.updatePost = function(post, next) {
   return validate(post, updateSchema).then(next);
 };
 
-
 var findSchema = joi.any().required();
 validator.id = function(id, next) {
   return validate(id, findSchema).then(next);
 };
-
 
 var postsSchema = joi.object().keys({
   id: joi.any().required(),
@@ -73,6 +70,5 @@ validator.byThread = function(threadId, opts, next) {
     return next(value.id, value.opts);
   });
 };
-
 
 module.exports = validator;

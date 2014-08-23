@@ -12,9 +12,11 @@ function Post(data) {
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
   }
+  if (data.smf && data.smf.post_id) { this.smf  = data.smf; }
   this.thread_id = data.thread_id;
   this.body = data.body;
   this.title = data.title;
+
 }
 
 Post.prototype.getKey = function() {
@@ -29,6 +31,14 @@ Post.prototype.getThreadPostKey = function() {
   var key;
   if (this.id) {
     key = config.posts.indexPrefix + config.sep + this.thread_id + config.sep + this.id;
+  }
+  return key;
+};
+
+Post.prototype.getLegacyKey = function() {
+  var key;
+  if (this.smf && this.smf.post_id) {
+    key = config.posts.prefix + config.sep + this.smf.post_id;
   }
   return key;
 };

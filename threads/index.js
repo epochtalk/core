@@ -4,6 +4,14 @@ var path = require('path');
 var threadsDb = require(path.join(__dirname, 'db'));
 var Thread = require(path.join(__dirname, 'model'));
 
+threads.import = function(data) {
+  var newThread = new Thread(data);
+  return threadsDb.import(newThread)
+  .then(function(thread) {
+    return thread;
+  });
+};
+
 threads.create = function(data) {
   var newThread = new Thread(data);
   return threadsDb.insert(newThread)

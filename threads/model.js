@@ -15,7 +15,7 @@ function Thread(data) {
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
   }
-
+  if (data.smf && data.smf.thread_id) { this.smf  = data.smf; }
   this.board_id = data.board_id;
 }
 
@@ -35,6 +35,13 @@ Thread.prototype.getPostCountKey = function() {
   return key;
 };
 
+Thread.prototype.getLegacyKey = function() {
+  var key;
+  if (this.smf && this.smf.thread_id) {
+    key = config.threads.prefix + config.sep + this.smf.thread_id;
+  }
+  return key;
+};
 
 Thread.prototype.getBoardThreadKey = function() {
   var boardThreadKey;
