@@ -5,6 +5,22 @@ var schema = require(path.join(__dirname, 'schema'));
 var indexPrefix = config.threads.indexPrefix;
 var sep = config.sep;
 
+// helper functions
+var keyForThread = function(id) {
+  var threadKey;
+  if (id) { threadKey = config.threads.prefix + config.sep + id; }
+  return threadKey;
+};
+
+var legacyKeyForThread = function(legacyId) {
+  var legacyKey;
+  if (legacyId) {
+    legacyId = legacyId.toString();
+    legacyKey = config.threads.prefix + config.sep + legacyId;
+  }
+  return legacyKey;
+};
+
 function Thread(data) {
   if (!(this instanceof Thread)) {
     return new Thread(data);
@@ -20,11 +36,8 @@ function Thread(data) {
 }
 
 Thread.prototype.getKey = function() {
-  var key;
-  if (this.id) {
-    key = config.threads.prefix + config.sep + this.id;
-  }
-  return key;
+  var self = this;
+  return keyForThread(self.id);
 };
 
 Thread.prototype.getPostCountKey = function() {
@@ -69,3 +82,13 @@ Thread.prototype.simple = function() {
   // this is a generated property
   return thread;
 };
+
+Thread.getKeyFromId = function(id) {
+  return keyForThread(id);
+};
+
+Thread.getLegacyKeyFromId = function(legacyId) {
+  return legacyKeyForThread(legacyId);
+};
+
+Thread.prefix = config.threads.prefix;

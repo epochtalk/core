@@ -94,7 +94,7 @@ boards.delete = function(boardId) {
 
 boards.purge = function(id) {
   var boardKey = Board.getKeyFromId(id);
-  var purgeBoard = null;
+  var purgeBoard;
 
   // see if board already exists
   return db.content.getAsync(boardKey)
@@ -104,11 +104,11 @@ boards.purge = function(id) {
   })
   // move board to deleted db
   .then(function() {
-    return db.content.putAsync(boardKey, purgeBoard);
+    return db.deleted.putAsync(boardKey, purgeBoard);
   })
   // remove board from content
   .then(function() {
-    return db.content.delAsync(purgeBoard.getKey());
+    return db.content.delAsync(boardKey);
   })
   // delete any extra indexes/metadata
   .then(function() {
@@ -129,17 +129,7 @@ boards.boardByOldId = function(oldId) {
 
   return db.legacy.getAsync(legacyBoardKey)
   .then(function(boardId) {
-    var boardKey = Board.getKeyFromId(boardId);
-    return db.content.getAsync(boardKey);
-  })
-  .then(function(board) {
-    board = new Board(board);
-    return board.getChildren()
-    .then(function(children) {
-      if (children.length > 0) { board.children = children; }
-      return;
-    })
-    .then(function() { return board; });
+    return boards.find(boardId);
   });
 };
 

@@ -11,7 +11,7 @@ threads.import = function(data) {
     return threadsDb.import(newThread);
   })
   .then(function(thread) {
-    return thread;
+    return thread.simple();
   });
 };
 
@@ -22,20 +22,26 @@ threads.create = function(data) {
     return threadsDb.insert(newThread);
   })
   .then(function(thread) {
-    return thread;
+    return thread.simple();
   });
 };
 
 threads.find = function(id) {
   return threadsDb.find(id)
   .then(function(thread) {
-    return thread;
+    return thread; // already simple
   });
 };
 
-threads.delete = function(data) {
-  var threadToDelete = new Thread(data);
-  return threadsDb.remove(threadToDelete)
+threads.delete = function(id) {
+  return threadsDb.remove(id)
+  .then(function(thread) {
+    return thread.simple();
+  });
+};
+
+threads.threadByOldId = function(oldId) {
+  return threadsDb.threadByOldId(oldId)
   .then(function(thread) {
     return thread;
   });
@@ -44,6 +50,6 @@ threads.delete = function(data) {
 threads.byBoard = function(boardId, opts) {
   return threadsDb.byBoard(boardId, opts)
   .then(function(threads) {
-    return threads;
+    return threads; // all already simple
   });
 };

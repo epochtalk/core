@@ -151,8 +151,7 @@ describe('boards', function() {
     it('should find specified board', function() {
       return boards.find(findBoard.id)
       .then(function(board){
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
+        board.id.should.equal(findBoard.id);
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
@@ -200,8 +199,7 @@ describe('boards', function() {
     it('should find parent board with children attached', function() {
       return boards.find(parentBoard.id)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
+        board.id.should.equal(parentBoard.id);
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
@@ -220,8 +218,7 @@ describe('boards', function() {
     it('should find child board with parent id', function() {
       return boards.find(childABoard.id)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
+        board.id.should.equal(childABoard.id);
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
@@ -258,8 +255,7 @@ describe('boards', function() {
 
       return boards.update(updateBoard)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
+        board.id.should.equal(updateBoard.id)
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
@@ -296,7 +292,7 @@ describe('boards', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { board_id: 111 }
+      smf: { board_id: '111' }
     };
     
     it('should import a board', function() {
@@ -322,7 +318,7 @@ describe('boards', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { board_id: 111 }
+      smf: { board_id: '111' }
     };
 
     before(function() {
@@ -335,8 +331,6 @@ describe('boards', function() {
     it('should verify key mapping for imported boards', function() {
       return boards.boardByOldId(importBoard.smf.board_id)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
         board.id.should.equal(importBoard.id);
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
@@ -352,11 +346,11 @@ describe('boards', function() {
     });
   });
 
-  describe('#IMPORT_DELETE', function() {
+  describe('#IMPORT_PURGE', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { board_id: 111 }
+      smf: { board_id: '111' }
     };
 
     before(function() {
@@ -366,23 +360,21 @@ describe('boards', function() {
       });
     });
 
-    it('should delete all imported boards key mappings', function() {
-      return boards.delete(importBoard.id)
+    it('should purge all imported boards key mappings', function() {
+      return boards.purge(importBoard.id)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
         board.id.should.equal(importBoard.id);
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
         board.imported_at.should.be.a('number');
-        board.deleted.should.be.true;
+        should.not.exist(board.deleted);
         board.name.should.equal(importBoard.name);
         board.description.should.equal(importBoard.description);
         board.smf.board_id.should.equal(importBoard.smf.board_id);
         should.not.exist(board.parent_id);
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
-        return board.id;
+        return board.smf.board_id;
       })
       .then(boards.boardByOldId)
       .catch(function(err) {
@@ -407,8 +399,7 @@ describe('boards', function() {
     it('should delete the specified board', function() {
       return boards.delete(testBoard.id)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
+        board.id.should.equal(testBoard.id);
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
@@ -424,8 +415,7 @@ describe('boards', function() {
       })
       .then(boards.find)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
+        board.id.should.equal(testBoard.id);
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
@@ -457,8 +447,7 @@ describe('boards', function() {
       testBoard.deleted = false;
       return boards.update(testBoard)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
+        board.id.should.equal(testBoard.id);
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
@@ -487,8 +476,7 @@ describe('boards', function() {
     it('should purge the specified board', function() {
       boards.purge(testBoard.id)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
+        board.id.should.equal(testBoard.id);
         board.created_at.should.be.a('number');
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
