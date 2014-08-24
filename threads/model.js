@@ -52,7 +52,20 @@ Thread.prototype.getBoardThreadKey = function() {
 };
 
 Thread.prototype.validate = function() {
-  // input validation
-  return schema.validate(this); // blocking
+  var thread = this.simple();
+  return schema.validate(thread);
 };
 
+Thread.prototype.simple = function() {
+  var thread = {};
+  var self = this;
+  if (self.id) { thread.id = self.id; }
+  if (self.board_id) { thread.board_id = self.board_id; }
+  if (self.created_at) { thread.created_at = self.created_at; }
+  if (self.updated_at) { thread.updated_at = self.updated_at; }
+  if (self.imported_at) { thread.imported_at = self.imported_at; }
+  if (self.deleted) { thread.deleted = self.deleted; }
+  if (self.smf && self.smf.thread_id && self.smf.post_id) { thread.smf  = self.smf; }
+  // this is a generated property
+  return thread;
+};

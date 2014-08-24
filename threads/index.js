@@ -6,7 +6,10 @@ var Thread = require(path.join(__dirname, 'model'));
 
 threads.import = function(data) {
   var newThread = new Thread(data);
-  return threadsDb.import(newThread)
+  return newThread.validate()
+  .then(function() {
+    return threadsDb.import(newThread);
+  })
   .then(function(thread) {
     return thread;
   });
@@ -14,7 +17,10 @@ threads.import = function(data) {
 
 threads.create = function(data) {
   var newThread = new Thread(data);
-  return threadsDb.insert(newThread)
+  return newThread.validate()
+  .then(function() {
+    return threadsDb.insert(newThread);
+  })
   .then(function(thread) {
     return thread;
   });

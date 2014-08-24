@@ -13,7 +13,8 @@ var threadSchema = joi.object().keys({
   id: joi.string(),
   deleted: joi.boolean(),
   smf: {
-    thread_id: joi.number()
+    thread_id: joi.number(),
+    post_id: joi.number()
   }
 });
 
