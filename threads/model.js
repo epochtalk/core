@@ -62,6 +62,14 @@ Thread.prototype.getBoardThreadKey = function() {
   return boardThreadKey;
 };
 
+Thread.prototype.getBoardKey = function() {
+  var key;
+  if (this.id) {
+    key = config.boards.prefix + config.sep + this.board_id;
+  }
+  return key;
+};
+
 Thread.prototype.validate = function() {
   var thread = this.simple();
   return schema.validate(thread);
@@ -90,3 +98,4 @@ Thread.getLegacyKeyFromId = function(legacyId) {
 };
 
 Thread.prefix = prefix;
+

@@ -29,10 +29,19 @@ threadsDb.insert = function(thread) {
   thread.updated_at = timestamp;
   thread.id = helper.genId(thread.created_at);
   var boardThreadKey = thread.getBoardThreadKey();
+  var boardThreadCountKey = thread.getBoardKey() + config.sep + 'thread_count';
   var postCountKey = thread.getPostCountKey();
   return db.content.putAsync(thread.getKey(), thread)
   .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
-  .then(function() { return db.metadata.putAsync(postCountKey, 0); })
+  .then(function() { return db.metadata.getAsync(boardThreadCountKey); })
+  .then(function(threadCount) {
+    threadCount = Number(threadCount);
+    var metadataBatch = [
+      { type: 'put', key: postCountKey, value: 0 },
+      { type: 'put', key: boardThreadCountKey, value: threadCount + 1 }
+    ];
+    return db.metadata.batchAsync(metadataBatch);
+  })
   .then(function() { return thread; });
 };
 
@@ -79,6 +88,9 @@ threadsDb.find = function(id) {
   .then(function(title) {
     thread.title = title;
     return thread;
+  })
+  .catch(function() { // thread doesn't have title yet
+    return thread;
   });
 };
 
@@ -116,7 +128,7 @@ threadsDb.byBoard = function(boardId, opts) {
       start: startThreadKey,
       end: endThreadKey
     };
-
+    console.log(queryOptions);
     // query thread Index
     db.indexes.createValueStream(queryOptions)
     .on('data', sorter)

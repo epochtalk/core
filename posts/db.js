@@ -7,6 +7,7 @@ var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Post = require(path.join(__dirname, 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
+var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
 
 posts.import = function(post) {
   post.imported_at = Date.now();
@@ -30,29 +31,33 @@ posts.insert = function(post) {
   post.id = helper.genId(post.created_at);
   var threadKeyPrefix = post.getThreadKey() + config.sep;
   var threadPostCountKey = threadKeyPrefix + 'post_count';
-
-  return db.metadata.getAsync(threadPostCountKey)
-  .then(function(count) {
-    count = Number(count);
+  var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
+  var threadTitleKey = threadKeyPrefix + 'title';
+  var threadPostCount, boardPostCountKey;
+  return threadsDb.find(post.thread_id)
+  .then(function(thread) {
+    threadPostCount = thread.post_count;
+    boardPostCountKey = config.boards.prefix + config.sep + thread.board_id + config.sep + 'post_count';
+    return db.metadata.getAsync(boardPostCountKey);
+  })
+  .then(function(boardPostCount) {
+    boardPostCount = Number(boardPostCount);
     var metadataBatch = [
-      { type: 'put', key: threadPostCountKey, value: count + 1 }
+      { type: 'put', key: boardPostCountKey, value: boardPostCount + 1 },
+      { type: 'put', key: threadPostCountKey, value: threadPostCount + 1 }
     ];
-    if (count === 0) { // First Post
-      var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
-      var threadTitleKey = threadKeyPrefix + 'title';
+    if (threadPostCount === 0) { // First Post
       metadataBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
       metadataBatch.push({ type: 'put', key: threadTitleKey, value: post.title });
     }
     return db.metadata.batchAsync(metadataBatch);
   })
-  .then(function() {
-    return db.indexes.putAsync(post.getThreadPostKey(), post.id);
-  })
-  .then(function() {
-    return db.content.putAsync(post.getKey(), post);
-  })
+  .then(function() { return db.indexes.putAsync(post.getThreadPostKey(), post.id); })
+  .then(function() { return db.content.putAsync(post.getKey(), post); })
   .then(function() { return post; });
 };
+
+
 
 posts.find = function(id) {
   var postKey = Post.getKeyFromId(id);

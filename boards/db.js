@@ -28,23 +28,39 @@ boards.create = function(board) {
   board.updated_at = timestamp;
   board.id = helper.genId(board.created_at);
   var boardKey = board.getKey();
-
-  return db.content.putAsync(boardKey, board)
+  var boardPostCountKey = boardKey + config.sep + 'post_count';
+  var boardThreadCountKey = boardKey + config.sep + 'thread_count';
+  var metadataBatch = [
+    { type: 'put', key: boardPostCountKey, value: 0 },
+    { type: 'put', key: boardThreadCountKey, value: 0 }
+  ];
+  return db.metadata.batchAsync(metadataBatch)
+  .then(function() { return db.content.putAsync(boardKey, board); })
   .then(function() { return board; });
 };
 
 /* RETRIEVE */
 boards.find = function(id) {
   var boardKey = Board.getKeyFromId(id);
+  var boardPostCountKey = boardKey + config.sep + 'post_count';
+  var boardThreadCountKey = boardKey + config.sep + 'thread_count';
+  var board;
   return db.content.getAsync(boardKey)
-  .then(function(board) {
-    board = new Board(board);
-    return board.getChildren()
-    .then(function(children) {
-      if (children.length > 0) { board.children = children; }
-      return;
-    })
-    .then(function() { return board; });
+  .then(function(dbBoard) {
+    board = new Board(dbBoard);
+    return board.getChildren();
+  })
+  .then(function(children) {
+    if (children.length > 0) { board.children = children; }
+    return db.metadata.getAsync(boardPostCountKey);
+  })
+  .then(function(postCount) {
+    board.post_count = Number(postCount);
+    return db.metadata.getAsync(boardThreadCountKey);
+  })
+  .then(function(threadCount) {
+    board.thread_count = Number(threadCount);
+    return board;
   });
 };
 
@@ -141,13 +157,10 @@ boards.all = function() {
     var allBoards = [];
     var sortBoards = function(board) {
       var boardModel = new Board(board.value);
-      return boardModel.getChildren()
-      .then(function(children) {
-        if (children.length > 0) {
-          boardModel.children = children;
-        }
-        if (!boardModel.parent_id) {
-          allBoards.push(boardModel.simple());
+      return boards.find(boardModel.id)
+      .then(function(board) {
+        if (!board.parent_id) {
+           allBoards.push(board);
         }
         return;
       });

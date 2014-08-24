@@ -66,9 +66,22 @@ Board.prototype.getChildren = function() {
   if (!self.children_ids) { return Promise.resolve([]); }
 
   return Promise.all(self.children_ids.map(function(childId) {
+    var board;
+    var boardKeyPrefix = config.boards.prefix + config.sep + childId + config.sep;
+    var boardPostCountKey = boardKeyPrefix + 'post_count';
+    var boardThreadCountKey = boardKeyPrefix + 'thread_count';
     return db.content.getAsync(keyForBoard(childId))
     .then(function(childBoardData) {
-      return new Board(childBoardData);
+      board = new Board(childBoardData);
+      return db.metadata.getAsync(boardPostCountKey);
+    })
+    .then(function(postCount) {
+      board.post_count = Number(postCount);
+      return db.metadata.getAsync(boardThreadCountKey);
+    })
+    .then(function(threadCount) {
+      board.thread_count = Number(threadCount);
+      return board;
     });
   }));
 };
@@ -108,6 +121,8 @@ Board.prototype.simple = function() {
   if (self.smf && self.smf.board_id) { board.smf = self.smf; }
   // this is a generated property
   if (self.children) { board.children = self.children; }
+  if (self.post_count) { board.post_count = self.post_count; }
+  if (self.thread_count) { board.thread_count = self.thread_count; }
 
   return board;
 };
