@@ -88,14 +88,14 @@ Board.prototype.getParent = function() {
 
 Board.prototype.validate = function() {
   var self = this;
-  var board = this.toObject();
+  var board = this.simple();
 
   // input validation
   var data = null;
   return schema.validate(board); // blocking
 };
 
-Board.prototype.toObject = function() {
+Board.prototype.simple = function() {
   var board = {};
   var self = this;
 

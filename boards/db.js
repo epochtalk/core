@@ -157,7 +157,7 @@ boards.all = function() {
           boardModel.children = children;
         }
         if (!boardModel.parent_id) {
-          allBoards.push(boardModel.toObject());
+          allBoards.push(boardModel.simple());
         }
         return;
       });

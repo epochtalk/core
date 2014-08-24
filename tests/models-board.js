@@ -424,7 +424,7 @@ describe('Board', function() {
     it('should return a simple version of the board', function() {
       var board = new Board(fullBoard);
       board.children = fullBoard.children;
-      var simpleBoard = board.toObject();
+      var simpleBoard = board.simple();
       simpleBoard.id.should.equal(fullBoard.id);
       simpleBoard.name.should.equal(fullBoard.name);
       simpleBoard.description.should.equal(fullBoard.description);
@@ -443,7 +443,7 @@ describe('Board', function() {
       should.not.exist(simpleBoard.getChildren);
       should.not.exist(simpleBoard.getParent);
       should.not.exist(simpleBoard.validate);
-      should.not.exist(simpleBoard.toObject);
+      should.not.exist(simpleBoard.simple);
       should.not.exist(simpleBoard.getKeyFromId);
       should.not.exist(simpleBoard.getLegacyKeyFromId);
       should.not.exist(simpleBoard.prefix);

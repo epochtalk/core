@@ -16,7 +16,7 @@ boards.import = function(json) {
   })
   // return json version of board
   .then(function() {
-    return board.toObject();
+    return board.simple();
   });
 };
 
@@ -28,14 +28,14 @@ boards.create = function(json) {
     return db.create(board);
   })
   .then(function() {
-    return board.toObject();
+    return board.simple();
   });
 };
 
 boards.find = function(id) {
   return db.find(id)
   .then(function(board) {
-    return board.toObject();
+    return board.simple();
   });
 };
 
@@ -47,28 +47,28 @@ boards.update = function(json) {
     return db.update(board);
   })
   .then(function() {
-    return board.toObject();
+    return board.simple();
   });
 };
 
 boards.delete = function(id) {
   return db.delete(id)
   .then(function(board) {
-    return board.toObject();
+    return board.simple();
   });
 };
 
 boards.purge = function(id) {
   return db.purge(id)
   .then(function(board) {
-    return board.toObject();
+    return board.simple();
   });
 };
 
 boards.boardByOldId = function(oldId) {
   return db.boardByOldId(oldId)
   .then(function(board) {
-    return board.toObject();
+    return board.simple();
   });
 };
 
