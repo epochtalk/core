@@ -1,13 +1,9 @@
 module.exports = Board;
-var _ = require('lodash');
-var joi = require('joi');
 var Promise = require('bluebird');
-var uuid = require('node-uuid');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var schema = require(path.join(__dirname, 'schema'));
-var helper = require(path.join(__dirname, '..', 'helper'));
 
 // helper functions
 var keyForBoard = function(id) {
@@ -43,7 +39,7 @@ function Board(board) {
   if (board.description) { this.description = board.description; }
   if (board.smf && board.smf.board_id) { this.smf  = board.smf; }
   if (board.parent_id) { this.parent_id = board.parent_id; }
-  if (board.children_ids) this.children_ids = board.children_ids;
+  if (board.children_ids) { this.children_ids = board.children_ids; }
 }
 
 Board.prototype.getKey = function() {
@@ -87,11 +83,9 @@ Board.prototype.getParent = function() {
 };
 
 Board.prototype.validate = function() {
-  var self = this;
   var board = this.simple();
 
   // input validation
-  var data = null;
   return schema.validate(board); // blocking
 };
 

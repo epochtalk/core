@@ -5,7 +5,6 @@ var Promise = require('bluebird');
 var uuid = require('node-uuid');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
-var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
 
 posts.import = function(post) {
   post.imported_at = Date.now();
