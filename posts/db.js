@@ -27,20 +27,21 @@ posts.insert = function(post) {
     post.created_at = timestamp;
     post.updated_at = timestamp;
     post.id = timestamp + uuid.v1({ msecs: timestamp });
-    var threadPostCountKey = post.getThreadKey() + config.sep + 'post_count';
+    var threadKeyPrefix = post.getThreadKey() + config.sep;
+    var threadPostCountKey = threadKeyPrefix + 'post_count';
     return db.metadata.getAsync(threadPostCountKey)
     .then(function(count) {
       count = Number(count);
       var metadataBatch = [ { type: 'put', key: threadPostCountKey, value: count + 1 } ];
       if (count === 0) { // First Post
-        var threadFirstPostIdKey = post.getThreadKey() + config.sep + 'first_post_id';
+        var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
+        var threadTitleKey = threadKeyPrefix + 'title';
         metadataBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
+        metadataBatch.push({ type: 'put', key: threadTitleKey, value: post.title });
       }
       return db.metadata.batchAsync(metadataBatch);
     })
     .then(function() { return db.indexes.putAsync(post.getThreadPostKey(), post.id); })
-    .then(function() { return { id: post.thread_id, title: post.title }; })
-    .then(threadsDb.update)
     .then(function() { return db.content.putAsync(post.getKey(), post); })
     .then(function() { fulfill(post); });
   });

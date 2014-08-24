@@ -50,20 +50,12 @@ threadsDb.find = function(id) {
   })
   .then(function(count) {
     thread.post_count = Number(count);
+    return db.metadata.getAsync(threadKey + config.sep + 'title');
+  })
+  .then(function(title) {
+    thread.title = title;
     return thread;
   });
-};
-
-threadsDb.update = function(thread) {
-  var updatedThread;
-  var threadKey = config.threads.prefix + config.sep + thread.id;
-  return db.content.getAsync(threadKey)
-  .then(function(threadFromDb) {
-    threadFromDb.title = thread.title;
-    updatedThread = threadFromDb;
-    return db.content.putAsync(threadKey, updatedThread);
-  })
-  .then(function() { return updatedThread; });
 };
 
 threadsDb.byBoard = function(boardId, opts) {

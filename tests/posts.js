@@ -6,6 +6,7 @@ var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 
 var newPost = {
+  title: 'post title',
   body: 'hello world. testing 1234'
 };
 var createdPost;

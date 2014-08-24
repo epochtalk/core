@@ -6,7 +6,6 @@ var joi = require('joi');
 var validate = Promise.promisify(joi.validate);
 
 var threadSchema = joi.object().keys({
-  title: joi.string().required(),
   board_id: joi.string().required(),
   created_at: joi.number(),
   updated_at: joi.number(),

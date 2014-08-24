@@ -27,6 +27,7 @@ describe('hierarchy', function() {
         createdThread.board_id.should.equal(createdBoard.id);
         return {
           body: 'Test post',
+          title: 'Post title',
           thread_id: createdThread.id
         };
       })

@@ -15,8 +15,7 @@ function Post(data) {
   if (data.smf && data.smf.post_id) { this.smf  = data.smf; }
   this.thread_id = data.thread_id;
   this.body = data.body;
-  this.title = data.title;
-
+  this.title = data.title ? data.title : '';
 }
 
 Post.prototype.getKey = function() {
