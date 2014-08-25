@@ -22,12 +22,12 @@ var generateBoard = function() {
   var description = Charlatan.Lorem.paragraph(Charlatan.Helpers.rand(10, 3));
   var board = {
     name: name,
-    description: description,
+    description: description
   };
   return board;
 };
 
-var generatePost = function(authorId, previousPostTime, threadId, boardId) {
+var generatePost = function(authorId, previousPostTime, threadId) {
   var words = Charlatan.Lorem.words(Charlatan.Helpers.rand(8, 1));
   words[0] = Charlatan.Helpers.capitalize(words[0]);
   var title = words.join(' ');
@@ -44,14 +44,9 @@ var generatePost = function(authorId, previousPostTime, threadId, boardId) {
   }
   var post = {
     title: title,
-    body: body,
+    body: body
   };
-  if (boardId) {
-    post.board_id = boardId;
-  }
-  if (threadId) {
-    post.thread_id = threadId;
-  }
+  post.thread_id = threadId;
   return post;
 };
 
@@ -78,6 +73,9 @@ function seedBoards(users, parentBoard, seedBoardsCallback) {
         process.stdout.write('Generating Boards: ' + createdBoard.id + '\r');
         if (parentBoard) {
           boards.push(createdBoard);
+          if (!parentBoard.children_ids) {
+            parentBoard.children_ids = [];
+          }
           parentBoard.children_ids.push(createdBoard.id);
           boardsCore.update(parentBoard)
           .then(function() {
@@ -110,7 +108,7 @@ function seedBoards(users, parentBoard, seedBoardsCallback) {
   );
 }
 
-function seedPosts(board, users, thread, seedPostsCallback) {
+function seedPosts(board, users, threadId, seedPostsCallback) {
   var i = 0;
   var postCount = Charlatan.Helpers.rand(maxPosts, 1);
   async.whilst(
@@ -119,18 +117,18 @@ function seedPosts(board, users, thread, seedPostsCallback) {
     },
     function (cb) {
       var post;
-      if (thread) { // sub level post
-        post = generatePost(null, thread.created_at, thread.thread_id);
+      if (threadId) { // sub level post
+        post = generatePost(null, null, threadId);
         posts.create(post)
         .then(function(createdPost) {
           process.stdout.write('Generating Post: ' + createdPost.id + '\r');
-          if (thread) {
+          if (threadId) {
             i++;
             cb();
           }
           else {
             i++;
-            seedPosts(null, users, createdPost, cb);
+            seedPosts(null, users, threadId, cb);
           }
         })
         .catch(function(err) {
@@ -138,17 +136,23 @@ function seedPosts(board, users, thread, seedPostsCallback) {
         });
       }
       else { // top level post
-        post = generatePost(null, board.created_at, null, board.id);
-        threads.create(post)
+        var plainThread = { board_id: board.id };
+        threads.create(plainThread)
+        .then(function(newThread) {
+          plainThread = newThread;
+          post = generatePost(null, null, plainThread.id);
+          return post;
+        })
+        .then(posts.create)
         .then(function(createdPost) {
           process.stdout.write('Generating Post: ' + createdPost.id + '\r');
-          if (thread) {
+          if (plainThread.id) {
             i++;
             cb();
           }
           else {
             i++;
-            seedPosts(null, users, createdPost, cb);
+            seedPosts(null, users, plainThread.id, cb);
           }
         })
         .catch(function(err) {
