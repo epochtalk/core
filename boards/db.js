@@ -154,19 +154,21 @@ boards.boardByOldId = function(oldId) {
 */
 boards.all = function() {
   return new Promise(function(fulfill, reject) {
-    var allBoards = [];
-    var sortBoards = function(board) {
-      var boardModel = new Board(board.value);
-      return boards.find(boardModel.id)
-      .then(function(board) {
-        if (!board.parent_id) {
-           allBoards.push(board);
-        }
-        return;
-      });
-    };
+    var boardIds = [];
+
     var handler = function() {
-      fulfill(allBoards);
+      Promise.map(boardIds, function(boardId) {
+        return boards.find(boardId);
+      })
+      .then(function(allBoards) {
+        var boards = [];
+        allBoards.forEach(function(board) {
+          if (!board.parent_id) {
+            boards.push(board);
+          }
+        });
+        return fulfill(boards);
+      });
     };
 
     var searchKey = Board.prefix + config.sep;
@@ -175,7 +177,9 @@ boards.all = function() {
       end: searchKey + '\xff'
     };
     db.content.createReadStream(query)
-    .on('data', sortBoards)
+    .on('data', function(board) {
+      boardIds.push(board.value.id);
+     })
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
