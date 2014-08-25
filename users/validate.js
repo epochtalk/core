@@ -10,7 +10,7 @@ var createSchema = joi.object().keys({
   confirmation: joi.ref('password')
 }).with('password', 'confirmation');
 
-validator.createUser = function(user, next) {
+validator.create = function(user, next) {
   return validate(user, createSchema).then(next);
 };
 

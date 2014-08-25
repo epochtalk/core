@@ -1,6 +1,7 @@
 module.exports = User;
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
+var validate = require(path.join(__dirname, 'validate'));
 
 function User(data) {
   if (!(this instanceof User)) {
@@ -15,10 +16,18 @@ function User(data) {
   this.username = data.username;
   this.password = data.password;
   this.confirmation = data.confirmation;
-  
+}
+
+User.prototype.validate = function() {
+  var user = this;
+  return validate.create(user);
 }
 
 User.prototype.getKey = function() {
-  return config.users.prefix + config.sep + this.id;
+  var key;
+  if (this.id) {
+    key = config.users.prefix + config.sep + this.id;
+  }
+  return key;
 };
 
