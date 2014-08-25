@@ -24,10 +24,10 @@ threadsDb.insert = function(thread) {
   if (!thread.board_id) {
     return Promise.reject('Invalid board id.');
   }
-  var timestamp = Date.now();
-  thread.created_at = timestamp;
-  thread.updated_at = timestamp;
   thread.id = helper.genId();
+  var timestamp = Date.now();
+  if (!thread.created_at) { thread.created_at = timestamp; }
+  thread.updated_at = timestamp;
   var boardThreadKey = thread.getBoardThreadKey();
   var postCountKey = thread.getPostCountKey();
   return db.content.putAsync(thread.getKey(), thread)

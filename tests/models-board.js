@@ -330,7 +330,7 @@ describe('Board', function() {
     });
   });
 
-  describe('#Validate', function() {
+  describe('#validate', function() {
 
     it('should validate the minimum board model', function() {
       var minBoard = { name: 'name' };

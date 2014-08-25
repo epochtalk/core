@@ -26,11 +26,11 @@ function Thread(data) {
     return new Thread(data);
   }
   // data.id signifies existing thread
-  if (data.id) {
-    this.id = data.id;
-    this.created_at = data.created_at;
-    this.updated_at = data.updated_at;
-  }
+  if (data.id) { this.id = data.id; }
+  if (data.created_at) { this.created_at = data.created_at; }
+  if (data.updated_at) { this.updated_at = data.updated_at; }
+  if (data.imported_at) { this.imported_at = data.imported_at; }
+  if (data.deleted) { this.deleted = data.deleted; }
   if (data.smf && data.smf.thread_id) { this.smf  = data.smf; }
   this.board_id = data.board_id;
 }
