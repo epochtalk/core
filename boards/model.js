@@ -2,13 +2,16 @@ module.exports = Board;
 var Promise = require('bluebird');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
-var db = require(path.join(__dirname, '..', 'db'));
 var schema = require(path.join(__dirname, 'schema'));
+var db = require(path.join(__dirname, '..', 'db'));
+var indexPrefix = config.boards.indexPrefix;
+var prefix = config.boards.prefix;
+var sep = config.sep;
 
 // helper functions
 var keyForBoard = function(id) {
   var boardKey;
-  if (id) { boardKey = config.boards.prefix + config.sep + id; }
+  if (id) { boardKey = prefix + sep + id; }
   return boardKey;
 };
 
@@ -16,7 +19,7 @@ var legacyKeyForBoard = function(legacyId) {
   var legacyKey;
   if (legacyId) {
     legacyId = legacyId.toString();
-    legacyKey = config.boards.prefix + config.sep + legacyId;
+    legacyKey = prefix + sep + legacyId;
   }
   return legacyKey;
 };
@@ -118,4 +121,4 @@ Board.getLegacyKeyFromId = function(legacyId) {
   return legacyKeyForBoard(legacyId);
 };
 
-Board.prefix = config.boards.prefix;
+Board.prefix = prefix;

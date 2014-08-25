@@ -115,9 +115,8 @@ describe('boards', function() {
         parentBoard.children_ids = [childABoard.id, childBBoard.id];
         return boards.update(parentBoard)
         .then(function(board) {
-          board.id.should.be.ok;
-          board.id.should.be.a('string');
-          board.created_at.should.be.a('number');
+          board.id.should.equal(parentBoard.id);
+          board.created_at.should.equal(parentBoard.created_at);
           board.updated_at.should.be.a('number');
           should.not.exist(board.imported_at);
           should.not.exist(board.deleted);
@@ -152,8 +151,8 @@ describe('boards', function() {
       return boards.find(findBoard.id)
       .then(function(board){
         board.id.should.equal(findBoard.id);
-        board.created_at.should.be.a('number');
-        board.updated_at.should.be.a('number');
+        board.created_at.should.equal(findBoard.created_at);
+        board.updated_at.should.equal(findBoard.updated_at);
         should.not.exist(board.imported_at);
         should.not.exist(board.deleted);
         board.name.should.equal(findBoard.name);
@@ -200,7 +199,7 @@ describe('boards', function() {
       return boards.find(parentBoard.id)
       .then(function(board) {
         board.id.should.equal(parentBoard.id);
-        board.created_at.should.be.a('number');
+        board.created_at.should.equal(parentBoard.created_at);
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
         should.not.exist(board.deleted);
@@ -219,8 +218,8 @@ describe('boards', function() {
       return boards.find(childABoard.id)
       .then(function(board) {
         board.id.should.equal(childABoard.id);
-        board.created_at.should.be.a('number');
-        board.updated_at.should.be.a('number');
+        board.created_at.should.equal(childABoard.created_at);
+        board.updated_at.should.equal(childABoard.updated_at);
         should.not.exist(board.imported_at);
         should.not.exist(board.deleted);
         board.name.should.equal(childABoard.name);
@@ -256,7 +255,7 @@ describe('boards', function() {
       return boards.update(updateBoard)
       .then(function(board) {
         board.id.should.equal(updateBoard.id)
-        board.created_at.should.be.a('number');
+        board.created_at.should.equal(updateBoard.created_at);
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
         should.not.exist(board.deleted);
@@ -272,9 +271,8 @@ describe('boards', function() {
     it('should return the updated board on find', function() {
       return boards.find(updateBoard.id)
       .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
-        board.created_at.should.be.a('number');
+        board.id.should.equal(updateBoard.id);
+        board.created_at.should.equal(updateBoard.created_at);
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
         should.not.exist(board.deleted);
@@ -332,9 +330,9 @@ describe('boards', function() {
       return boards.boardByOldId(importBoard.smf.board_id)
       .then(function(board) {
         board.id.should.equal(importBoard.id);
-        board.created_at.should.be.a('number');
-        board.updated_at.should.be.a('number');
-        board.imported_at.should.be.a('number');
+        board.created_at.should.equal(importBoard.created_at);
+        board.updated_at.should.be.equal(importBoard.updated_at);
+        board.imported_at.should.be.equal(importBoard.imported_at);
         should.not.exist(board.deleted);
         board.name.should.equal(importBoard.name);
         board.description.should.equal(importBoard.description);
@@ -364,9 +362,9 @@ describe('boards', function() {
       return boards.purge(importBoard.id)
       .then(function(board) {
         board.id.should.equal(importBoard.id);
-        board.created_at.should.be.a('number');
-        board.updated_at.should.be.a('number');
-        board.imported_at.should.be.a('number');
+        board.created_at.should.be.equal(importBoard.created_at);
+        board.updated_at.should.be.equla(importBoard.updated_at);
+        board.imported_at.should.be.equal(importBoard.imported_at);
         should.not.exist(board.deleted);
         board.name.should.equal(importBoard.name);
         board.description.should.equal(importBoard.description);
@@ -400,7 +398,7 @@ describe('boards', function() {
       return boards.delete(testBoard.id)
       .then(function(board) {
         board.id.should.equal(testBoard.id);
-        board.created_at.should.be.a('number');
+        board.created_at.should.be.equal(testBoard.created_at);
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
         board.deleted.should.be.true;
@@ -416,7 +414,7 @@ describe('boards', function() {
       .then(boards.find)
       .then(function(board) {
         board.id.should.equal(testBoard.id);
-        board.created_at.should.be.a('number');
+        board.created_at.should.be.equal(testBoard.created_at);
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
         board.deleted.should.be.true;
@@ -448,7 +446,7 @@ describe('boards', function() {
       return boards.update(testBoard)
       .then(function(board) {
         board.id.should.equal(testBoard.id);
-        board.created_at.should.be.a('number');
+        board.created_at.should.equal(testBoard.created_at);
         board.updated_at.should.be.a('number');
         should.not.exist(board.imported_at);
         should.not.exist(board.deleted);
@@ -474,11 +472,11 @@ describe('boards', function() {
     });
 
     it('should purge the specified board', function() {
-      boards.purge(testBoard.id)
+      return boards.purge(testBoard.id)
       .then(function(board) {
         board.id.should.equal(testBoard.id);
-        board.created_at.should.be.a('number');
-        board.updated_at.should.be.a('number');
+        board.created_at.should.equal(testBoard.created_at);
+        board.updated_at.should.equal(testBoard.updated_at);
         should.not.exist(board.imported_at);
         should.not.exist(board.deleted);
         board.name.should.equal(testBoard.name);

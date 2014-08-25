@@ -23,10 +23,10 @@ boards.import = function(board) {
 /* CREATE */
 boards.create = function(board) {
   // insert into db
-  board.id = helper.genId();
   var timestamp = Date.now();
   if (!board.created_at) { board.created_at = timestamp; }
   board.updated_at = timestamp;
+  board.id = helper.genId(board.created_at);
   var boardKey = board.getKey();
 
   return db.content.putAsync(boardKey, board)

@@ -10,13 +10,13 @@ var postSchema = joi.object().keys({
   title: joi.string().required(),
   body: joi.string().required(),
   thread_id: joi.string().required(),
-  board_id: joi.string(),
   created_at: joi.number(),
-  imported_at: joi.number(),
   updated_at: joi.number(),
+  imported_at: joi.number(),
+  deleted: joi.boolean(),
   smf: {
-    post_id: joi.number(),
-    thread_id: joi.number()
+    thread_id: joi.number(),
+    post_id: joi.number()
   }
 });
 

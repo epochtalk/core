@@ -11,7 +11,7 @@ posts.import = function(data) {
     return postsDb.import(newPost);
   })
   .then(function(post) {
-    return post;
+    return post.simple();
   });
 };
 
@@ -22,28 +22,34 @@ posts.create = function(data) {
     return postsDb.insert(newPost);
   })
   .then(function(post) {
-    return post;
+    return post.simple();
   });
 };
 
 posts.find = function(id) {
   return postsDb.find(id)
   .then(function(post) {
-    return post;
+    return post; // already simple
   });
 };
 
-posts.byThread = function(id, opts) {
-  return postsDb.byThread(id, opts)
-  .then(function(posts) {
-    return posts;
+posts.delete = function(id) {
+  return postsDb.remove(id)
+  .then(function(post) {
+    return post.simple();
   });
 };
 
-posts.delete = function(data) {
-  var postToDelete = new Post(data);
-  return postsDb.remove(postToDelete)
+posts.postByOldId = function(oldId) {
+  return postsDb.postByOldId(oldId)
   .then(function(post) {
     return post;
+  });
+};
+
+posts.byThread = function(threadId, opts) {
+  return postsDb.byThread(threadId, opts)
+  .then(function(posts) {
+    return posts; // all already simple
   });
 };

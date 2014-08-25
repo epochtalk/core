@@ -24,10 +24,10 @@ threadsDb.insert = function(thread) {
   if (!thread.board_id) {
     return Promise.reject('Invalid board id.');
   }
-  thread.id = helper.genId();
   var timestamp = Date.now();
   if (!thread.created_at) { thread.created_at = timestamp; }
   thread.updated_at = timestamp;
+  thread.id = helper.genId(thread.created_at);
   var boardThreadKey = thread.getBoardThreadKey();
   var postCountKey = thread.getPostCountKey();
   return db.content.putAsync(thread.getKey(), thread)
@@ -65,7 +65,7 @@ threadsDb.remove = function(id) {
 
 threadsDb.find = function(id) {
   var thread;
-  var threadKey = config.threads.prefix + config.sep + id;
+  var threadKey = Thread.getKeyFromId(id);
 
   return db.content.getAsync(threadKey)
   .then(function(dbThread) {
@@ -94,14 +94,15 @@ threadsDb.threadByOldId = function(oldId) {
 threadsDb.byBoard = function(boardId, opts) {
   return new Promise(function(fulfill, reject) {
     var entries = [];
-    // return map of entries as an threadId and title
-    var handler = function() {
-      var fullEntries = Promise.all(entries.map(function(entry) {
-        return threadsDb.find(entry);
-      }));
-      return fulfill(fullEntries);
-    };
     var sorter = function(value) { entries.push(value); };
+    var handler = function() {
+      Promise.map(entries, function(entry) {
+        return threadsDb.find(entry);
+      })
+      .then(function(allThreads) {
+        return fulfill(allThreads);
+      });
+    };
 
     // query vars
     var startThreadKey = config.threads.indexPrefix + config.sep + boardId + config.sep;

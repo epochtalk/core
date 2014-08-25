@@ -50,8 +50,8 @@ describe('threads', function() {
       return threads.find(plainThread.id)
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
-        thread.created_at.should.be.a('number');
-        thread.updated_at.should.be.a('number');
+        thread.created_at.should.be.equal(plainThread.created_at);
+        thread.updated_at.should.be.equal(plainThread.updated_at);
         should.not.exist(thread.imported_at);
         should.not.exist(thread.deleted);
         should.not.exist(thread.smf);
@@ -81,8 +81,8 @@ describe('threads', function() {
       return threads.delete(plainThread.id)
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
-        thread.created_at.should.be.a('number');
-        thread.updated_at.should.be.a('number');
+        thread.created_at.should.equal(plainThread.created_at);
+        thread.updated_at.should.equal(plainThread.updated_at);
         should.not.exist(thread.imported_at);
         should.not.exist(thread.deleted);
         should.not.exist(thread.smf);
@@ -103,8 +103,7 @@ describe('threads', function() {
     var plainThread = {
       board_id: 'board_id_test',
       smf: {
-        thread_id: '112',
-        post_id: '1231' // this is required
+        thread_id: '112'
       }
     };
 
@@ -129,8 +128,7 @@ describe('threads', function() {
     var plainThread = {
       board_id: 'board_id_test',
       smf: {
-        thread_id: '112',
-        post_id: '1231' // this is required
+        thread_id: '112'
       }
     };
     var plainPost = { title: 'plain title', body: 'plain body' };
@@ -149,9 +147,9 @@ describe('threads', function() {
       return threads.threadByOldId(plainThread.smf.thread_id)
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
-        thread.created_at.should.be.a('number');
-        thread.updated_at.should.be.a('number');
-        thread.imported_at.should.be.a('number');
+        thread.created_at.should.equal(plainThread.created_at);
+        thread.updated_at.should.equal(plainThread.updated_at);
+        thread.imported_at.should.equal(plainThread.imported_at);
         should.not.exist(thread.deleted);
         thread.smf.thread_id.should.equal(plainThread.smf.thread_id);
         thread.post_count.should.equal(1);
@@ -166,8 +164,7 @@ describe('threads', function() {
     var plainThread = {
       board_id: 'board_id_test',
       smf: {
-        thread_id: '112',
-        post_id: '1231' // this is required
+        thread_id: '112'
       }
     };
     var plainPost = { title: 'plain title', body: 'plain body' };
@@ -186,9 +183,9 @@ describe('threads', function() {
       return threads.delete(plainThread.id)
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
-        thread.created_at.should.be.a('number');
-        thread.updated_at.should.be.a('number');
-        thread.imported_at.should.be.a('number');
+        thread.created_at.should.equal(plainThread.created_at);
+        thread.updated_at.should.equal(plainThread.updated_at);
+        thread.imported_at.should.equal(plainThread.imported_at);
         should.not.exist(thread.deleted);
         thread.smf.thread_id.should.equal(plainThread.smf.thread_id);
         should.not.exist(thread.post_count); // no post count for delete return
@@ -221,7 +218,8 @@ describe('threads', function() {
       .then(function(board) {
         boardId = board.id;
         plainThread.board_id = board.id;
-        
+      })
+      .then(function(board) {
         return threads.create(plainThread)
         .then(function(thread) {
           thread1 = thread;

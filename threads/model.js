@@ -3,12 +3,13 @@ var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var schema = require(path.join(__dirname, 'schema'));
 var indexPrefix = config.threads.indexPrefix;
+var prefix = config.threads.prefix;
 var sep = config.sep;
 
 // helper functions
 var keyForThread = function(id) {
   var threadKey;
-  if (id) { threadKey = config.threads.prefix + config.sep + id; }
+  if (id) { threadKey = prefix + sep + id; }
   return threadKey;
 };
 
@@ -16,7 +17,7 @@ var legacyKeyForThread = function(legacyId) {
   var legacyKey;
   if (legacyId) {
     legacyId = legacyId.toString();
-    legacyKey = config.threads.prefix + config.sep + legacyId;
+    legacyKey = prefix + sep + legacyId;
   }
   return legacyKey;
 };
@@ -43,17 +44,14 @@ Thread.prototype.getKey = function() {
 Thread.prototype.getPostCountKey = function() {
   var key;
   if (this.id) {
-    key = config.threads.prefix + config.sep + this.id + config.sep + 'post_count';
+    key = prefix + sep + this.id + sep + 'post_count';
   }
   return key;
 };
 
 Thread.prototype.getLegacyKey = function() {
-  var key;
-  if (this.smf && this.smf.thread_id) {
-    key = config.threads.prefix + config.sep + this.smf.thread_id;
-  }
-  return key;
+  var self = this;
+  return legacyKeyForThread(self.smf.thread_id);
 };
 
 Thread.prototype.getBoardThreadKey = function() {
@@ -78,7 +76,7 @@ Thread.prototype.simple = function() {
   if (self.updated_at) { thread.updated_at = self.updated_at; }
   if (self.imported_at) { thread.imported_at = self.imported_at; }
   if (self.deleted) { thread.deleted = self.deleted; }
-  if (self.smf && self.smf.thread_id && self.smf.post_id) { thread.smf  = self.smf; }
+  if (self.smf && self.smf.thread_id) { thread.smf  = self.smf; }
   // this is a generated property
   return thread;
 };
@@ -91,4 +89,4 @@ Thread.getLegacyKeyFromId = function(legacyId) {
   return legacyKeyForThread(legacyId);
 };
 
-Thread.prefix = config.threads.prefix;
+Thread.prefix = prefix;
