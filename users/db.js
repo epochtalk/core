@@ -8,32 +8,27 @@ var speakeasy = require('speakeasy');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 
-users.insert = function(post) {
-  return new Promise(function(fulfill, reject) {
-    if (!user.thread_id) {
-      reject('The thread_id isn\'t present for given User.');
-    }
-    var timestamp = Date.now();
-    user.created_at = timestamp;
-    user.updated_at = timestamp;
-    user.id = timestamp + uuid.v1({ msecs: timestamp });
-    // prepare for storage or match
-    user.passhash = bcrypt.hashSync(user.password, 12);
+users.insert = function(user) {
+  var timestamp = Date.now();
+  user.created_at = timestamp;
+  user.updated_at = timestamp;
+  user.id = timestamp + uuid.v1({ msecs: timestamp });
+  // prepare for storage or match
+  user.passhash = bcrypt.hashSync(user.password, 12);
 
-    delete user.password;
-    delete user.confirm_password;
+  delete user.password;
+  delete user.confirm_password;
 
-    db.content.putAsync(user.getKey(), post)
-    .then(function() {
-      fulfill(user);
-    });
+  return db.content.putAsync(user.getKey(), user)
+  .then(function() {
+    return user;
   });
 };
 
-users.remove = function(post) {
+users.remove = function(user) {
   return db.content.delAsync(user.getKey())
   .then(function() {
-    db.deleted.putAsync(user.getKey, post);
+    db.deleted.putAsync(user.getKey, user);
   })
   .then(function() {
     return user;

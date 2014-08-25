@@ -8,25 +8,14 @@ var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 var modelPrefix = config.users.prefix;
 var sep = config.sep;
+var usersDb = require(path.join(__dirname, 'db'));
+var User = require(path.join(__dirname, 'model'));
 
 var validator = require(path.join(__dirname, 'validator'));
 
-var create = function(user) {
-  user.created_at = Date.now();
-  var id = uuid.v1({msecs: user.created_at});
-  var key = modelPrefix + sep + id;
-  user.id = id;
-  var valid = false;
-  user.passhash = bcrypt.hashSync(user.password, 12);
-  user.timestamps = { created: new Date().getTime() };
-  // original clear text is never stored
-  delete user.password;
-  delete user.confirm_password;
-
-  return db.content.putAsync(key, user)
-  .then(function() {
-    return user;
-  });
+var create = function(data) {
+  var newUser = new User(data);
+  return usersDb.insert(newUser);
 };
 
 users.create = function(user) {

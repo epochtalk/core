@@ -13,6 +13,9 @@ function User(data) {
     this.updated_at = data.updated_at;
   }
   this.username = data.username;
+  this.password = data.password;
+  this.confirmation = data.confirmation;
+  
 }
 
 User.prototype.getKey = function() {
