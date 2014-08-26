@@ -6,17 +6,24 @@ var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Post = require(path.join(__dirname, 'model'));
+var User = require(path.join(__dirname, '..', 'users', 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
 
 posts.import = function(post) {
   post.imported_at = Date.now();
-  return posts.insert(post)
-  .then(function(dbPost) {
-    if (dbPost.smf) {
-      return db.legacy.putAsync(dbPost.getLegacyKey(), dbPost.id)
-      .then(function() { return dbPost; });
-    }
+  return db.legacy.getAsync(User.legacyKeyForId(post.smf.ID_MEMBER))
+  .then(function(userId) {
+    post.user_id = userId;
+  })
+  .then(function() {
+    return posts.insert(post)
+    .then(function(dbPost) {
+      if (dbPost.smf) {
+        return db.legacy.putAsync(dbPost.getLegacyKey(), dbPost.id)
+        .then(function() { return dbPost; });
+      }
+    });
   });
 };
 
