@@ -11,6 +11,14 @@ var sep = config.sep;
 var usersDb = require(path.join(__dirname, 'db'));
 var User = require(path.join(__dirname, 'model'));
 
+users.import = function(data) {
+  var newUser = new User(data);
+  return newUser.validate()
+  .then(function() {
+    return usersDb.import(newUser);
+  })
+};
+
 users.create = function(data) {
   var newUser = new User(data);
   return newUser.validate()
