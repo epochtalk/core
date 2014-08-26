@@ -4,7 +4,7 @@ var Promise = require('bluebird');
 var validate = Promise.promisify(joi.validate);
 
 var createSchema = joi.object().keys({
-  username: joi.string().alphanum().min(3).max(30).required(),
+  username: joi.string().regex(/[a-zA-Z0-9_\-]/).min(3).max(30).required(),
   email: joi.string().email(),
   password: joi.string().regex(/[a-zA-Z0-9]{3,30}/),
   confirmation: joi.ref('password')

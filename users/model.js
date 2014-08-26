@@ -16,6 +16,8 @@ function User(data) {
   this.username = data.username;
   this.password = data.password;
   this.confirmation = data.confirmation;
+
+  this.smf = data.smf;
 }
 
 User.prototype.validate = function() {
