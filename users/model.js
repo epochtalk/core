@@ -33,6 +33,14 @@ User.prototype.getKey = function() {
   return key;
 };
 
+User.prototype.legacyKey = function() {
+  var key;
+  if (this.smf.ID_MEMBER) {
+    key = config.users.prefix + config.sep + this.smf.ID_MEMBER;
+  }
+  return key;
+}
+
 User.legacyKeyForId = function(legacyId) {
   var legacyKey;
   if (legacyId) {
@@ -40,3 +48,4 @@ User.legacyKeyForId = function(legacyId) {
   }
   return legacyKey;
 };
+

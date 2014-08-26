@@ -13,7 +13,7 @@ users.import = function(user) {
   return users.insert(user)
   .then(function(dbUser) {
     if (dbUser.smf) {
-      return db.legacy.putAsync(dbUser.getLegacyKey(), dbUser.id)
+      return db.legacy.putAsync(dbUser.legacyKey(), dbUser.id)
       .then(function() {
         return dbUser;
       });
