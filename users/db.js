@@ -54,3 +54,9 @@ users.find = function(id) {
     return user;
   });
 };
+
+users.findByLegacyId = function(legacyId) {
+  var legacyUserKey = User.legacyKeyFromId(legacyId);
+  return db.legacy.getAsync(legacyUserKey)
+  .then(users.find);
+}

@@ -31,3 +31,10 @@ User.prototype.getKey = function() {
   return key;
 };
 
+User.legacyKeyForId = function(legacyId) {
+  var legacyKey;
+  if (legacyId) {
+    legacyKey = config.users.prefix + sep + legacyId;
+  }
+  return legacyKey;
+};
