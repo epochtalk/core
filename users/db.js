@@ -10,7 +10,7 @@ var config = require(path.join(__dirname, '..', 'config'));
 
 users.import = function(user) {
   user.imported_at = Date.now();
-  return user.insert(user)
+  return users.insert(user)
   .then(function(dbUser) {
     if (dbUser.smf) {
       return db.legacy.putAsync(dbUser.getLegacyKey(), dbUser.id)
