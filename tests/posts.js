@@ -259,6 +259,60 @@ describe('posts', function() {
     });
   });
 
+  describe('#update', function() {
+    var plainPost = { title: 'post title', body: 'hello world.' };
+
+    before(function() {
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainPost.thread_id = thread.id;
+        return plainPost;
+      })
+      .then(posts.create)
+      .then(function(post) {
+        plainPost = post;
+      });
+    });
+
+    it('should update specified post with new values', function() {
+      plainPost.name = 'update name';
+      plainPost.description = 'update Description';
+
+      return posts.update(plainPost)
+      .then(function(post) {
+        post.id.should.equal(plainPost.id);
+        post.created_at.should.equal(plainPost.created_at);
+        post.updated_at.should.be.a('number');
+        should.not.exist(post.imported_at);
+        post.title.should.equal(plainPost.title);
+        post.body.should.equal(plainPost.body);
+        should.not.exist(post.deleted);
+        should.not.exist(post.smf);
+        post.thread_id.should.equal(plainPost.thread_id);
+      });
+    });
+
+    it('should return the updated post on find', function() {
+      return posts.find(plainPost.id)
+      .then(function(post) {
+        post.id.should.equal(plainPost.id);
+        post.created_at.should.equal(plainPost.created_at);
+        post.updated_at.should.be.a('number');
+        should.not.exist(post.imported_at);
+        post.title.should.equal(plainPost.title);
+        post.body.should.equal(plainPost.body);
+        should.not.exist(post.deleted);
+        should.not.exist(post.smf);
+        post.thread_id.should.equal(plainPost.thread_id);
+      });
+    });
+  });
+
   describe('#delete', function() {
     var plainPost = { title: 'post title', body: 'hello world.' };
 
@@ -308,44 +362,43 @@ describe('posts', function() {
     });
   });
 
-  // update needed first
-  // describe('#undelete', function() {
-  //   var plainPost = { title: 'post title', body: 'hello world.' };
+  describe('#undelete', function() {
+    var plainPost = { title: 'post title', body: 'hello world.' };
 
-  //   before(function() {
-  //     var newBoard = { name: 'Board', description: 'Board Desc' };
-  //     return boards.create(newBoard)
-  //     .then(function(board) {
-  //       return { board_id: board.id };
-  //     })
-  //     .then(threads.create)
-  //     .then(function(thread) {
-  //       plainPost.thread_id = thread.id;
-  //       return plainPost;
-  //     })
-  //     .then(posts.create)
-  //     .then(function(post) {
-  //       return posts.delete(post.id)
-  //       .then(function(post) { plainPost = post });
-  //     });
-  //   });
+    before(function() {
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainPost.thread_id = thread.id;
+        return plainPost;
+      })
+      .then(posts.create)
+      .then(function(post) {
+        return posts.delete(post.id)
+        .then(function(post) { plainPost = post });
+      });
+    });
 
-  //   it('should undelete specified post', function() {
-  //     plainPost.deleted = false;
-  //     return posts.update(plainPost)
-  //     .then(function(post) {
-  //       post.id.should.equal(plainPost.id);
-  //       post.created_at.should.equal(plainPost.created_at);
-  //       post.updated_at.should.be.a('number');
-  //       should.not.exist(post.imported_at);
-  //       post.title.should.equal(plainPost.title);
-  //       post.body.should.equal(plainPost.body);
-  //       should.not.exist(post.deleted);
-  //       should.not.exist(post.smf);
-  //       post.thread_id.should.equal(plainPost.thread_id);
-  //     });
-  //   });
-  // });
+    it('should undelete specified post', function() {
+      plainPost.deleted = false;
+      return posts.update(plainPost)
+      .then(function(post) {
+        post.id.should.equal(plainPost.id);
+        post.created_at.should.equal(plainPost.created_at);
+        post.updated_at.should.be.a('number');
+        should.not.exist(post.imported_at);
+        post.title.should.equal(plainPost.title);
+        post.body.should.equal(plainPost.body);
+        should.not.exist(post.deleted);
+        should.not.exist(post.smf);
+        post.thread_id.should.equal(plainPost.thread_id);
+      });
+    });
+  });
 
   describe('#purge', function() {
     var plainPost = { title: 'post title', body: 'hello world.' };

@@ -73,8 +73,5 @@ boards.boardByOldId = function(oldId) {
 };
 
 boards.all = function() {
-  return db.all()
-  .then(function(allboards) {
-    return allboards;
-  });
+  return db.all(); // all already simple
 };

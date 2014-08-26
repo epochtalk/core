@@ -27,10 +27,7 @@ threads.create = function(data) {
 };
 
 threads.find = function(id) {
-  return threadsDb.find(id)
-  .then(function(thread) {
-    return thread; // already simple
-  });
+  return threadsDb.find(id); // already simple
 };
 
 threads.delete = function(id) {
@@ -41,15 +38,9 @@ threads.delete = function(id) {
 };
 
 threads.threadByOldId = function(oldId) {
-  return threadsDb.threadByOldId(oldId)
-  .then(function(thread) {
-    return thread;
-  });
+  return threadsDb.threadByOldId(oldId); // already simple
 };
 
 threads.byBoard = function(boardId, opts) {
-  return threadsDb.byBoard(boardId, opts)
-  .then(function(threads) {
-    return threads; // all already simple
-  });
+  return threadsDb.byBoard(boardId, opts); // all already simple
 };

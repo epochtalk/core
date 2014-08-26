@@ -81,6 +81,40 @@ posts.find = function(id) {
   });
 };
 
+posts.update = function(post) {
+  var postKey = post.getKey();
+  var updatePost = null;
+
+  var threadKeyPrefix = post.getThreadKey() + config.sep;
+  var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
+
+  // check if first post in thread
+  return db.metadata.getAsync(threadFirstPostIdKey)
+  .then(function(firstPostId) {
+    if (firstPostId === post.id) {
+      return db.metadata.putAsync(threadFirstPostIdKey, post.title)
+      .then(function() { return postKey; });
+    }
+    return postKey;
+  })
+  .then(function(key) {
+    return db.content.getAsync(key); // get old post
+  })
+  .then(function(oldPost) {
+    updatePost = new Post(oldPost);
+
+    // update board values
+    updatePost.title = post.title;
+    updatePost.body = post.body;
+    updatePost.deleted = post.deleted;
+    updatePost.updated_at = Date.now();
+
+    // insert back into db
+    return db.content.putAsync(postKey, updatePost);
+  })
+  .then(function() { return updatePost; });
+};
+
 posts.delete = function(postId) {
   var postKey = Post.getKeyFromId(postId);
   var deletedPost = null;

@@ -27,9 +27,17 @@ posts.create = function(data) {
 };
 
 posts.find = function(id) {
-  return postsDb.find(id)
+  return postsDb.find(id);
+};
+
+posts.update = function(data) {
+  var updatePost = new Post(data);
+  return updatePost.validate()
+  .then(function() {
+    return postsDb.update(updatePost);
+  })
   .then(function(post) {
-    return post; // already simple
+    return post.simple();
   });
 };
 
@@ -48,15 +56,9 @@ posts.purge = function(id) {
 };
 
 posts.postByOldId = function(oldId) {
-  return postsDb.postByOldId(oldId)
-  .then(function(post) {
-    return post;
-  });
+  return postsDb.postByOldId(oldId);
 };
 
 posts.byThread = function(threadId, opts) {
-  return postsDb.byThread(threadId, opts)
-  .then(function(posts) {
-    return posts; // all already simple
-  });
+  return postsDb.byThread(threadId, opts); // all already simple
 };
