@@ -27,7 +27,9 @@ users.insert = function(user) {
   user.updated_at = timestamp;
   user.id = timestamp + uuid.v1({ msecs: timestamp });
   // prepare for storage or match
-  user.passhash = bcrypt.hashSync(user.password, 12);
+  if (user.password) {
+    user.passhash = bcrypt.hashSync(user.password, 12);
+  }
 
   delete user.password;
   delete user.confirm_password;
