@@ -11,12 +11,7 @@ var helper = require(path.join(__dirname, '..', 'helper'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
 
 posts.import = function(post) {
-  post.imported_at = Date.now();
-  return db.legacy.getAsync(User.legacyKeyForId(post.smf.ID_MEMBER))
-  .then(function(userId) {
-    post.user_id = userId;
-  })
-  .then(function() {
+  var insertPost = function() {
     return posts.insert(post)
     .then(function(dbPost) {
       if (dbPost.smf) {
@@ -24,7 +19,21 @@ posts.import = function(post) {
         .then(function() { return dbPost; });
       }
     });
-  });
+  };
+
+  post.imported_at = Date.now();
+  var promise;
+  if (post.smf.ID_MEMBER) {
+    promise = db.legacy.getAsync(User.legacyKeyForId(post.smf.ID_MEMBER))
+    .then(function(userId) {
+      post.user_id = userId;
+    })
+    .then(insertPost);
+  }
+  else {
+    promise = insertPost();
+  }
+  return promise;
 };
 
 posts.insert = function(post) {
