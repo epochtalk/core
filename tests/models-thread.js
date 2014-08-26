@@ -4,21 +4,35 @@ var dbName = 'test-epoch.db';
 var path = require('path');
 var core = require(path.join(__dirname, '..'))(dbName);
 var threads = core.threads;
+var boards = core.boards;
+var posts = core.posts;
 var Thread = require(path.join(__dirname, '..', 'threads', 'model'));
 var config = require(path.join(__dirname, '..', 'config'));
 
 describe('Thread', function() {
 
   describe('#new', function() {
-    var plainThread = { board_id: 'test_board_id' };
+    var plainThread;
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
 
     before(function() {
-      return threads.create(plainThread)
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
       .then(function(thread) {
         plainThread = thread;
-      });
+        plainPost.thread_id = thread.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; });
     });
-    
+
     it('should create a plain thread object', function() {
       var thread = new Thread(plainThread);
       thread.id.should.equal(plainThread.id);
@@ -34,15 +48,26 @@ describe('Thread', function() {
   });
 
   describe('#getKey', function() {
-    var plainThread = { board_id: 'test_board_id' };
+    var plainThread;
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
 
     before(function() {
-      return threads.create(plainThread)
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
       .then(function(thread) {
         plainThread = thread;
-      });
+        plainPost.thread_id = thread.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; });
     });
-
     it('should return the thread\'s key', function() {
       var threadPrefix = config.threads.prefix;
       var sep = config.sep;
@@ -72,30 +97,42 @@ describe('Thread', function() {
 
   describe('#getLegacyKey', function() {
     var plainThread = {
-      board_id: 'test_board_id',
       smf: {
         thread_id: '0123456789',
         post_id: '9876543210'
       }
     };
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
 
     before(function() {
-      return threads.create(plainThread)
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        plainThread.board_id = board.id;
+        return plainThread;
+      })
+      .then(threads.create)
       .then(function(thread) {
         plainThread = thread;
-      });
+        plainPost.thread_id = thread.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; });
     });
 
     it('should return the board\'s legacy key', function() {
       var threadPrefix = config.threads.prefix;
       var sep = config.sep;
 
-      var thread = new Thread(plainThread);
-      var key = thread.getLegacyKey();
+      var newThread = new Thread(plainThread);
+      var key = newThread.getLegacyKey();
 
       key.should.be.ok;
       key.should.be.a('string');
-      key.should.be.equal(threadPrefix + sep + thread.smf.thread_id);
+      key.should.be.equal(threadPrefix + sep + newThread.smf.thread_id);
     });
   });
 
@@ -114,13 +151,25 @@ describe('Thread', function() {
   });
 
   describe('#getPostCountKey', function() {
-    var plainThread = { board_id: 'test_board_id' };
+    var plainThread;
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
 
     before(function() {
-      return threads.create(plainThread)
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
       .then(function(thread) {
         plainThread = thread;
-      });
+        plainPost.thread_id = thread.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; });
     });
 
     it('should return the board\'s postCount key', function() {
@@ -138,13 +187,25 @@ describe('Thread', function() {
   });
 
   describe('#getBoardThreadKey', function() {
-    var plainThread = { board_id: 'test_board_id' };
+    var plainThread;
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
 
     before(function() {
-      return threads.create(plainThread)
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
       .then(function(thread) {
         plainThread = thread;
-      });
+        plainPost.thread_id = thread.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; });
     });
 
     it('should return the board\'s boardThread key', function() {

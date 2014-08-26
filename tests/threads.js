@@ -10,9 +10,26 @@ var boards = core.boards;
 describe('threads', function() {
 
   describe('#create', function() {
-    var plainThread = {
-      board_id: 'board_id_test'
+    var plainThread;
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
     };
+
+    before(function() {
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainThread = thread;
+        plainPost.thread_id = thread.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; });
+    });
 
     it('should create a thread in the db', function() {
       return threads.create(plainThread)
@@ -32,23 +49,32 @@ describe('threads', function() {
   });
 
   describe('#find', function() {
-    // *** find doesn't work if no posts exists for given thread *** 
-    var plainThread = { board_id: 'board_id_test' };
-    var plainPost = { title: 'plain title', body: 'plain body' };
+    // *** find doesn't work if no posts exists for given thread ***
+    var plainThread;
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
 
     before(function() {
-      return threads.create(plainThread)
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
-        return plainPost;
+        return posts.create(plainPost);
       })
-      .then(posts.create);
+      .then(function(post) { plainPost = post; });
     });
 
     it('should find a thread from the db', function() {
       return threads.find(plainThread.id)
       .then(function(thread) {
+        console.log(thread);
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.be.equal(plainThread.created_at);
         thread.updated_at.should.be.equal(plainThread.updated_at);
@@ -64,17 +90,25 @@ describe('threads', function() {
 
   describe('#delete', function() {
     // *** you can delete a thread with posts still in it ***
-    var plainThread = { board_id: 'board_id_test' };
-    var plainPost = { title: 'plain title', body: 'plain body' }; // body required
+    var plainThread;
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
 
     before(function() {
-      return threads.create(plainThread)
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
-        return plainPost;
+        return posts.create(plainPost);
       })
-      .then(posts.create);
+      .then(function(post) { plainPost = post; });
     });
 
     it('should delete a thread from the db', function() {
@@ -98,14 +132,34 @@ describe('threads', function() {
       });
     });
   });
-  
+
   describe('#import', function() {
     var plainThread = {
-      board_id: 'board_id_test',
       smf: {
         thread_id: '112'
       }
     };
+
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
+
+    before(function() {
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        plainThread.board_id = board.id;
+        return plainThread;
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainThread = thread;
+        plainPost.thread_id = thread.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; });
+    });
 
     it('should create a thread in the db', function() {
       return threads.import(plainThread)
@@ -126,21 +180,30 @@ describe('threads', function() {
 
   describe('#import_get', function() {
     var plainThread = {
-      board_id: 'board_id_test',
       smf: {
         thread_id: '112'
       }
     };
-    var plainPost = { title: 'plain title', body: 'plain body' };
+
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
 
     before(function() {
-      return threads.import(plainThread)
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        plainThread.board_id = board.id;
+        return plainThread;
+      })
+      .then(threads.import)
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
-        return plainPost;
+        return posts.create(plainPost);
       })
-      .then(posts.create);
+      .then(function(post) { plainPost = post; });
     });
 
     it('should verify key mapping for imported threads', function() {
@@ -162,21 +225,30 @@ describe('threads', function() {
   describe('#import_delete', function() {
     // *** you can delete a thread with posts still in it ***
     var plainThread = {
-      board_id: 'board_id_test',
       smf: {
         thread_id: '112'
       }
     };
-    var plainPost = { title: 'plain title', body: 'plain body' };
+
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
 
     before(function() {
-      return threads.import(plainThread)
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        plainThread.board_id = board.id;
+        return plainThread;
+      })
+      .then(threads.create)
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
-        return plainPost;
+        return posts.create(plainPost);
       })
-      .then(posts.create);
+      .then(function(post) { plainPost = post; });
     });
 
     it('should delete all imported thread key mappings', function() {
