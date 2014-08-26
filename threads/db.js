@@ -83,6 +83,10 @@ threadsDb.find = function(id) {
   })
   .then(function(count) {
     thread.post_count = Number(count);
+    return db.metadata.getAsync(threadKey + config.sep + 'first_post_id');
+  })
+  .then(function(firstPostId) {
+    thread.first_post_id = firstPostId;
     return db.metadata.getAsync(threadKey + config.sep + 'title');
   })
   .then(function(title) {

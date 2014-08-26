@@ -1,4 +1,3 @@
-var should = require('chai').should();
 var rimraf = require('rimraf');
 var Promise = require('bluebird');
 var path = require('path');
@@ -66,7 +65,9 @@ describe('metadata', function() {
         title: 'post title',
         body: 'post body'
       };
-      var threadId;
+      var threadId, firstPostId;
+      var first = true;
+      var firstPostTitle = 'First Post Title!';
       before(function() {
         var newBoard = { name: 'Board', description: 'Board Desc' };
         return boards.create(newBoard)
@@ -79,13 +80,24 @@ describe('metadata', function() {
           return threads.create(threadToCreate)
           .then(function(thread) {
             threadId = thread.id;
-            var tempPost = plainPost;
-            tempPost.thread_id = thread.id;
-            return [tempPost, tempPost, tempPost, tempPost, tempPost];
+            plainPost.thread_id = thread.id;
+            var firstPost = {
+              thread_id: thread.id,
+              title: firstPostTitle,
+              body: 'this is the first post'
+            };
+            return [firstPost, plainPost, plainPost, plainPost, plainPost];
           })
           .then(function(postArray) {
             return Promise.each(postArray, function(post) {
-              return posts.create(post);
+              return posts.create(post)
+              .then(function(post) {
+                if (first) {
+                  firstPostId = post.id;
+                  firstPostTitle = post.title;
+                  first = false;
+                }
+              });
             });
           });
         });
@@ -96,6 +108,24 @@ describe('metadata', function() {
           return threads.find(threadId)
           .then(function(thread) {
             thread.post_count.should.equal(5);
+          });
+        });
+      });
+
+      describe('#first_post_id', function() {
+        it('should store the id of the first post', function() {
+          return threads.find(threadId)
+          .then(function(thread) {
+            thread.first_post_id.should.equal(firstPostId);
+          });
+        });
+      });
+
+      describe('#title', function() {
+        it('should store the title of the first post', function() {
+          return threads.find(threadId)
+          .then(function(thread) {
+            thread.first_post_id.should.equal(firstPostId);
           });
         });
       });
