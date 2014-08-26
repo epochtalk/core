@@ -8,6 +8,19 @@ var speakeasy = require('speakeasy');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 
+users.import = function(user) {
+  user.imported_at = Date.now();
+  return user.insert(user)
+  .then(function(dbUser) {
+    if (dbUser.smf) {
+      return db.legacy.putAsync(dbUser.getLegacyKey(), dbUser.id)
+      .then(function() {
+        return dbUser;
+      });
+    }
+  });
+};
+
 users.insert = function(user) {
   var timestamp = Date.now();
   user.created_at = timestamp;
