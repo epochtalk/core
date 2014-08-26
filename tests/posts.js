@@ -9,6 +9,63 @@ var boards = core.boards;
 
 describe('posts', function() {
 
+  describe('#byThread', function() {
+    var post1 = { title: 'title', body: 'body' };
+    var post2 = { title: 'title', body: 'body' };
+    var parentThead;
+
+    before(function() {
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return core.boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(core.threads.create)
+      .then(function(thread) {
+        parentThread = thread;
+        post1.thread_id = thread.id;
+        post2.thread_id = thread.id;
+      })
+      .then(function() {
+        return posts.create(post1)
+        .then(function(post){
+          post1 = post;
+        });
+      })
+      .then(function() {
+        return posts.create(post2)
+        .then(function(post) {
+          post2 = post;
+        });
+      });
+    });
+
+    it('should return posts for a threadId', function() {
+      return posts.byThread(parentThread.id, { limit: 10 })
+      .then(function(allPosts) {
+        allPosts.forEach(function(post) {
+          post.id.should.be.ok;
+          post.id.should.be.a('string');
+          post.created_at.should.be.a('number');
+          post.updated_at.should.be.a('number');
+          should.not.exist(post.imported_at);
+          post.title.should.equal('title');
+          post.body.should.equal('body');
+          should.not.exist(post.deleted);
+          should.not.exist(post.smf);
+          post.thread_id.should.equal(parentThread.id);
+        });
+      });
+    });
+
+    it('should return 2 posts', function() {
+      return posts.byThread(parentThread.id, { limit: 10 })
+      .then(function(allPosts) {
+        allPosts.should.have.length(2);
+      });
+    });
+  });
+
   describe('#create', function() {
     var plainPost = { title: 'post title', body: 'hello world.' };
 
@@ -37,83 +94,6 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
-      });
-    });
-  });
-
-  describe('#find', function() {
-    var plainPost = { title: 'post title', body: 'hello world.' };
-
-    before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
-      .then(function(board) {
-        return { board_id: board.id };
-      })
-      .then(threads.create)
-      .then(function(thread) {
-        plainPost.thread_id = thread.id;
-        return plainPost;
-      })
-      .then(posts.create)
-      .then(function(post) {
-        plainPost = post;
-      });
-    });
-
-    it('should find a post from the db', function() {
-      return posts.find(plainPost.id)
-      .then(function(post) {
-        post.id.should.equal(plainPost.id);
-        post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.equal(plainPost.updated_at);
-        should.not.exist(post.imported_at);
-        post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.body);
-        should.not.exist(post.deleted);
-        should.not.exist(post.smf);
-        post.thread_id.should.equal(plainPost.thread_id);
-      });
-    });
-  });
-
-  describe('#delete', function() {
-    var plainPost = { title: 'post title', body: 'hello world.' };
-
-    before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
-      .then(function(board) {
-        return { board_id: board.id };
-      })
-      .then(threads.create)
-      .then(function(thread) {
-        plainPost.thread_id = thread.id;
-        return plainPost;
-      })
-      .then(posts.create)
-      .then(function(post) {
-        plainPost = post;
-      });
-    });
-
-    it('should delete a post from the db', function() {
-      return posts.delete(plainPost.id)
-      .then(function(post) {
-        post.id.should.equal(plainPost.id);
-        post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.equal(plainPost.updated_at);
-        should.not.exist(post.imported_at);
-        post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.body);
-        should.not.exist(post.deleted);
-        should.not.exist(post.smf);
-        post.thread_id.should.equal(plainPost.thread_id);
-        return post.id;
-      })
-      .then(posts.find)
-      .catch(function(err) {
-        err.should.not.be.null;
       });
     });
   });
@@ -223,7 +203,7 @@ describe('posts', function() {
     });
 
     it('should delete all imported thread key mappings', function() {
-      return posts.delete(plainPost.id)
+      return posts.purge(plainPost.id)
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
@@ -243,59 +223,167 @@ describe('posts', function() {
     });
   });
 
-  describe('#byThread', function() {
-    var post1 = { title: 'title', body: 'body' };
-    var post2 = { title: 'title', body: 'body' };
-    var parentThead;
+  describe('#find', function() {
+    var plainPost = { title: 'post title', body: 'hello world.' };
 
     before(function() {
       var newBoard = { name: 'Board', description: 'Board Desc' };
-      return core.boards.create(newBoard)
+      return boards.create(newBoard)
       .then(function(board) {
         return { board_id: board.id };
       })
-      .then(core.threads.create)
+      .then(threads.create)
       .then(function(thread) {
-        parentThread = thread;
-        post1.thread_id = thread.id;
-        post2.thread_id = thread.id;
+        plainPost.thread_id = thread.id;
+        return plainPost;
       })
-      .then(function() {
-        return posts.create(post1)
-        .then(function(post){
-          post1 = post;
-        });
-      })
-      .then(function() {
-        return posts.create(post2)
-        .then(function(post) {
-          post2 = post;
-        });
+      .then(posts.create)
+      .then(function(post) {
+        plainPost = post;
       });
     });
 
-    it('should return posts for a threadId', function() {
-      return posts.byThread(parentThread.id, { limit: 10 })
-      .then(function(allPosts) {
-        allPosts.forEach(function(post) {
-          post.id.should.be.ok;
-          post.id.should.be.a('string');
-          post.created_at.should.be.a('number');
-          post.updated_at.should.be.a('number');
-          should.not.exist(post.imported_at);
-          post.title.should.equal('title');
-          post.body.should.equal('body');
-          should.not.exist(post.deleted);
-          should.not.exist(post.smf);
-          post.thread_id.should.equal(parentThread.id);
-        });
+    it('should find a post from the db', function() {
+      return posts.find(plainPost.id)
+      .then(function(post) {
+        post.id.should.equal(plainPost.id);
+        post.created_at.should.equal(plainPost.created_at);
+        post.updated_at.should.equal(plainPost.updated_at);
+        should.not.exist(post.imported_at);
+        post.title.should.equal(plainPost.title);
+        post.body.should.equal(plainPost.body);
+        should.not.exist(post.deleted);
+        should.not.exist(post.smf);
+        post.thread_id.should.equal(plainPost.thread_id);
+      });
+    });
+  });
+
+  describe('#delete', function() {
+    var plainPost = { title: 'post title', body: 'hello world.' };
+
+    before(function() {
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainPost.thread_id = thread.id;
+        return plainPost;
+      })
+      .then(posts.create)
+      .then(function(post) {
+        plainPost = post;
       });
     });
 
-    it('should return 2 posts', function() {
-      return posts.byThread(parentThread.id, { limit: 10 })
-      .then(function(allPosts) {
-        allPosts.should.have.length(2);
+    it('should delete a post from the db', function() {
+      return posts.delete(plainPost.id)
+      .then(function(post) {
+        post.id.should.equal(plainPost.id);
+        post.created_at.should.equal(plainPost.created_at);
+        post.updated_at.should.be.a('number');
+        should.not.exist(post.imported_at);
+        post.title.should.equal(plainPost.title);
+        post.body.should.equal(plainPost.body);
+        post.deleted.should.be.true;
+        should.not.exist(post.smf);
+        post.thread_id.should.equal(plainPost.thread_id);
+        return post.id;
+      })
+      .then(posts.find)
+      .then(function(post) {
+        post.id.should.equal(plainPost.id);
+        post.created_at.should.equal(plainPost.created_at);
+        post.updated_at.should.be.a('number');
+        should.not.exist(post.imported_at);
+        post.title.should.equal(plainPost.title);
+        post.body.should.equal(plainPost.body);
+        post.deleted.should.be.true;
+        should.not.exist(post.smf);
+        post.thread_id.should.equal(plainPost.thread_id);
+      });
+    });
+  });
+
+  // update needed first
+  // describe('#undelete', function() {
+  //   var plainPost = { title: 'post title', body: 'hello world.' };
+
+  //   before(function() {
+  //     var newBoard = { name: 'Board', description: 'Board Desc' };
+  //     return boards.create(newBoard)
+  //     .then(function(board) {
+  //       return { board_id: board.id };
+  //     })
+  //     .then(threads.create)
+  //     .then(function(thread) {
+  //       plainPost.thread_id = thread.id;
+  //       return plainPost;
+  //     })
+  //     .then(posts.create)
+  //     .then(function(post) {
+  //       return posts.delete(post.id)
+  //       .then(function(post) { plainPost = post });
+  //     });
+  //   });
+
+  //   it('should undelete specified post', function() {
+  //     plainPost.deleted = false;
+  //     return posts.update(plainPost)
+  //     .then(function(post) {
+  //       post.id.should.equal(plainPost.id);
+  //       post.created_at.should.equal(plainPost.created_at);
+  //       post.updated_at.should.be.a('number');
+  //       should.not.exist(post.imported_at);
+  //       post.title.should.equal(plainPost.title);
+  //       post.body.should.equal(plainPost.body);
+  //       should.not.exist(post.deleted);
+  //       should.not.exist(post.smf);
+  //       post.thread_id.should.equal(plainPost.thread_id);
+  //     });
+  //   });
+  // });
+
+  describe('#purge', function() {
+    var plainPost = { title: 'post title', body: 'hello world.' };
+
+    before(function() {
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainPost.thread_id = thread.id;
+        return plainPost;
+      })
+      .then(posts.create)
+      .then(function(post) {
+        plainPost = post;
+      });
+    });
+
+    it('should purge the specified post', function() {
+      return posts.purge(plainPost.id)
+      .then(function(post) {
+        post.id.should.equal(plainPost.id);
+        post.created_at.should.equal(plainPost.created_at);
+        post.updated_at.should.be.a('number');
+        should.not.exist(post.imported_at);
+        post.title.should.equal(plainPost.title);
+        post.body.should.equal(plainPost.body);
+        should.not.exist(post.deleted);
+        should.not.exist(post.smf);
+        post.thread_id.should.equal(plainPost.thread_id);
+        return post.id;
+      })
+      .then(posts.find)
+      .catch(function(err) {
+        err.should.not.be.null;
       });
     });
   });

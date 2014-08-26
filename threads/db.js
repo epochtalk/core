@@ -128,7 +128,6 @@ threadsDb.byBoard = function(boardId, opts) {
       start: startThreadKey,
       end: endThreadKey
     };
-    console.log(queryOptions);
     // query thread Index
     db.indexes.createValueStream(queryOptions)
     .on('data', sorter)

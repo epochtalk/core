@@ -34,9 +34,16 @@ posts.find = function(id) {
 };
 
 posts.delete = function(id) {
-  return postsDb.remove(id)
+  return postsDb.delete(id)
   .then(function(post) {
     return post.simple();
+  });
+};
+
+posts.purge = function(id) {
+  return postsDb.purge(id)
+  .then(function(board) {
+    return board.simple();
   });
 };
 

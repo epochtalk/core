@@ -34,7 +34,7 @@ posts.insert = function(post) {
   var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
   var threadTitleKey = threadKeyPrefix + 'title';
   var threadPostCount, boardPostCountKey;
-  return threadsDb.find(post.thread_id)
+  return threadsDb.find(post.thread_id) // get parent thread
   .then(function(thread) {
     threadPostCount = thread.post_count;
     boardPostCountKey = config.boards.prefix + config.sep + thread.board_id + config.sep + 'post_count';
@@ -57,8 +57,6 @@ posts.insert = function(post) {
   .then(function() { return post; });
 };
 
-
-
 posts.find = function(id) {
   var postKey = Post.getKeyFromId(id);
   return db.content.getAsync(postKey)
@@ -67,7 +65,27 @@ posts.find = function(id) {
   });
 };
 
-posts.remove = function(id) {
+posts.delete = function(postId) {
+  var postKey = Post.getKeyFromId(postId);
+  var deletedPost = null;
+
+  // see if post already exists
+  return db.content.getAsync(postKey)
+  .then(function(postData) {
+    deletedPost = new Post(postData);
+
+    // add deleted: true flag to board
+    deletedPost.deleted = true;
+    deletedPost.updated_at = Date.now();
+
+    // insert back into db
+    return db.content.putAsync(postKey, deletedPost);
+  })
+  .then(function() { return deletedPost; });
+};
+
+/* deleting first post should remove thread */
+posts.purge = function(id) {
   var postKey = Post.getKeyFromId(id);
   var deletedPost;
   return db.content.getAsync(postKey)
@@ -78,10 +96,6 @@ posts.remove = function(id) {
   .then(function() {
     return db.content.delAsync(postKey);
   })
-
-  // delete any unnecessary keys
-  // -- delete threadFirstPostIdKey???
-
   .then(function() { // update threadPostCount
     // generate the threadPostCountKey
     var threadKeyPrefix = deletedPost.getThreadKey() + config.sep;
@@ -98,9 +112,40 @@ posts.remove = function(id) {
       return db.metadata.batchAsync(metadataBatch);
     });
   })
+  .then(function() { // update BoardPostCount
+    var boardPostCountKey;
+    // get parent thread
+    return threadsDb.find(deletedPost.thread_id)
+    .then(function(thread) {
+      // generate the boardPostCountKey
+      boardPostCountKey = config.boards.prefix + config.sep + thread.board_id + config.sep + 'post_count';
+      return db.metadata.getAsync(boardPostCountKey);
+    })
+    .then(function(count) {
+      count = Number(count);
+      count = count - 1;
+      if (count < 0) { count = 0; }
+      var metadataBatch = [
+        { type: 'put', key: boardPostCountKey, value: count }
+      ];
+      return db.metadata.batchAsync(metadataBatch);
+    });
+  })
   .then(function() { // delete ThreadPostKey
     var threadPostKey = deletedPost.getThreadPostKey();
     return db.indexes.delAsync(threadPostKey);
+  })
+  .then(function() { // manage ThreadFirstPostIdKey
+    var threadKeyPrefix = deletedPost.getThreadKey() + config.sep;
+    var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
+    return db.metadata.getAsync(threadFirstPostIdKey)
+    .then(function(postId) {
+      if (postId === deletedPost.id) {
+        // remove key
+        return db.metadata.delAsync(threadFirstPostIdKey);
+      }
+      else { return; }
+    });
   })
   .then(function() {
     return deletedPost;

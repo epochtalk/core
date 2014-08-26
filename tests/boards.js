@@ -134,6 +134,101 @@ describe('boards', function() {
     });
   });
 
+  describe('#IMPORT', function() {
+    var importBoard = {
+      name: 'import name',
+      description: 'import description',
+      smf: { board_id: '111' }
+    };
+    
+    it('should import a board', function() {
+      return boards.import(importBoard)
+      .then(function(board) {
+        board.id.should.be.ok;
+        board.id.should.be.a('string');
+        board.created_at.should.be.a('number');
+        board.updated_at.should.be.a('number');
+        board.imported_at.should.be.a('number');
+        should.not.exist(board.deleted);
+        board.name.should.equal(importBoard.name);
+        board.description.should.equal(importBoard.description);
+        board.smf.board_id.should.equal(importBoard.smf.board_id);
+        should.not.exist(board.parent_id);
+        should.not.exist(board.children_ids);
+        should.not.exist(board.children);
+      });
+    });
+  });
+
+  describe('#IMPORT_GET', function() {
+    var importBoard = {
+      name: 'import name',
+      description: 'import description',
+      smf: { board_id: '111' }
+    };
+
+    before(function() {
+      return boards.import(importBoard)
+      .then(function(board) {
+        importBoard = board;
+      });
+    });
+
+    it('should verify key mapping for imported boards', function() {
+      return boards.boardByOldId(importBoard.smf.board_id)
+      .then(function(board) {
+        board.id.should.equal(importBoard.id);
+        board.created_at.should.equal(importBoard.created_at);
+        board.updated_at.should.be.equal(importBoard.updated_at);
+        board.imported_at.should.be.equal(importBoard.imported_at);
+        should.not.exist(board.deleted);
+        board.name.should.equal(importBoard.name);
+        board.description.should.equal(importBoard.description);
+        board.smf.board_id.should.equal(importBoard.smf.board_id);
+        should.not.exist(board.parent_id);
+        should.not.exist(board.children_ids);
+        should.not.exist(board.children);
+      });
+    });
+  });
+
+  describe('#IMPORT_PURGE', function() {
+    var importBoard = {
+      name: 'import name',
+      description: 'import description',
+      smf: { board_id: '111' }
+    };
+
+    before(function() {
+      return boards.import(importBoard)
+      .then(function(board) {
+        importBoard = board;
+      });
+    });
+
+    it('should purge all imported boards key mappings', function() {
+      return boards.purge(importBoard.id)
+      .then(function(board) {
+        board.id.should.equal(importBoard.id);
+        board.created_at.should.be.equal(importBoard.created_at);
+        board.updated_at.should.be.equla(importBoard.updated_at);
+        board.imported_at.should.be.equal(importBoard.imported_at);
+        should.not.exist(board.deleted);
+        board.name.should.equal(importBoard.name);
+        board.description.should.equal(importBoard.description);
+        board.smf.board_id.should.equal(importBoard.smf.board_id);
+        should.not.exist(board.parent_id);
+        should.not.exist(board.children_ids);
+        should.not.exist(board.children);
+        return board.smf.board_id;
+      })
+      .then(boards.boardByOldId)
+      .catch(function(err) {
+        err.should.not.be.null;
+      });
+    });
+  });
+
   describe('#FIND', function() {
     var findBoard = {
       name: 'Find Test Board',
@@ -282,101 +377,6 @@ describe('boards', function() {
         should.not.exist(board.parent_id);
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
-      });
-    });
-  });
-
-  describe('#IMPORT', function() {
-    var importBoard = {
-      name: 'import name',
-      description: 'import description',
-      smf: { board_id: '111' }
-    };
-    
-    it('should import a board', function() {
-      return boards.import(importBoard)
-      .then(function(board) {
-        board.id.should.be.ok;
-        board.id.should.be.a('string');
-        board.created_at.should.be.a('number');
-        board.updated_at.should.be.a('number');
-        board.imported_at.should.be.a('number');
-        should.not.exist(board.deleted);
-        board.name.should.equal(importBoard.name);
-        board.description.should.equal(importBoard.description);
-        board.smf.board_id.should.equal(importBoard.smf.board_id);
-        should.not.exist(board.parent_id);
-        should.not.exist(board.children_ids);
-        should.not.exist(board.children);
-      });
-    });
-  });
-
-  describe('#IMPORT_GET', function() {
-    var importBoard = {
-      name: 'import name',
-      description: 'import description',
-      smf: { board_id: '111' }
-    };
-
-    before(function() {
-      return boards.import(importBoard)
-      .then(function(board) {
-        importBoard = board;
-      });
-    });
-
-    it('should verify key mapping for imported boards', function() {
-      return boards.boardByOldId(importBoard.smf.board_id)
-      .then(function(board) {
-        board.id.should.equal(importBoard.id);
-        board.created_at.should.equal(importBoard.created_at);
-        board.updated_at.should.be.equal(importBoard.updated_at);
-        board.imported_at.should.be.equal(importBoard.imported_at);
-        should.not.exist(board.deleted);
-        board.name.should.equal(importBoard.name);
-        board.description.should.equal(importBoard.description);
-        board.smf.board_id.should.equal(importBoard.smf.board_id);
-        should.not.exist(board.parent_id);
-        should.not.exist(board.children_ids);
-        should.not.exist(board.children);
-      });
-    });
-  });
-
-  describe('#IMPORT_PURGE', function() {
-    var importBoard = {
-      name: 'import name',
-      description: 'import description',
-      smf: { board_id: '111' }
-    };
-
-    before(function() {
-      return boards.import(importBoard)
-      .then(function(board) {
-        importBoard = board;
-      });
-    });
-
-    it('should purge all imported boards key mappings', function() {
-      return boards.purge(importBoard.id)
-      .then(function(board) {
-        board.id.should.equal(importBoard.id);
-        board.created_at.should.be.equal(importBoard.created_at);
-        board.updated_at.should.be.equla(importBoard.updated_at);
-        board.imported_at.should.be.equal(importBoard.imported_at);
-        should.not.exist(board.deleted);
-        board.name.should.equal(importBoard.name);
-        board.description.should.equal(importBoard.description);
-        board.smf.board_id.should.equal(importBoard.smf.board_id);
-        should.not.exist(board.parent_id);
-        should.not.exist(board.children_ids);
-        should.not.exist(board.children);
-        return board.smf.board_id;
-      })
-      .then(boards.boardByOldId)
-      .catch(function(err) {
-        err.should.not.be.null;
       });
     });
   });
