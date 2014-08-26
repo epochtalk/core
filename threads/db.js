@@ -69,6 +69,16 @@ threadsDb.remove = function(id) {
       return db.metadata.delAsync(postCountKey);
     });
   })
+  .then(function() {
+    var boardThreadKey = thread.getBoardThreadKey();
+    var boardThreadCountKey = thread.getBoardKey() + config.sep + 'thread_count';
+    return db.metadata.getAsync(boardThreadCountKey)
+    .then(function(count) {
+      count = count - 1;
+      if (count < 0) { count = 0; }
+      return db.metadata.putAsync(boardThreadCountKey, count);
+    });
+  })
   .then(function() { return deletedThread; });
 };
 
