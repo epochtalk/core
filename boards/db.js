@@ -7,7 +7,9 @@ var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Board = require(path.join(__dirname, 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
-
+var Padlock = require('padlock').Padlock;
+var postCountLock = new Padlock();
+var threadCountLock = new Padlock();
 /* IMPORT */
 boards.import = function(board) {
   board.imported_at = Date.now();
@@ -28,13 +30,8 @@ boards.create = function(board) {
   board.updated_at = timestamp;
   board.id = helper.genId(board.created_at);
   var boardKey = board.getKey();
-  var boardPostCountKey = boardKey + config.sep + 'post_count';
-  var boardThreadCountKey = boardKey + config.sep + 'thread_count';
-  var metadataBatch = [
-    { type: 'put', key: boardPostCountKey, value: 0 },
-    { type: 'put', key: boardThreadCountKey, value: 0 }
-  ];
-  return db.metadata.batchAsync(metadataBatch)
+  return boards.incPostCount(board.id)
+  .then(function() { return boards.incThreadCount(board.id); })
   .then(function() { return db.content.putAsync(boardKey, board); })
   .then(function() { return board; });
 };
@@ -183,5 +180,85 @@ boards.all = function() {
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
+  });
+};
+
+boards.incPostCount = function(id) {
+  var postCountKey = Board.getKeyFromId(id) + config.sep + 'post_count';
+  return new Promise(function(fulfill, reject) {
+    postCountLock.runwithlock(function () {
+      var newPostCount = 0;
+      db.metadata.getAsync(postCountKey)
+      .then(function(postCount) {
+        newPostCount = Number(postCount);
+        newPostCount++;
+        return newPostCount;
+      })
+      .catch(function() { return newPostCount; })
+      .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
+      .then(function() { fulfill(newPostCount); })
+      .catch(function(err) { reject(err); })
+      .finally(function() { postCountLock.release(); });
+    });
+  });
+};
+
+boards.decPostCount = function(id) {
+  var postCountKey = Board.getKeyFromId(id) + config.sep + 'post_count';
+  return new Promise(function(fulfill, reject) {
+    postCountLock.runwithlock(function () {
+      var newPostCount = 0;
+      db.metadata.getAsync(postCountKey)
+      .then(function(postCount) {
+        newPostCount = Number(postCount);
+        newPostCount--;
+        return newPostCount;
+      })
+      .catch(function() { return newPostCount; })
+      .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
+      .then(function() { fulfill(newPostCount); })
+      .catch(function(err) { reject(err); })
+      .finally(function() { postCountLock.release(); });
+    });
+  });
+};
+
+boards.incThreadCount = function(id) {
+  var threadCountKey = Board.getKeyFromId(id) + config.sep + 'thread_count';
+  return new Promise(function(fulfill, reject) {
+    threadCountLock.runwithlock(function () {
+      var newThreadCount = 0;
+      db.metadata.getAsync(threadCountKey)
+      .then(function(threadCount) {
+        newThreadCount = Number(threadCount);
+        newThreadCount++;
+        return newThreadCount;
+      })
+      .catch(function() { return newThreadCount; })
+      .then(function(count) { return db.metadata.putAsync(threadCountKey, count);})
+      .then(function() { fulfill(newThreadCount); })
+      .catch(function(err) { reject(err); })
+      .finally(function() { threadCountLock.release(); });
+    });
+  });
+};
+
+boards.decThreadCount = function(id) {
+  var threadCountKey = Board.getKeyFromId(id) + config.sep + 'thread_count';
+  return new Promise(function(fulfill, reject) {
+    threadCountLock.runwithlock(function () {
+      var newThreadCount = 0;
+      db.metadata.getAsync(threadCountKey)
+      .then(function(threadCount) {
+        newThreadCount = Number(threadCount);
+        newThreadCount--;
+        return newThreadCount;
+      })
+      .catch(function() { return newThreadCount; })
+      .then(function(count) { return db.metadata.putAsync(threadCountKey, count);})
+      .then(function() { fulfill(newThreadCount); })
+      .catch(function(err) { reject(err); })
+      .finally(function() { threadCountLock.release(); });
+    });
   });
 };

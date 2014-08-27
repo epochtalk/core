@@ -29,6 +29,7 @@
     "lodash": "^2.4.1",
     "mkdirp": "^0.5.0",
     "node-uuid": "^1.4.1",
+    "padlock": "^1.1.2",
     "replify": "^1.2.0",
     "replpad": "^0.11.9",
     "rimraf": "^2.2.8",

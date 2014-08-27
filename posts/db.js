@@ -9,6 +9,7 @@ var Post = require(path.join(__dirname, 'model'));
 var User = require(path.join(__dirname, '..', 'users', 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
+var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
 
 posts.import = function(post) {
   var insertPost = function() {
@@ -46,27 +47,21 @@ posts.insert = function(post) {
   post.updated_at = timestamp;
   post.id = helper.genId(post.created_at);
   var threadKeyPrefix = post.getThreadKey() + config.sep;
-  var threadPostCountKey = threadKeyPrefix + 'post_count';
   var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
   var threadTitleKey = threadKeyPrefix + 'title';
-  var threadPostCount, boardPostCountKey;
   return threadsDb.find(post.thread_id) // get parent thread
-  .then(function(thread) {
-    threadPostCount = thread.post_count;
-    boardPostCountKey = config.boards.prefix + config.sep + thread.board_id + config.sep + 'post_count';
-    return db.metadata.getAsync(boardPostCountKey);
-  })
-  .then(function(boardPostCount) {
-    boardPostCount = Number(boardPostCount);
-    var metadataBatch = [
-      { type: 'put', key: boardPostCountKey, value: boardPostCount + 1 },
-      { type: 'put', key: threadPostCountKey, value: threadPostCount + 1 }
-    ];
-    if (threadPostCount === 0) { // First Post
-      metadataBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
-      metadataBatch.push({ type: 'put', key: threadTitleKey, value: post.title });
+  .then(function(thread) { return boardsDb.incPostCount(thread.board_id); })
+  .then(function() { return threadsDb.incPostCount(post.thread_id); })
+  .then(function(postCount) {
+    postCount = Number(postCount);
+    if (postCount === 1) { // First Post
+      var metadataBatch = [
+        { type: 'put', key: threadFirstPostIdKey, value: post.id },
+        { type: 'put', key: threadTitleKey, value: post.title }
+      ];
+      return db.metadata.batchAsync(metadataBatch);
     }
-    return db.metadata.batchAsync(metadataBatch);
+    return;
   })
   .then(function() { return db.indexes.putAsync(post.getThreadPostKey(), post.id); })
   .then(function() { return db.content.putAsync(post.getKey(), post); })

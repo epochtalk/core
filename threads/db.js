@@ -7,6 +7,9 @@ var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Thread = require(path.join(__dirname, 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
+var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
+var Padlock = require('padlock').Padlock;
+var lock = new Padlock();
 
 threadsDb.import = function(thread) {
   thread.imported_at = Date.now();
@@ -29,20 +32,51 @@ threadsDb.insert = function(thread) {
   thread.updated_at = timestamp;
   thread.id = helper.genId(thread.created_at);
   var boardThreadKey = thread.getBoardThreadKey();
-  var boardThreadCountKey = thread.getBoardKey() + config.sep + 'thread_count';
-  var postCountKey = thread.getPostCountKey();
   return db.content.putAsync(thread.getKey(), thread)
   .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
-  .then(function() { return db.metadata.getAsync(boardThreadCountKey); })
-  .then(function(threadCount) {
-    threadCount = Number(threadCount);
-    var metadataBatch = [
-      { type: 'put', key: postCountKey, value: 0 },
-      { type: 'put', key: boardThreadCountKey, value: threadCount + 1 }
-    ];
-    return db.metadata.batchAsync(metadataBatch);
-  })
+  .then(function() { return threadsDb.incPostCount(thread.id); })
+  .then(function() { return boardsDb.incThreadCount(thread.board_id); })
   .then(function() { return thread; });
+};
+
+threadsDb.incPostCount = function(id) {
+  var postCountKey = Thread.getKeyFromId(id) + config.sep + 'post_count';
+  return new Promise(function(fulfill, reject) {
+    lock.runwithlock(function () {
+      var newPostCount = 0;
+      db.metadata.getAsync(postCountKey)
+      .then(function(postCount) {
+        newPostCount = Number(postCount);
+        newPostCount++;
+        return newPostCount;
+      })
+      .catch(function() { return newPostCount; })
+      .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
+      .then(function() { fulfill(newPostCount); })
+      .catch(function(err) { reject(err); })
+      .finally(function() { lock.release(); });
+    });
+  });
+};
+
+threadsDb.decPostCount = function(id) {
+  var postCountKey = Thread.getKeyFromId(id) + config.sep + 'post_count';
+  return new Promise(function(fulfill, reject) {
+    lock.runwithlock(function () {
+      var newPostCount = 0;
+      db.metadata.getAsync(postCountKey)
+      .then(function(postCount) {
+        newPostCount = Number(postCount);
+        newPostCount--;
+        return newPostCount;
+      })
+      .catch(function() { return newPostCount; })
+      .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
+      .then(function() { fulfill(newPostCount); })
+      .catch(function(err) { reject(err); })
+      .finally(function() { lock.release(); });
+    });
+  });
 };
 
 threadsDb.remove = function(id) {
