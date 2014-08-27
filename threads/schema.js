@@ -13,6 +13,7 @@ var threadSchema = joi.object().keys({
   imported_at: joi.number(),
   deleted: joi.boolean(),
   smf: {
+    ID_MEMBER: joi.number(),
     thread_id: joi.number(),
     post_id: joi.number()
   }
