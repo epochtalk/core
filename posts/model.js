@@ -37,6 +37,7 @@ function Post(data) {
   this.thread_id = data.thread_id;
   this.body = data.body;
   this.title = data.title;
+  this.user_id = data.user_id;
 }
 
 Post.prototype.getKey = function() {

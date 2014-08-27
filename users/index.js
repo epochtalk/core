@@ -1,9 +1,7 @@
 var users = {};
 module.exports = users;
 
-var uuid = require('node-uuid');
 var path = require('path');
-var bcrypt = require('bcrypt');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 var modelPrefix = config.users.prefix;
@@ -16,7 +14,7 @@ users.import = function(data) {
   return newUser.validate()
   .then(function() {
     return usersDb.import(newUser);
-  })
+  });
 };
 
 users.create = function(data) {

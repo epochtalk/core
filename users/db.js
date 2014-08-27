@@ -1,10 +1,8 @@
 var users = {};
 module.exports = users;
 var path = require('path');
-var Promise = require('bluebird');
 var uuid = require('node-uuid');
 var bcrypt = require('bcrypt');
-var speakeasy = require('speakeasy');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 var User = require(path.join(__dirname, 'model'));
@@ -33,7 +31,7 @@ users.insert = function(user) {
   }
 
   delete user.password;
-  delete user.confirm_password;
+  delete user.confirmation;
 
   return db.content.putAsync(user.getKey(), user)
   .then(function() {
