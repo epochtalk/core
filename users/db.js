@@ -7,6 +7,7 @@ var bcrypt = require('bcrypt');
 var speakeasy = require('speakeasy');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
+var User = require(path.join(__dirname, 'model'));
 
 users.import = function(user) {
   user.imported_at = Date.now();

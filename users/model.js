@@ -15,6 +15,7 @@ function User(data) {
   }
   this.username = data.username;
   this.password = data.password;
+  this.email = data.email;
   this.confirmation = data.confirmation;
 
   this.smf = data.smf;
@@ -23,7 +24,7 @@ function User(data) {
 User.prototype.validate = function() {
   var user = this;
   return validate.create(user);
-}
+};
 
 User.prototype.getKey = function() {
   var key;
@@ -39,7 +40,7 @@ User.prototype.legacyKey = function() {
     key = config.users.prefix + config.sep + this.smf.ID_MEMBER;
   }
   return key;
-}
+};
 
 User.legacyKeyForId = function(legacyId) {
   var legacyKey;
