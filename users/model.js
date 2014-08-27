@@ -44,7 +44,7 @@ User.prototype.legacyKey = function() {
 User.legacyKeyForId = function(legacyId) {
   var legacyKey;
   if (legacyId) {
-    legacyKey = config.users.prefix + sep + legacyId;
+    legacyKey = config.users.prefix + config.sep + legacyId;
   }
   return legacyKey;
 };
