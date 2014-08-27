@@ -221,7 +221,9 @@ boards.decPostCount = function(id) {
       db.metadata.getAsync(postCountKey)
       .then(function(postCount) {
         newPostCount = Number(postCount);
-        newPostCount--;
+        if (newPostCount > 0) {
+          newPostCount--;
+        }
         return newPostCount;
       })
       .catch(function() { return newPostCount; })
@@ -261,7 +263,9 @@ boards.decThreadCount = function(id) {
       db.metadata.getAsync(threadCountKey)
       .then(function(threadCount) {
         newThreadCount = Number(threadCount);
-        newThreadCount--;
+        if (newThreadCount > 0) {
+          newThreadCount--;
+        }
         return newThreadCount;
       })
       .catch(function() { return newThreadCount; })

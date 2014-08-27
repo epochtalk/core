@@ -69,7 +69,9 @@ threadsDb.decPostCount = function(id) {
       db.metadata.getAsync(postCountKey)
       .then(function(postCount) {
         newPostCount = Number(postCount);
-        newPostCount--;
+        if (newPostCount > 0) {
+          newPostCount--;
+        }
         return newPostCount;
       })
       .catch(function() { return newPostCount; })
@@ -136,7 +138,7 @@ threadsDb.purge = function(id) {
     var boardThreadKey = deletedThread.getBoardThreadKey();
     return db.indexes.delAsync(boardThreadKey);
   })
-  .then(function() { // remove post count Key 
+  .then(function() { // remove post count Key
     var postCountKey = deletedThread.getPostCountKey();
     return db.metadata.delAsync(postCountKey);
   })
