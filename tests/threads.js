@@ -131,7 +131,7 @@ describe('threads', function() {
         plainThread.board_id = board.id;
         return plainThread;
       })
-      .then(threads.create)
+      .then(threads.import)
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
@@ -201,8 +201,9 @@ describe('threads', function() {
     });
   });
 
-  describe('#import_delete', function() {
+  describe('#import_purge', function() {
     // *** you can delete a thread with posts still in it ***
+    var catchCalled = false;
     var plainThread = {
       smf: {
         thread_id: '112'
@@ -221,7 +222,7 @@ describe('threads', function() {
         plainThread.board_id = board.id;
         return plainThread;
       })
-      .then(threads.create)
+      .then(threads.import)
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
@@ -231,7 +232,7 @@ describe('threads', function() {
     });
 
     it('should delete all imported thread key mappings', function() {
-      return threads.delete(plainThread.id)
+      return threads.purge(plainThread.id)
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.equal(plainThread.created_at);
@@ -246,7 +247,12 @@ describe('threads', function() {
       })
       .then(threads.threadByOldId)
       .catch(function(err) {
+        catchCalled = true;
         err.should.not.be.null;
+        err.type.should.equal('NotFoundError');
+      })
+      .then(function() {
+        catchCalled.should.be.true;
       });
     });
   });
@@ -317,6 +323,113 @@ describe('threads', function() {
       return threads.delete(plainThread.id)
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
+        thread.created_at.should.be.equal(plainThread.created_at);
+        thread.updated_at.should.be.a('number');
+        should.not.exist(thread.imported_at);
+        thread.deleted.should.be.true;
+        should.not.exist(thread.smf);
+        should.not.exist(thread.post_count); // no post count for delete return
+        should.not.exist(thread.title); // no title for delete return
+        thread.board_id.should.equal(plainThread.board_id);
+        return thread.id;
+      })
+      .then(threads.find)
+      .then(function(thread) {
+        thread.id.should.equal(plainThread.id);
+        thread.created_at.should.be.equal(plainThread.created_at);
+        thread.updated_at.should.be.a('number');
+        should.not.exist(thread.imported_at);
+        thread.deleted.should.be.true;
+        should.not.exist(thread.smf);
+        thread.post_count.should.equal(1);
+        thread.title.should.equal(plainPost.title);
+        thread.board_id.should.equal(plainThread.board_id);
+      });
+    });
+  });
+
+  describe('#undelete', function() {
+    // *** you can delete a thread with posts still in it ***
+    var plainThread;
+    var plainPost = { title: 'post title', body: 'post body' };
+
+    before(function() {
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainThread = thread;
+        plainPost.thread_id = thread.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; })
+      .then(function() {
+        return threads.delete(plainThread.id)
+        .then(function(thread) { plainThread = thread; });
+      });
+    });
+
+    it('should undelete specified thread', function() {
+      plainThread.deleted = false;
+      return threads.update(plainThread)
+      .then(function(thread) {
+        thread.id.should.equal(plainThread.id);
+        thread.created_at.should.be.equal(plainThread.created_at);
+        thread.updated_at.should.be.a('number');
+        should.not.exist(thread.imported_at);
+        should.not.exist(thread.deleted);
+        should.not.exist(thread.smf);
+        should.not.exist(thread.post_count); // no post count for delete return
+        should.not.exist(thread.title); // no title for delete return
+        thread.board_id.should.equal(plainThread.board_id);
+        return thread.id;
+      })
+      .then(threads.find)
+      .then(function(thread) {
+        thread.id.should.equal(plainThread.id);
+        thread.created_at.should.be.equal(plainThread.created_at);
+        thread.updated_at.should.be.a('number');
+        should.not.exist(thread.imported_at);
+        should.not.exist(thread.deleted);
+        should.not.exist(thread.smf);
+        thread.post_count.should.equal(1);
+        thread.title.should.equal(plainPost.title);
+        thread.board_id.should.equal(plainThread.board_id);
+      });
+    });
+  });
+
+  describe('#purge', function() {
+    // *** you can delete a thread with posts still in it ***
+    var catchCalled = false;
+    var plainThread;
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
+
+    before(function() {
+      var newBoard = { name: 'Board', description: 'Board Desc' };
+      return boards.create(newBoard)
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainThread = thread;
+        plainPost.thread_id = thread.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; });
+    });
+
+    it('should purge a thread from the db', function() {
+      return threads.purge(plainThread.id)
+      .then(function(thread) {
+        thread.id.should.equal(plainThread.id);
         thread.created_at.should.equal(plainThread.created_at);
         thread.updated_at.should.equal(plainThread.updated_at);
         should.not.exist(thread.imported_at);
@@ -325,12 +438,16 @@ describe('threads', function() {
         should.not.exist(thread.post_count); // no post count for delete return
         should.not.exist(thread.title); // no title for delete return
         thread.board_id.should.equal(plainThread.board_id);
-
         return thread.id;
       })
       .then(threads.find)
       .catch(function(err) {
+        catchCalled = true;
         err.should.not.be.null;
+        err.type.should.equal('NotFoundError');
+      })
+      .then(function() {
+        catchCalled.should.be.true;
       });
     });
   });

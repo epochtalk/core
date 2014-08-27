@@ -211,7 +211,7 @@ describe('boards', function() {
       .then(function(board) {
         board.id.should.equal(importBoard.id);
         board.created_at.should.be.equal(importBoard.created_at);
-        board.updated_at.should.be.equla(importBoard.updated_at);
+        board.updated_at.should.be.equal(importBoard.updated_at);
         board.imported_at.should.be.equal(importBoard.imported_at);
         should.not.exist(board.deleted);
         board.name.should.equal(importBoard.name);
@@ -225,6 +225,7 @@ describe('boards', function() {
       .then(boards.boardByOldId)
       .catch(function(err) {
         err.should.not.be.null;
+        err.type.should.equal('NotFoundError');
       });
     });
   });
@@ -490,6 +491,7 @@ describe('boards', function() {
       .then(boards.find)
       .catch(function(err) {
         err.should.not.be.null;
+        err.type.should.equal('NotFoundError');
       });
     });
   });

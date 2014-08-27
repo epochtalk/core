@@ -30,6 +30,7 @@ boards.create = function(board) {
   board.updated_at = timestamp;
   board.id = helper.genId(board.created_at);
   var boardKey = board.getKey();
+
   return boards.incPostCount(board.id)
   .then(function() { return boards.incThreadCount(board.id); })
   .then(function() { return db.content.putAsync(boardKey, board); })
@@ -123,14 +124,23 @@ boards.purge = function(id) {
   .then(function() {
     return db.content.delAsync(boardKey);
   })
-  // delete any extra indexes/metadata
+  // delete postCount index
+  .then(function() {
+    var postCountKey = boardKey + config.sep + 'post_count';
+    return db.metadata.delAsync(postCountKey);
+  })
+  // delete threadCount index
+  .then(function() {
+    var threadCountKey = boardKey + config.sep + 'thread_count';
+    return db.metadata.delAsync(threadCountKey);
+  })
+  // delete legacy key index
   .then(function() {
     if (purgeBoard.smf) {
       var legacyKey = purgeBoard.getLegacyKey();
-      db.indexes.delAsync(legacyKey)
-      .catch(function(err) { console.log(err); });
+      return db.indexes.delAsync(legacyKey);
     }
-    return;
+    else { return; }
   })
   // return this board
   .then(function() { return purgeBoard; });

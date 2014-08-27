@@ -27,11 +27,13 @@ threadsDb.insert = function(thread) {
   if (!thread.board_id) {
     return Promise.reject('Invalid board id.');
   }
+
   var timestamp = Date.now();
   if (!thread.created_at) { thread.created_at = timestamp; }
   thread.updated_at = timestamp;
   thread.id = helper.genId(thread.created_at);
   var boardThreadKey = thread.getBoardThreadKey();
+
   return db.content.putAsync(thread.getKey(), thread)
   .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
   .then(function() { return threadsDb.incPostCount(thread.id); })
@@ -79,39 +81,75 @@ threadsDb.decPostCount = function(id) {
   });
 };
 
-threadsDb.remove = function(id) {
+threadsDb.update = function(thread) {
+  var threadKey = thread.getKey();
+  var updateThread;
+
+  return db.content.getAsync(threadKey) // get old post
+  .then(function(oldThread) {
+    updateThread = new Thread(oldThread);
+
+    // update thread values
+    updateThread.deleted = thread.deleted;
+    updateThread.updated_at = Date.now();
+
+    // insert back into db
+    return db.content.putAsync(threadKey, updateThread);
+  })
+  .then(function() { return updateThread; });
+};
+
+threadsDb.delete = function(id) {
+  var threadKey = Thread.getKeyFromId(id);
+  var deletedThread = null;
+
+  // see if thread already exists
+  return db.content.getAsync(threadKey)
+  .then(function(threadData) {
+    deletedThread = new Thread(threadData);
+
+    // add deleted: true flag to board
+    deletedThread.deleted = true;
+    deletedThread.updated_at = Date.now();
+
+    // insert back into db
+    return db.content.putAsync(threadKey, deletedThread);
+  })
+  .then(function() { return deletedThread; });
+};
+
+threadsDb.purge = function(id) {
   var threadKey = Thread.getKeyFromId(id);
   var deletedThread;
-  var boardThreadKey;
-  var postCountKey;
 
-  return db.content.getAsync(threadKey)
+  return db.content.getAsync(threadKey) // get thread
   .then(function(thread) {
     deletedThread = new Thread(thread);
-    boardThreadKey = deletedThread.getBoardThreadKey();
-    postCountKey = deletedThread.getPostCountKey();
   })
-  .then(function() {
+  .then(function() { // move to deleted DB
     return db.deleted.putAsync(threadKey, deletedThread);
   })
-  .then(function() {
+  .then(function() { // remove from content
     return db.content.delAsync(threadKey);
   })
-  .then(function() {
-    return db.indexes.delAsync(boardThreadKey)
-    .then(function() {
-      return db.metadata.delAsync(postCountKey);
-    });
+  .then(function() { // remove board - thread index
+    var boardThreadKey = deletedThread.getBoardThreadKey();
+    return db.indexes.delAsync(boardThreadKey);
+  })
+  .then(function() { // remove post count Key 
+    var postCountKey = deletedThread.getPostCountKey();
+    return db.metadata.delAsync(postCountKey);
+  })
+  .then(function() { // decrement board thread count
+    var boardId = deletedThread.board_id;
+    return boardsDb.decThreadCount(boardId);
   })
   .then(function() {
-    var boardThreadKey = thread.getBoardThreadKey();
-    var boardThreadCountKey = thread.getBoardKey() + config.sep + 'thread_count';
-    return db.metadata.getAsync(boardThreadCountKey)
-    .then(function(count) {
-      count = count - 1;
-      if (count < 0) { count = 0; }
-      return db.metadata.putAsync(boardThreadCountKey, count);
-    });
+    if (deletedThread.smf) {
+      var legacyKey = deletedThread.getLegacyKey();
+      return db.indexes.delAsync(legacyKey);
+    }
+    else { return; }
   })
   .then(function() { return deletedThread; });
 };
@@ -128,16 +166,15 @@ threadsDb.find = function(id) {
   .then(function(count) {
     thread.post_count = Number(count);
     return db.metadata.getAsync(threadKey + config.sep + 'first_post_id');
+    // possibly add catch here if first post doesn't exist
   })
   .then(function(firstPostId) {
     thread.first_post_id = firstPostId;
     return db.metadata.getAsync(threadKey + config.sep + 'title');
+    // possibly add catch here if first post doesn't exist
   })
   .then(function(title) {
     thread.title = title;
-    return thread;
-  })
-  .catch(function() { // thread doesn't have title yet
     return thread;
   });
 };

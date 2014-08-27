@@ -30,8 +30,27 @@ threads.find = function(id) {
   return threadsDb.find(id); // already simple
 };
 
+threads.update = function(data) {
+  var thread = new Thread(data);
+
+  return thread.validate()
+  .then(function() {
+    return threadsDb.update(thread);
+  })
+  .then(function(thread) {
+    return thread.simple();
+  });
+};
+
 threads.delete = function(id) {
-  return threadsDb.remove(id)
+  return threadsDb.delete(id)
+  .then(function(thread) {
+    return thread.simple();
+  });
+};
+
+threads.purge = function(id) {
+  return threadsDb.purge(id)
   .then(function(thread) {
     return thread.simple();
   });

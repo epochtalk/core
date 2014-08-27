@@ -177,7 +177,8 @@ describe('posts', function() {
     });
   });
 
-  describe('#import_delete', function() {
+  describe('#import_purge', function() {
+    var catchCalled = false;
     var plainPost = {
       title: 'post title',
       body: 'hello world.',
@@ -218,7 +219,12 @@ describe('posts', function() {
       })
       .then(posts.postByOldId)
       .catch(function(err) {
+        catchCalled = true;
         err.should.not.be.null;
+        err.type.should.equal('NotFoundError');
+      })
+      .then(function() {
+        catchCalled.should.be.true;
       });
     });
   });
@@ -396,11 +402,25 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
+        return post.id;
+      })
+      .then(posts.find)
+      .then(function(post) {
+        post.id.should.equal(plainPost.id);
+        post.created_at.should.equal(plainPost.created_at);
+        post.updated_at.should.be.a('number');
+        should.not.exist(post.imported_at);
+        post.title.should.equal(plainPost.title);
+        post.body.should.equal(plainPost.body);
+        should.not.exist(post.deleted);
+        should.not.exist(post.smf);
+        post.thread_id.should.equal(plainPost.thread_id);
       });
     });
   });
 
   describe('#purge', function() {
+    var catchCalled = false;
     var plainPost = { title: 'post title', body: 'hello world.' };
 
     before(function() {
@@ -436,7 +456,12 @@ describe('posts', function() {
       })
       .then(posts.find)
       .catch(function(err) {
+        catchCalled = true;
         err.should.not.be.null;
+        err.type.should.equal('NotFoundError');
+      })
+      .then(function() {
+        catchCalled.should.be.true;
       });
     });
   });
