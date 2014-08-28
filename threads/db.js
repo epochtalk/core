@@ -159,7 +159,7 @@ threadsDb.purge = function(id) {
 threadsDb.find = function(id) {
   var thread;
   var threadKey = Thread.getKeyFromId(id);
-
+  // TODO: Move key generation to models.
   return db.content.getAsync(threadKey)
   .then(function(dbThread) {
     thread = dbThread;
@@ -177,6 +177,12 @@ threadsDb.find = function(id) {
   })
   .then(function(title) {
     thread.title = title;
+    return db.metadata.getAsync(threadKey + config.sep + 'username');
+  })
+  .then(function(threadUsername) {
+    thread.user = {
+      username: threadUsername
+    };
     return thread;
   });
 };

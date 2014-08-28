@@ -77,6 +77,7 @@ Post.prototype.simple = function() {
   if (self.id) { post.id = self.id; }
   if (self.title) { post.title = self.title; }
   if (self.body) { post.body = self.body; }
+  if (self.user_id) { post.user_id = self.user_id; }
   if (self.thread_id) { post.thread_id = self.thread_id; }
   if (self.created_at) { post.created_at = self.created_at; }
   if (self.updated_at) { post.updated_at = self.updated_at; }

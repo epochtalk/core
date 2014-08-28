@@ -11,6 +11,19 @@ var newBoard = {
 
 describe('hierarchy', function() {
   describe('#check', function() {
+    var user;
+    before(function() {
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+      });
+    });
     it('should check board/thread/post relationship', function() {
       var createdThread;
       var createdBoard;
@@ -28,6 +41,7 @@ describe('hierarchy', function() {
         return {
           body: 'Test post',
           title: 'Post title',
+          user_id: user.id,
           thread_id: createdThread.id
         };
       })

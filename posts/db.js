@@ -10,6 +10,7 @@ var User = require(path.join(__dirname, '..', 'users', 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
 var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
+var usersDb = require(path.join(__dirname, '..', 'users', 'db'));
 
 posts.import = function(post) {
   var insertPost = function() {
@@ -41,26 +42,33 @@ posts.insert = function(post) {
   if (!post.thread_id) {
     return Promise.reject('The thread_id isn\'t present for given Post.');
   }
-
   var timestamp = Date.now();
   if (!post.created_at) { post.created_at = timestamp; }
   post.updated_at = timestamp;
   post.id = helper.genId(post.created_at);
-
-  return threadsDb.incPostCount(post.thread_id)
+  var postUsername;
+  return usersDb.find(post.user_id)
+  .then(function(user) {
+    postUsername = user.username;
+    return threadsDb.incPostCount(post.thread_id);
+  })
   .then(function(postCount) {
     postCount = Number(postCount);
+    var postUsernameKey = post.getKey() + config.sep + 'username';
+    var metadataBatch = [
+      { type: 'put', key: postUsernameKey, value: postUsername }
+    ];
     if (postCount === 1) { // First Post
+      // TODO: Move key generation into models.
       var threadKeyPrefix = post.getThreadKey() + config.sep;
       var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
       var threadTitleKey = threadKeyPrefix + 'title';
-      var metadataBatch = [
-        { type: 'put', key: threadFirstPostIdKey, value: post.id },
-        { type: 'put', key: threadTitleKey, value: post.title }
-      ];
-      return db.metadata.batchAsync(metadataBatch);
+      var threadUsernameKey = threadKeyPrefix + 'username';
+      metadataBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
+      metadataBatch.push({ type: 'put', key: threadTitleKey, value: post.title });
+      metadataBatch.push({ type: 'put', key: threadUsernameKey, value: postUsername });
     }
-    else { return; }
+    return db.metadata.batchAsync(metadataBatch);
   })
   .then(function() {
     return threadsDb.find(post.thread_id)
@@ -76,8 +84,22 @@ posts.insert = function(post) {
 };
 
 posts.find = function(id) {
+  var post;
   var postKey = Post.getKeyFromId(id);
-  return db.content.getAsync(postKey);
+  var postUsernameKey = postKey + config.sep + 'username';
+  return db.content.getAsync(postKey)
+  .then(function(dbPost) {
+    post = dbPost;
+    return db.metadata.getAsync(postUsernameKey);
+  })
+  .then(function(postUsername) {
+    post.user = {
+      username: postUsername,
+      id: post.user_id
+    };
+    delete post.user_id;
+    return post;
+  });
 };
 
 posts.update = function(post) {
@@ -172,7 +194,7 @@ posts.purge = function(id) {
       else { return; }
     });
   })
-  // temporarily not handling threadTitle 
+  // temporarily not handling threadTitle
   .then(function() {
     if (deletedPost.smf) {
       var legacyKey = deletedPost.getLegacyKey();

@@ -14,10 +14,20 @@ describe('metadata', function() {
       title: 'post title',
       body: 'post body'
     };
-    var boardId;
+    var boardId, user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         boardId = board.id;
         var threadData = { board_id: board.id };
@@ -30,6 +40,7 @@ describe('metadata', function() {
           .then(function(thread) {
             var tempPost = plainPost;
             tempPost.thread_id = thread.id;
+            tempPost.user_id = user.id;
             return [tempPost, tempPost, tempPost];
           })
           .then(function(postArray) {
@@ -65,12 +76,22 @@ describe('metadata', function() {
       title: 'post title',
       body: 'post body'
     };
-    var threadId, firstPostId;
+    var threadId, firstPostId, user;
     var first = true;
     var firstPostTitle = 'First Post Title!';
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         var threadData = { board_id: board.id };
         return threadData;
@@ -80,7 +101,9 @@ describe('metadata', function() {
         .then(function(thread) {
           threadId = thread.id;
           plainPost.thread_id = thread.id;
+          plainPost.user_id = user.id;
           var firstPost = {
+            user_id: user.id,
             thread_id: thread.id,
             title: firstPostTitle,
             body: 'this is the first post'
@@ -124,8 +147,62 @@ describe('metadata', function() {
       it('should store the title of the first post', function() {
         return threads.find(threadId)
         .then(function(thread) {
-          if (thread.first_post_id) {}
           thread.first_post_id.should.equal(firstPostId);
+        });
+      });
+    });
+
+    describe('#user', function() {
+      it('should store the user who created the thread/first post', function() {
+        return threads.find(threadId)
+        .then(function(thread) {
+          thread.user.should.be.ok;
+          thread.user.username.should.equal('test_user');
+        });
+      });
+    });
+  });
+
+  describe('#posts', function() {
+    var plainThread, user;
+    var plainPost = {
+      title: 'post title',
+      body: 'post body'
+    };
+
+    before(function() {
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainThread = thread;
+        plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
+        return posts.create(plainPost);
+      })
+      .then(function(post) { plainPost = post; });
+    });
+
+    describe('#user', function() {
+      it('should store the user who created the post', function() {
+        return posts.find(plainPost.id)
+        .then(function(thread) {
+          thread.user.should.be.ok;
+          thread.user.username.should.equal('test_user');
+          thread.user.id.should.equal(user.id);
         });
       });
     });

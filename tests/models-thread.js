@@ -12,15 +12,25 @@ var config = require(path.join(__dirname, '..', 'config'));
 describe('Thread', function() {
 
   describe('#new', function() {
-    var plainThread;
+    var plainThread, user;
     var plainPost = {
       title: 'post title',
       body: 'post body'
     };
 
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
@@ -28,6 +38,7 @@ describe('Thread', function() {
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return posts.create(plainPost);
       })
       .then(function(post) { plainPost = post; });
@@ -48,15 +59,25 @@ describe('Thread', function() {
   });
 
   describe('#getKey', function() {
-    var plainThread;
+    var plainThread, user;
     var plainPost = {
       title: 'post title',
       body: 'post body'
     };
 
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
@@ -64,6 +85,7 @@ describe('Thread', function() {
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return posts.create(plainPost);
       })
       .then(function(post) { plainPost = post; });
@@ -106,10 +128,20 @@ describe('Thread', function() {
       title: 'post title',
       body: 'post body'
     };
-
+    var user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         plainThread.board_id = board.id;
         return plainThread;
@@ -118,6 +150,7 @@ describe('Thread', function() {
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return posts.create(plainPost);
       })
       .then(function(post) { plainPost = post; });
@@ -151,15 +184,25 @@ describe('Thread', function() {
   });
 
   describe('#getPostCountKey', function() {
-    var plainThread;
+    var plainThread, user;
     var plainPost = {
       title: 'post title',
       body: 'post body'
     };
 
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
@@ -167,6 +210,7 @@ describe('Thread', function() {
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return posts.create(plainPost);
       })
       .then(function(post) { plainPost = post; });
@@ -187,15 +231,25 @@ describe('Thread', function() {
   });
 
   describe('#getBoardThreadKey', function() {
-    var plainThread;
+    var plainThread, user;
     var plainPost = {
       title: 'post title',
       body: 'post body'
     };
 
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
@@ -203,6 +257,7 @@ describe('Thread', function() {
       .then(function(thread) {
         plainThread = thread;
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return posts.create(plainPost);
       })
       .then(function(post) { plainPost = post; });

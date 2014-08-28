@@ -12,11 +12,21 @@ describe('posts', function() {
   describe('#byThread', function() {
     var post1 = { title: 'title', body: 'body' };
     var post2 = { title: 'title', body: 'body' };
-    var parentThead;
+    var parentThead, user;
 
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return core.boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
@@ -24,7 +34,9 @@ describe('posts', function() {
       .then(function(thread) {
         parentThread = thread;
         post1.thread_id = thread.id;
+        post1.user_id = user.id;
         post2.thread_id = thread.id;
+        post2.user_id = user.id;
       })
       .then(function() {
         return posts.create(post1)
@@ -51,6 +63,9 @@ describe('posts', function() {
           should.not.exist(post.imported_at);
           post.title.should.equal('title');
           post.body.should.equal('body');
+          post.user.should.be.ok;
+          post.user.username.should.equal('test_user');
+          post.user.id.should.equal(user.id);
           should.not.exist(post.deleted);
           should.not.exist(post.smf);
           post.thread_id.should.equal(parentThread.id);
@@ -68,16 +83,27 @@ describe('posts', function() {
 
   describe('#create', function() {
     var plainPost = { title: 'post title', body: 'hello world.' };
-
+    var user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
       .then(threads.create)
       .then(function(thread) {
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
       });
     });
 
@@ -91,6 +117,7 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -106,16 +133,27 @@ describe('posts', function() {
         post_id: '123'
       }
      };
-
+     var user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return core.boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
       .then(core.threads.create)
       .then(function(thread) {
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
       });
     });
 
@@ -129,6 +167,7 @@ describe('posts', function() {
         post.imported_at.should.be.a('number');
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         post.smf.post_id.should.equal(plainPost.smf.post_id);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -143,17 +182,28 @@ describe('posts', function() {
       smf: {
         post_id: '123'
       }
-     };
-
+    };
+    var user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return core.boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
       .then(core.threads.create)
       .then(function(thread) {
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return posts.import(plainPost);
       })
       .then(function(post) {
@@ -170,6 +220,9 @@ describe('posts', function() {
         post.imported_at.should.equal(plainPost.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user.should.be.ok;
+        post.user.username.should.equal('test_user');
+        post.user.id.should.equal(user.id);
         should.not.exist(post.deleted);
         post.smf.post_id.should.equal(plainPost.smf.post_id);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -179,6 +232,7 @@ describe('posts', function() {
 
   describe('#import_purge', function() {
     var catchCalled = false;
+    var user;
     var plainPost = {
       title: 'post title',
       body: 'hello world.',
@@ -188,14 +242,25 @@ describe('posts', function() {
      };
 
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return core.boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
       .then(core.threads.create)
       .then(function(thread) {
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return posts.import(plainPost);
       })
       .then(function(post) {
@@ -212,6 +277,7 @@ describe('posts', function() {
         post.imported_at.should.equal(plainPost.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         post.smf.post_id.should.equal(plainPost.smf.post_id);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -231,16 +297,27 @@ describe('posts', function() {
 
   describe('#find', function() {
     var plainPost = { title: 'post title', body: 'hello world.' };
-
+    var user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
       .then(threads.create)
       .then(function(thread) {
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return plainPost;
       })
       .then(posts.create)
@@ -258,6 +335,9 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user.should.be.ok;
+        post.user.username.should.equal('test_user');
+        post.user.id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -267,16 +347,27 @@ describe('posts', function() {
 
   describe('#update', function() {
     var plainPost = { title: 'post title', body: 'hello world.' };
-
+    var user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
       .then(threads.create)
       .then(function(thread) {
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return plainPost;
       })
       .then(posts.create)
@@ -297,6 +388,7 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -312,6 +404,9 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user.should.be.ok;
+        post.user.username.should.equal('test_user');
+        post.user.id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -321,16 +416,27 @@ describe('posts', function() {
 
   describe('#delete', function() {
     var plainPost = { title: 'post title', body: 'hello world.' };
-
+    var user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
       .then(threads.create)
       .then(function(thread) {
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return plainPost;
       })
       .then(posts.create)
@@ -348,6 +454,7 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user_id.should.equal(user.id);
         post.deleted.should.be.true;
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -361,6 +468,9 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user.should.be.ok;
+        post.user.username.should.equal('test_user');
+        post.user.id.should.equal(user.id);
         post.deleted.should.be.true;
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -370,22 +480,33 @@ describe('posts', function() {
 
   describe('#undelete', function() {
     var plainPost = { title: 'post title', body: 'hello world.' };
-
+    var user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
       .then(threads.create)
       .then(function(thread) {
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return plainPost;
       })
       .then(posts.create)
       .then(function(post) {
         return posts.delete(post.id)
-        .then(function(post) { plainPost = post });
+        .then(function(post) { plainPost = post; });
       });
     });
 
@@ -399,6 +520,7 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -412,6 +534,9 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user.should.be.ok;
+        post.user.username.should.equal('test_user');
+        post.user.id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -422,16 +547,27 @@ describe('posts', function() {
   describe('#purge', function() {
     var catchCalled = false;
     var plainPost = { title: 'post title', body: 'hello world.' };
-
+    var user;
     before(function() {
-      var newBoard = { name: 'Board', description: 'Board Desc' };
-      return boards.create(newBoard)
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
       .then(function(board) {
         return { board_id: board.id };
       })
       .then(threads.create)
       .then(function(thread) {
         plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
         return plainPost;
       })
       .then(posts.create)
@@ -449,6 +585,7 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
+        post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
