@@ -69,6 +69,7 @@ describe('posts', function() {
           should.not.exist(post.deleted);
           should.not.exist(post.smf);
           post.thread_id.should.equal(parentThread.id);
+          post.version.should.be.a('number');
         });
       });
     });
@@ -77,6 +78,71 @@ describe('posts', function() {
       return posts.byThread(parentThread.id, { limit: 10 })
       .then(function(allPosts) {
         allPosts.should.have.length(2);
+      });
+    });
+  });
+
+  describe('#versions', function() {
+    var plainPost = { title: 'post title', body: 'hello world.' };
+    var user;
+    before(function() {
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
+        return plainPost;
+      })
+      .then(posts.create)
+      .then(function(post) {
+        plainPost = post;
+        return post;
+      })
+      .then(function(post) {
+        post.title = 'updated';
+        post.body = 'updated';
+        return posts.update(post);
+      });
+    });
+
+    it('should verify all versions of a post', function() {
+      return posts.versions(plainPost.id)
+      .then(function(postVersions) {
+        postVersions.forEach(function(post) {
+          post.id.should.be.ok;
+          post.id.should.be.a('string');
+          post.created_at.should.be.a('number');
+          post.updated_at.should.be.a('number');
+          should.not.exist(post.imported_at);
+          post.title.should.be.a('string');
+          post.body.should.be.a('string');
+          post.user_id.should.equal(user.id);
+          should.not.exist(post.deleted);
+          should.not.exist(post.smf);
+          post.thread_id.should.equal(plainPost.thread_id);
+          post.version.should.be.a('number');
+        });
+      });
+    });
+
+    it('should return 2 posts', function() {
+      return posts.versions(plainPost.id)
+      .then(function(postVersions) {
+        postVersions.should.have.length(2);
       });
     });
   });
@@ -120,6 +186,7 @@ describe('posts', function() {
         post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
+        post.version.should.be.a('number');
         post.thread_id.should.equal(plainPost.thread_id);
       });
     });
@@ -171,6 +238,7 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         post.smf.post_id.should.equal(plainPost.smf.post_id);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.be.a('number');
       });
     });
   });
@@ -226,6 +294,7 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         post.smf.post_id.should.equal(plainPost.smf.post_id);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.equal(plainPost.version);
       });
     });
   });
@@ -281,6 +350,7 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         post.smf.post_id.should.equal(plainPost.smf.post_id);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.equal(plainPost.version);
         return post.smf.post_id;
       })
       .then(posts.postByOldId)
@@ -341,6 +411,7 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.equal(plainPost.version);
       });
     });
   });
@@ -392,6 +463,8 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.be.a('number');
+        post.version.should.not.equal(plainPost.version);
       });
     });
 
@@ -410,6 +483,8 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.be.a('number');
+        post.version.should.not.equal(plainPost.version);
       });
     });
   });
@@ -458,6 +533,8 @@ describe('posts', function() {
         post.deleted.should.be.true;
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.be.a('number');
+        post.version.should.not.equal(plainPost.version);
         return post.id;
       })
       .then(posts.find)
@@ -474,6 +551,8 @@ describe('posts', function() {
         post.deleted.should.be.true;
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.be.a('number');
+        post.version.should.not.equal(plainPost.version);
       });
     });
   });
@@ -524,6 +603,8 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.be.a('number');
+        // post.version.should.not.equal(plainPost.version);
         return post.id;
       })
       .then(posts.find)
@@ -540,6 +621,8 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.be.a('number');
+        // post.version.should.not.equal(plainPost.version);
       });
     });
   });
@@ -589,6 +672,7 @@ describe('posts', function() {
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
+        post.version.should.equal(plainPost.version);
         return post.id;
       })
       .then(posts.find)

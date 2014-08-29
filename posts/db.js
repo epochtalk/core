@@ -42,11 +42,13 @@ posts.insert = function(post) {
   if (!post.thread_id) {
     return Promise.reject('The thread_id isn\'t present for given Post.');
   }
+  
   var timestamp = Date.now();
   if (!post.created_at) { post.created_at = timestamp; }
   post.updated_at = timestamp;
   post.id = helper.genId(post.created_at);
   var postUsername;
+
   return usersDb.find(post.user_id)
   .then(function(user) {
     postUsername = user.username;
@@ -78,6 +80,11 @@ posts.insert = function(post) {
   })
   .then(function() {
     return db.indexes.putAsync(post.getThreadPostKey(), post.id);
+  })
+  .then(function() {
+    post.version = timestamp; // add version 
+    var versionKey = post.versionKey();
+    return db.content.putAsync(versionKey, post);
   })
   .then(function() { return db.content.putAsync(post.getKey(), post); })
   .then(function() { return post; });
@@ -123,15 +130,22 @@ posts.update = function(post) {
   })
   .then(function(oldPost) {
     updatePost = new Post(oldPost);
+    var timestamp = Date.now();
 
     // update post values
     updatePost.title = post.title;
     updatePost.body = post.body;
     updatePost.deleted = post.deleted;
-    updatePost.updated_at = Date.now();
+    updatePost.updated_at = timestamp;
+    updatePost.version = timestamp;
 
     // insert back into db
     return db.content.putAsync(postKey, updatePost);
+  })
+  .then(function() {
+    // version already updated above
+    var versionKey = updatePost.versionKey();
+    return db.content.putAsync(versionKey, updatePost);
   })
   .then(function() { return updatePost; });
 };
@@ -144,13 +158,20 @@ posts.delete = function(postId) {
   return db.content.getAsync(postKey)
   .then(function(postData) {
     deletedPost = new Post(postData);
+    var timestamp = Date.now();
 
     // add deleted: true flag to board
     deletedPost.deleted = true;
-    deletedPost.updated_at = Date.now();
+    deletedPost.updated_at = timestamp;
+    deletedPost.version = timestamp;
 
     // insert back into db
     return db.content.putAsync(postKey, deletedPost);
+  })
+  .then(function() {
+    // version already updated above
+    var versionKey = deletedPost.versionKey();
+    return db.content.putAsync(versionKey, deletedPost);
   })
   .then(function() { return deletedPost; });
 };
@@ -162,9 +183,17 @@ posts.purge = function(id) {
   var deletedPost;
 
   return db.content.getAsync(postKey) // get post
-  .then(function(post) { deletedPost = new Post(post); })
-  .then(function() { // move to deleted db
-    return db.deleted.putAsync(postKey, deletedPost);
+  .then(function(post) {
+    deletedPost = new Post(post);
+    return id;
+  })
+  .then(posts.versions)
+  .then(function(versions) { // move versions to deleted db
+    var batchArray = versions.map(function(version) {
+      var post = Post(version);
+      return { type: 'put', key: post.versionKey(), value: post };
+    });
+    return db.deleted.batchAsync(batchArray);
   })
   .then(function() { // remove from this db
     return db.content.delAsync(postKey);
@@ -254,6 +283,29 @@ posts.byThread = function(threadId, opts) {
     // query for all posts fir this threadId
     db.indexes.createValueStream(queryOptions)
     .on('data', sorter)
+    .on('error', reject)
+    .on('close', handler)
+    .on('end', handler);
+  });
+};
+
+posts.versions = function(id) {
+  return new Promise(function(fulfill, reject) {
+    var postVersions = [];
+    var sortVersions = function(post) {
+      postVersions.push(post);
+    };
+    var handler = function() {
+      fulfill(postVersions);
+    };
+
+    var searchKey = config.posts.version + config.sep + id + config.sep;
+    var query = {
+      start: searchKey,
+      end: searchKey + '\xff'
+    };
+    db.content.createValueStream(query)
+    .on('data', sortVersions)
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);

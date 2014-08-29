@@ -15,6 +15,7 @@ var postSchema = joi.object().keys({
   imported_at: joi.number(),
   deleted: joi.boolean(),
   user_id: joi.string(),
+  version: joi.number(),
   smf: {
     ID_MEMBER: joi.number(),
     thread_id: joi.number(),

@@ -34,6 +34,7 @@ function Post(data) {
   if (data.imported_at) { this.imported_at = data.imported_at; }
   if (data.deleted) { this.deleted = data.deleted; }
   if (data.smf && data.smf.post_id) { this.smf  = data.smf; }
+  if (data.version) { this.version = data.version; }
   this.thread_id = data.thread_id;
   this.body = data.body;
   this.title = data.title;
@@ -66,6 +67,15 @@ Post.prototype.getThreadKey = function() {
   return key;
 };
 
+Post.prototype.versionKey = function() {
+  var key;
+  if (this.id) {
+    key = config.posts.version + sep + this.id + sep + this.version;
+  }
+
+  return key;
+};
+
 Post.prototype.validate = function() {
   var post = this.simple();
   return schema.validate(post);
@@ -84,6 +94,7 @@ Post.prototype.simple = function() {
   if (self.imported_at) { post.imported_at = self.imported_at; }
   if (self.deleted) { post.deleted = self.deleted; }
   if (self.smf && self.smf.post_id) { post.smf  = self.smf; }
+  if (self.version) { post.version = self.version; }
   return post;
 };
 

@@ -4,12 +4,12 @@ module.exports = {
   sep: '~',
   boards: {
     prefix: 'board',
-    indexPrefix: 'boards',
-    version: 'board_version'
+    indexPrefix: 'boards'
   },
   posts: {
     prefix: 'post',
-    indexPrefix: 'posts'
+    indexPrefix: 'posts',
+    version: 'post_version'
   },
   threads: {
     prefix: 'thread',

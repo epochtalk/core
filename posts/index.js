@@ -62,3 +62,7 @@ posts.postByOldId = function(oldId) {
 posts.byThread = function(threadId, opts) {
   return postsDb.byThread(threadId, opts); // all already simple
 };
+
+posts.versions = function(id) {
+  return postsDb.versions(id); // all already simple
+};
