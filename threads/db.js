@@ -142,6 +142,10 @@ threadsDb.purge = function(id) {
     var postCountKey = deletedThread.getPostCountKey();
     return db.metadata.delAsync(postCountKey);
   })
+  .then(function() { // remove username Key
+    var threadUsernameKey = threadKey + config.sep + 'username';
+    return db.metadata.delAsync(threadUsernameKey);
+  })
   .then(function() { // decrement board thread count
     var boardId = deletedThread.board_id;
     return boardsDb.decThreadCount(boardId);

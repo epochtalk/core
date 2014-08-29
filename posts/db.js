@@ -158,6 +158,7 @@ posts.delete = function(postId) {
 /* deleting first post should remove thread */
 posts.purge = function(id) {
   var postKey = Post.getKeyFromId(id);
+  var postUsernameKey = postKey + config.sep + 'username';
   var deletedPost;
 
   return db.content.getAsync(postKey) // get post
@@ -167,6 +168,9 @@ posts.purge = function(id) {
   })
   .then(function() { // remove from this db
     return db.content.delAsync(postKey);
+  })
+  .then(function() { // remove username metadata from db
+    return db.metadata.delAsync(postUsernameKey);
   })
   .then(function() { // decrement threadPostCount
     return threadsDb.decPostCount(deletedPost.thread_id);
