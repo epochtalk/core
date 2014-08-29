@@ -26,7 +26,7 @@ User.prototype.validate = function() {
   return validate.create(user);
 };
 
-User.prototype.getKey = function() {
+User.prototype.key = function() {
   var key;
   if (this.id) {
     key = config.users.prefix + config.sep + this.id;

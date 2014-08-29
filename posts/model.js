@@ -41,12 +41,12 @@ function Post(data) {
   this.user_id = data.user_id;
 }
 
-Post.prototype.getKey = function() {
+Post.prototype.key = function() {
   var self = this;
   return keyForPost(self.id);
 };
 
-Post.prototype.getThreadPostKey = function() {
+Post.prototype.threadPostKey = function() {
   var key;
   if (this.thread_id && this.id) {
     key = indexPrefix + sep + this.thread_id + sep + this.id;
@@ -54,12 +54,12 @@ Post.prototype.getThreadPostKey = function() {
   return key;
 };
 
-Post.prototype.getLegacyKey = function() {
+Post.prototype.legacyKey = function() {
   var self = this;
   return legacyKeyForPost(self.smf.post_id);
 };
 
-Post.prototype.getThreadKey = function() {
+Post.prototype.threadKey = function() {
   var key;
   if (this.thread_id) {
     key = config.threads.prefix + sep + this.thread_id;
@@ -98,11 +98,15 @@ Post.prototype.simple = function() {
   return post;
 };
 
-Post.getKeyFromId = function(id) {
+Post.keyFromId = function(id) {
   return keyForPost(id);
 };
 
-Post.getLegacyKeyFromId = function(legacyId) {
+Post.usernameKeyFromId = function(id) {
+  return keyForPost(id) + config.sep + 'username';
+};
+
+Post.legacyKeyFromId = function(legacyId) {
   return legacyKeyForPost(legacyId);
 };
 

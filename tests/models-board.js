@@ -56,7 +56,7 @@ describe('Board', function() {
         parentBoard = updatedParentBoard;
       });
     });
-    
+
     it('should create a plain Board object', function() {
       var board = new Board(plainBoard);
       board.should.be.a('object');
@@ -109,7 +109,7 @@ describe('Board', function() {
     });
   });
 
-  describe('#getKey', function() {
+  describe('#key', function() {
     var plainBoard = {
       name: 'Board',
       description: 'Board Description'
@@ -127,7 +127,7 @@ describe('Board', function() {
       var sep = config.sep;
 
       var board = new Board(plainBoard);
-      var key = board.getKey();
+      var key = board.key();
 
       key.should.be.ok;
       key.should.be.a('string');
@@ -135,13 +135,13 @@ describe('Board', function() {
     });
   });
 
-  describe('#getKeyFromId', function() {
-    it('should return the board\'s legacy key', function() {
+  describe('#keyFromId', function() {
+    it('should return the board\'s key', function() {
       var boardPrefix = config.boards.prefix;
       var sep = config.sep;
       var fakeId = '123456789';
 
-      var key = Board.getKeyFromId(fakeId);
+      var key = Board.keyFromId(fakeId);
 
       key.should.be.ok;
       key.should.be.a('string');
@@ -149,7 +149,35 @@ describe('Board', function() {
     });
   });
 
-  describe('#getLegacyKey', function() {
+  describe('#postCountKeyFromId', function() {
+    it('should return the board\'s post count key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Board.postCountKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + fakeId + sep + 'post_count');
+    });
+  });
+
+  describe('#threadCountKeyFromId', function() {
+    it('should return the board\'s thread count key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Board.threadCountKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + fakeId + sep + 'thread_count');
+    });
+  });
+
+  describe('#legacyKey', function() {
     var plainBoard = {
       name: 'Board',
       description: 'Board Description',
@@ -170,7 +198,7 @@ describe('Board', function() {
       var sep = config.sep;
 
       var board = new Board(plainBoard);
-      var key = board.getLegacyKey();
+      var key = board.legacyKey();
 
       key.should.be.ok;
       key.should.be.a('string');
@@ -178,13 +206,13 @@ describe('Board', function() {
     });
   });
 
-  describe('#getLegacyKeyFromId', function() {
+  describe('#legacyKeyFromId', function() {
     it('should return the board\'s legacy key', function() {
       var boardPrefix = config.boards.prefix;
       var sep = config.sep;
       var fakeId = '123456789';
 
-      var key = Board.getLegacyKeyFromId(fakeId);
+      var key = Board.legacyKeyFromId(fakeId);
 
       key.should.be.ok;
       key.should.be.a('string');
@@ -438,14 +466,14 @@ describe('Board', function() {
       simpleBoard.smf.board_id.should.equal(fullBoard.smf.board_id);
       simpleBoard.children.should.be.an('array');
 
-      should.not.exist(simpleBoard.getKey);
-      should.not.exist(simpleBoard.getLegacyKey);
+      should.not.exist(simpleBoard.key);
+      should.not.exist(simpleBoard.legacyKey);
       should.not.exist(simpleBoard.getChildren);
       should.not.exist(simpleBoard.getParent);
       should.not.exist(simpleBoard.validate);
       should.not.exist(simpleBoard.simple);
-      should.not.exist(simpleBoard.getKeyFromId);
-      should.not.exist(simpleBoard.getLegacyKeyFromId);
+      should.not.exist(simpleBoard.keyFromId);
+      should.not.exist(simpleBoard.legacyKeyFromId);
       should.not.exist(simpleBoard.prefix);
     });
   });

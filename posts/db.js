@@ -6,6 +6,7 @@ var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Post = require(path.join(__dirname, 'model'));
+var Thread = require(path.join(__dirname, '..', 'threads', 'model'));
 var User = require(path.join(__dirname, '..', 'users', 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
@@ -17,7 +18,7 @@ posts.import = function(post) {
     return posts.insert(post)
     .then(function(dbPost) {
       if (dbPost.smf) {
-        return db.legacy.putAsync(dbPost.getLegacyKey(), dbPost.id)
+        return db.legacy.putAsync(dbPost.legacyKey(), dbPost.id)
         .then(function() { return dbPost; });
       }
     });
@@ -42,7 +43,7 @@ posts.insert = function(post) {
   if (!post.thread_id) {
     return Promise.reject('The thread_id isn\'t present for given Post.');
   }
-  
+
   var timestamp = Date.now();
   if (!post.created_at) { post.created_at = timestamp; }
   post.updated_at = timestamp;
@@ -56,16 +57,16 @@ posts.insert = function(post) {
   })
   .then(function(postCount) {
     postCount = Number(postCount);
-    var postUsernameKey = post.getKey() + config.sep + 'username';
+    var postUsernameKey = Post.usernameKeyFromId(post.id);
     var metadataBatch = [
       { type: 'put', key: postUsernameKey, value: postUsername }
     ];
     if (postCount === 1) { // First Post
       // TODO: Move key generation into models.
-      var threadKeyPrefix = post.getThreadKey() + config.sep;
-      var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
-      var threadTitleKey = threadKeyPrefix + 'title';
-      var threadUsernameKey = threadKeyPrefix + 'username';
+      var threadId = post.thread_id;
+      var threadFirstPostIdKey = Thread.firstPostIdKeyFromId(threadId);
+      var threadTitleKey = Thread.titleKeyFromId(threadId);
+      var threadUsernameKey = Thread.usernameKeyFromId(threadId);
       metadataBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
       metadataBatch.push({ type: 'put', key: threadTitleKey, value: post.title });
       metadataBatch.push({ type: 'put', key: threadUsernameKey, value: postUsername });
@@ -79,21 +80,21 @@ posts.insert = function(post) {
     });
   })
   .then(function() {
-    return db.indexes.putAsync(post.getThreadPostKey(), post.id);
+    return db.indexes.putAsync(post.threadPostKey(), post.id);
   })
   .then(function() {
-    post.version = timestamp; // add version 
+    post.version = timestamp; // add version
     var versionKey = post.versionKey();
     return db.content.putAsync(versionKey, post);
   })
-  .then(function() { return db.content.putAsync(post.getKey(), post); })
+  .then(function() { return db.content.putAsync(post.key(), post); })
   .then(function() { return post; });
 };
 
 posts.find = function(id) {
   var post;
-  var postKey = Post.getKeyFromId(id);
-  var postUsernameKey = postKey + config.sep + 'username';
+  var postKey = Post.keyFromId(id);
+  var postUsernameKey = Post.usernameKeyFromId(id);
   return db.content.getAsync(postKey)
   .then(function(dbPost) {
     post = dbPost;
@@ -110,11 +111,9 @@ posts.find = function(id) {
 };
 
 posts.update = function(post) {
-  var postKey = post.getKey();
+  var postKey = post.key();
   var updatePost = null;
-
-  var threadKeyPrefix = post.getThreadKey() + config.sep;
-  var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
+  var threadFirstPostIdKey = Thread.firstPostIdKeyFromId(post.thread_id);
 
   // check if first post in thread
   return db.metadata.getAsync(threadFirstPostIdKey)
@@ -151,7 +150,7 @@ posts.update = function(post) {
 };
 
 posts.delete = function(postId) {
-  var postKey = Post.getKeyFromId(postId);
+  var postKey = Post.keyFromId(postId);
   var deletedPost = null;
 
   // see if post already exists
@@ -178,8 +177,8 @@ posts.delete = function(postId) {
 
 /* deleting first post should remove thread */
 posts.purge = function(id) {
-  var postKey = Post.getKeyFromId(id);
-  var postUsernameKey = postKey + config.sep + 'username';
+  var postKey = Post.keyFromId(id);
+  var postUsernameKey = Post.usernameKeyFromId(id);
   var deletedPost;
 
   return db.content.getAsync(postKey) // get post
@@ -211,13 +210,12 @@ posts.purge = function(id) {
     });
   })
   .then(function() { // delete ThreadPostKey
-    var threadPostKey = deletedPost.getThreadPostKey();
+    var threadPostKey = deletedPost.threadPostKey();
     return db.indexes.delAsync(threadPostKey);
   })
   // temporary solution to handling ThreadFirstPostIdKey
   .then(function() { // manage ThreadFirstPostIdKey
-    var threadKeyPrefix = deletedPost.getThreadKey() + config.sep;
-    var threadFirstPostIdKey = threadKeyPrefix + 'first_post_id';
+    var threadFirstPostIdKey = Thread.firstPostIdKeyFromId((deletedPost.thread_id));
     return db.metadata.getAsync(threadFirstPostIdKey)
     .then(function(postId) {
       if (postId === deletedPost.id) {
@@ -230,7 +228,7 @@ posts.purge = function(id) {
   // temporarily not handling threadTitle
   .then(function() {
     if (deletedPost.smf) {
-      var legacyKey = deletedPost.getLegacyKey();
+      var legacyKey = deletedPost.legacyKey();
       return db.indexes.delAsync(legacyKey);
     }
     else { return; }
@@ -239,7 +237,7 @@ posts.purge = function(id) {
 };
 
 posts.postByOldId = function(oldId) {
-  var legacyThreadKey = Post.getLegacyKeyFromId(oldId);
+  var legacyThreadKey = Post.legacyKeyFromId(oldId);
 
   return db.legacy.getAsync(legacyThreadKey)
   .then(function(postId) {

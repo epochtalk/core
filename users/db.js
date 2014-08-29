@@ -33,16 +33,16 @@ users.insert = function(user) {
   delete user.password;
   delete user.confirmation;
 
-  return db.content.putAsync(user.getKey(), user)
+  return db.content.putAsync(user.key(), user)
   .then(function() {
     return user;
   });
 };
 
 users.remove = function(user) {
-  return db.content.delAsync(user.getKey())
+  return db.content.delAsync(user.key())
   .then(function() {
-    db.deleted.putAsync(user.getKey, user);
+    db.deleted.putAsync(user.key, user);
   })
   .then(function() {
     return user;

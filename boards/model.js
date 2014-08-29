@@ -4,7 +4,6 @@ var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var schema = require(path.join(__dirname, 'schema'));
 var db = require(path.join(__dirname, '..', 'db'));
-var indexPrefix = config.boards.indexPrefix;
 var prefix = config.boards.prefix;
 var sep = config.sep;
 
@@ -45,12 +44,12 @@ function Board(board) {
   if (board.children_ids) { this.children_ids = board.children_ids; }
 }
 
-Board.prototype.getKey = function() {
+Board.prototype.key = function() {
   var self = this;
   return keyForBoard(self.id);
 };
 
-Board.prototype.getLegacyKey = function() {
+Board.prototype.legacyKey = function() {
   var self = this;
   var legacyKey;
   if (self.smf.board_id) {
@@ -128,11 +127,19 @@ Board.prototype.simple = function() {
 };
 
 // Static Methods
-Board.getKeyFromId = function(id) {
+Board.keyFromId = function(id) {
   return keyForBoard(id);
 };
 
-Board.getLegacyKeyFromId = function(legacyId) {
+Board.postCountKeyFromId = function(id) {
+  return keyForBoard(id) + config.sep + 'post_count';
+};
+
+Board.threadCountKeyFromId = function(id) {
+  return keyForBoard(id) + config.sep + 'thread_count';
+};
+
+Board.legacyKeyFromId = function(legacyId) {
   return legacyKeyForBoard(legacyId);
 };
 

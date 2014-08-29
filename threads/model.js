@@ -36,25 +36,17 @@ function Thread(data) {
   this.board_id = data.board_id;
 }
 
-Thread.prototype.getKey = function() {
+Thread.prototype.key = function() {
   var self = this;
   return keyForThread(self.id);
 };
 
-Thread.prototype.getPostCountKey = function() {
-  var key;
-  if (this.id) {
-    key = prefix + sep + this.id + sep + 'post_count';
-  }
-  return key;
-};
-
-Thread.prototype.getLegacyKey = function() {
+Thread.prototype.legacyKey = function() {
   var self = this;
   return legacyKeyForThread(self.smf.thread_id);
 };
 
-Thread.prototype.getBoardThreadKey = function() {
+Thread.prototype.boardThreadKey = function() {
   var boardThreadKey;
   if (this.id && this.board_id) {
     boardThreadKey = indexPrefix + sep + this.board_id + sep + this.id;
@@ -62,7 +54,7 @@ Thread.prototype.getBoardThreadKey = function() {
   return boardThreadKey;
 };
 
-Thread.prototype.getBoardKey = function() {
+Thread.prototype.boardKey = function() {
   var key;
   if (this.id) {
     key = config.boards.prefix + config.sep + this.board_id;
@@ -89,12 +81,28 @@ Thread.prototype.simple = function() {
   return thread;
 };
 
-Thread.getKeyFromId = function(id) {
+Thread.keyFromId = function(id) {
   return keyForThread(id);
 };
 
-Thread.getLegacyKeyFromId = function(legacyId) {
+Thread.legacyKeyFromId = function(legacyId) {
   return legacyKeyForThread(legacyId);
+};
+
+Thread.postCountKeyFromId = function(id) {
+  return keyForThread(id) + config.sep + 'post_count';
+};
+
+Thread.firstPostIdKeyFromId = function(id) {
+  return keyForThread(id) + config.sep + 'first_post_id';
+};
+
+Thread.titleKeyFromId = function(id) {
+  return keyForThread(id) + config.sep + 'title';
+};
+
+Thread.usernameKeyFromId = function(id) {
+  return keyForThread(id) + config.sep + 'username';
 };
 
 Thread.prefix = prefix;

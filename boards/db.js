@@ -16,7 +16,7 @@ boards.import = function(board) {
   return boards.create(board) // create board first to handle id
   .then(function(dbBoard) {
     if (dbBoard.smf) {
-      db.legacy.putAsync(board.getLegacyKey(), dbBoard.id)
+      db.legacy.putAsync(board.legacyKey(), dbBoard.id)
       .then(function() { return dbBoard; });
     }
   });
@@ -29,7 +29,7 @@ boards.create = function(board) {
   if (!board.created_at) { board.created_at = timestamp; }
   board.updated_at = timestamp;
   board.id = helper.genId(board.created_at);
-  var boardKey = board.getKey();
+  var boardKey = board.key();
 
   return boards.incPostCount(board.id)
   .then(function() { return boards.incThreadCount(board.id); })
@@ -39,7 +39,7 @@ boards.create = function(board) {
 
 /* RETRIEVE */
 boards.find = function(id) {
-  var boardKey = Board.getKeyFromId(id);
+  var boardKey = Board.keyFromId(id);
   var boardPostCountKey = boardKey + config.sep + 'post_count';
   var boardThreadCountKey = boardKey + config.sep + 'thread_count';
   var board;
@@ -64,7 +64,7 @@ boards.find = function(id) {
 
 /*  UPDATE */
 boards.update = function(board) {
-  var boardKey = board.getKey();
+  var boardKey = board.key();
   var updateBoard = null;
 
   // get old board from db
@@ -88,7 +88,7 @@ boards.update = function(board) {
 
 /* DELETE */
 boards.delete = function(boardId) {
-  var boardKey = Board.getKeyFromId(boardId);
+  var boardKey = Board.keyFromId(boardId);
   var deleteBoard = null;
 
   // see if board already exists
@@ -107,7 +107,7 @@ boards.delete = function(boardId) {
 };
 
 boards.purge = function(id) {
-  var boardKey = Board.getKeyFromId(id);
+  var boardKey = Board.keyFromId(id);
   var purgeBoard;
 
   // see if board already exists
@@ -137,7 +137,7 @@ boards.purge = function(id) {
   // delete legacy key index
   .then(function() {
     if (purgeBoard.smf) {
-      var legacyKey = purgeBoard.getLegacyKey();
+      var legacyKey = purgeBoard.legacyKey();
       return db.indexes.delAsync(legacyKey);
     }
     else { return; }
@@ -148,7 +148,7 @@ boards.purge = function(id) {
 
 /*  QUERY: board using old id */
 boards.boardByOldId = function(oldId) {
-  var legacyBoardKey = Board.getLegacyKeyFromId(oldId);
+  var legacyBoardKey = Board.legacyKeyFromId(oldId);
 
   return db.legacy.getAsync(legacyBoardKey)
   .then(function(boardId) {
@@ -194,7 +194,7 @@ boards.all = function() {
 };
 
 boards.incPostCount = function(id) {
-  var postCountKey = Board.getKeyFromId(id) + config.sep + 'post_count';
+  var postCountKey = Board.postCountKeyFromId(id);
   return new Promise(function(fulfill, reject) {
     postCountLock.runwithlock(function () {
       var newPostCount = 0;
@@ -214,7 +214,7 @@ boards.incPostCount = function(id) {
 };
 
 boards.decPostCount = function(id) {
-  var postCountKey = Board.getKeyFromId(id) + config.sep + 'post_count';
+  var postCountKey = Board.postCountKeyFromId(id);
   return new Promise(function(fulfill, reject) {
     postCountLock.runwithlock(function () {
       var newPostCount = 0;
@@ -236,7 +236,7 @@ boards.decPostCount = function(id) {
 };
 
 boards.incThreadCount = function(id) {
-  var threadCountKey = Board.getKeyFromId(id) + config.sep + 'thread_count';
+  var threadCountKey = Board.threadCountKeyFromId(id);
   return new Promise(function(fulfill, reject) {
     threadCountLock.runwithlock(function () {
       var newThreadCount = 0;
@@ -256,7 +256,7 @@ boards.incThreadCount = function(id) {
 };
 
 boards.decThreadCount = function(id) {
-  var threadCountKey = Board.getKeyFromId(id) + config.sep + 'thread_count';
+  var threadCountKey = Board.threadCountKeyFromId(id);
   return new Promise(function(fulfill, reject) {
     threadCountLock.runwithlock(function () {
       var newThreadCount = 0;

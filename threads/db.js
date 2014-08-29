@@ -16,7 +16,7 @@ threadsDb.import = function(thread) {
   return threadsDb.insert(thread)
   .then(function(dbThread) {
     if (dbThread.smf) {
-      return db.legacy.putAsync(thread.getLegacyKey(), dbThread.id)
+      return db.legacy.putAsync(thread.legacyKey(), dbThread.id)
       .then(function() { return dbThread; });
     }
   });
@@ -32,9 +32,9 @@ threadsDb.insert = function(thread) {
   if (!thread.created_at) { thread.created_at = timestamp; }
   thread.updated_at = timestamp;
   thread.id = helper.genId(thread.created_at);
-  var boardThreadKey = thread.getBoardThreadKey();
+  var boardThreadKey = thread.boardThreadKey();
 
-  return db.content.putAsync(thread.getKey(), thread)
+  return db.content.putAsync(thread.key(), thread)
   .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
   .then(function() { return threadsDb.incPostCount(thread.id); })
   .then(function() { return boardsDb.incThreadCount(thread.board_id); })
@@ -42,7 +42,7 @@ threadsDb.insert = function(thread) {
 };
 
 threadsDb.incPostCount = function(id) {
-  var postCountKey = Thread.getKeyFromId(id) + config.sep + 'post_count';
+  var postCountKey = Thread.postCountKeyFromId(id);
   return new Promise(function(fulfill, reject) {
     lock.runwithlock(function () {
       var newPostCount = 0;
@@ -62,7 +62,7 @@ threadsDb.incPostCount = function(id) {
 };
 
 threadsDb.decPostCount = function(id) {
-  var postCountKey = Thread.getKeyFromId(id) + config.sep + 'post_count';
+  var postCountKey = Thread.postCountKeyFromId(id);
   return new Promise(function(fulfill, reject) {
     lock.runwithlock(function () {
       var newPostCount = 0;
@@ -84,7 +84,7 @@ threadsDb.decPostCount = function(id) {
 };
 
 threadsDb.update = function(thread) {
-  var threadKey = thread.getKey();
+  var threadKey = thread.key();
   var updateThread;
 
   return db.content.getAsync(threadKey) // get old post
@@ -102,7 +102,7 @@ threadsDb.update = function(thread) {
 };
 
 threadsDb.delete = function(id) {
-  var threadKey = Thread.getKeyFromId(id);
+  var threadKey = Thread.keyFromId(id);
   var deletedThread = null;
 
   // see if thread already exists
@@ -121,7 +121,7 @@ threadsDb.delete = function(id) {
 };
 
 threadsDb.purge = function(id) {
-  var threadKey = Thread.getKeyFromId(id);
+  var threadKey = Thread.keyFromId(id);
   var deletedThread;
 
   return db.content.getAsync(threadKey) // get thread
@@ -135,15 +135,15 @@ threadsDb.purge = function(id) {
     return db.content.delAsync(threadKey);
   })
   .then(function() { // remove board - thread index
-    var boardThreadKey = deletedThread.getBoardThreadKey();
+    var boardThreadKey = deletedThread.boardThreadKey();
     return db.indexes.delAsync(boardThreadKey);
   })
   .then(function() { // remove post count Key
-    var postCountKey = deletedThread.getPostCountKey();
+    var postCountKey = Thread.postCountKeyFromId(id);
     return db.metadata.delAsync(postCountKey);
   })
   .then(function() { // remove username Key
-    var threadUsernameKey = threadKey + config.sep + 'username';
+    var threadUsernameKey = Thread.usernameKeyFromId(id);
     return db.metadata.delAsync(threadUsernameKey);
   })
   .then(function() { // decrement board thread count
@@ -152,7 +152,7 @@ threadsDb.purge = function(id) {
   })
   .then(function() {
     if (deletedThread.smf) {
-      var legacyKey = deletedThread.getLegacyKey();
+      var legacyKey = deletedThread.legacyKey();
       return db.indexes.delAsync(legacyKey);
     }
     else { return; }
@@ -162,26 +162,30 @@ threadsDb.purge = function(id) {
 
 threadsDb.find = function(id) {
   var thread;
-  var threadKey = Thread.getKeyFromId(id);
+  var threadKey = Thread.keyFromId(id);
   // TODO: Move key generation to models.
   return db.content.getAsync(threadKey)
   .then(function(dbThread) {
     thread = dbThread;
-    return db.metadata.getAsync(threadKey + config.sep + 'post_count');
+    var postCountKey = Thread.postCountKeyFromId(id);
+    return db.metadata.getAsync(postCountKey);
   })
   .then(function(count) {
     thread.post_count = Number(count);
-    return db.metadata.getAsync(threadKey + config.sep + 'first_post_id');
+    var firstPostIdKey = Thread.firstPostIdKeyFromId(id);
+    return db.metadata.getAsync(firstPostIdKey);
     // possibly add catch here if first post doesn't exist
   })
   .then(function(firstPostId) {
     thread.first_post_id = firstPostId;
-    return db.metadata.getAsync(threadKey + config.sep + 'title');
+    var titleKey = Thread.titleKeyFromId(id);
+    return db.metadata.getAsync(titleKey);
     // possibly add catch here if first post doesn't exist
   })
   .then(function(title) {
     thread.title = title;
-    return db.metadata.getAsync(threadKey + config.sep + 'username');
+    var usernameKey = Thread.usernameKeyFromId(id);
+    return db.metadata.getAsync(usernameKey);
   })
   .then(function(threadUsername) {
     thread.user = {
@@ -192,7 +196,7 @@ threadsDb.find = function(id) {
 };
 
 threadsDb.threadByOldId = function(oldId) {
-  var legacyThreadKey = Thread.getLegacyKeyFromId(oldId);
+  var legacyThreadKey = Thread.legacyKeyFromId(oldId);
 
   return db.legacy.getAsync(legacyThreadKey)
   .then(function(threadId) {

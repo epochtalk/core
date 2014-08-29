@@ -58,7 +58,7 @@ describe('Thread', function() {
     });
   });
 
-  describe('#getKey', function() {
+  describe('#key', function() {
     var plainThread, user;
     var plainPost = {
       title: 'post title',
@@ -95,7 +95,7 @@ describe('Thread', function() {
       var sep = config.sep;
 
       var thread = new Thread(plainThread);
-      var key = thread.getKey();
+      var key = thread.key();
 
       key.should.be.ok;
       key.should.be.a('string');
@@ -103,13 +103,13 @@ describe('Thread', function() {
     });
   });
 
-  describe('#getKeyFromId', function() {
-    it('should return the thread\'s legacy key', function() {
+  describe('#keyFromId', function() {
+    it('should return the thread\'s key', function() {
       var threadPrefix = config.threads.prefix;
       var sep = config.sep;
       var fakeId = '123456789';
 
-      var key = Thread.getKeyFromId(fakeId);
+      var key = Thread.keyFromId(fakeId);
 
       key.should.be.ok;
       key.should.be.a('string');
@@ -117,7 +117,63 @@ describe('Thread', function() {
     });
   });
 
-  describe('#getLegacyKey', function() {
+  describe('#postCountKeyFromId', function() {
+    it('should return the thread\'s post count key', function() {
+      var threadPrefix = config.threads.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Thread.postCountKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(threadPrefix + sep + fakeId + sep + 'post_count');
+    });
+  });
+
+  describe('#firstPostIdKeyFromId', function() {
+    it('should return the thread\'s first post id key', function() {
+      var threadPrefix = config.threads.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Thread.firstPostIdKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(threadPrefix + sep + fakeId + sep + 'first_post_id');
+    });
+  });
+
+  describe('#titleKeyFromId', function() {
+    it('should return the thread\'s title key', function() {
+      var threadPrefix = config.threads.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Thread.titleKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(threadPrefix + sep + fakeId + sep + 'title');
+    });
+  });
+
+  describe('#usernameKeyFromId', function() {
+    it('should return the thread\'s username key', function() {
+      var threadPrefix = config.threads.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Thread.usernameKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(threadPrefix + sep + fakeId + sep + 'username');
+    });
+  });
+
+  describe('#legacyKey', function() {
     var plainThread = {
       smf: {
         thread_id: '0123456789',
@@ -161,7 +217,7 @@ describe('Thread', function() {
       var sep = config.sep;
 
       var newThread = new Thread(plainThread);
-      var key = newThread.getLegacyKey();
+      var key = newThread.legacyKey();
 
       key.should.be.ok;
       key.should.be.a('string');
@@ -169,13 +225,13 @@ describe('Thread', function() {
     });
   });
 
-  describe('#getLegacyKeyFromId', function() {
+  describe('#legacyKeyFromId', function() {
     it('should return the board\'s legacy key', function() {
       var threadPrefix = config.threads.prefix;
       var sep = config.sep;
       var fakeId = '123456789';
 
-      var key = Thread.getLegacyKeyFromId(fakeId);
+      var key = Thread.legacyKeyFromId(fakeId);
 
       key.should.be.ok;
       key.should.be.a('string');
@@ -183,54 +239,21 @@ describe('Thread', function() {
     });
   });
 
-  describe('#getPostCountKey', function() {
-    var plainThread, user;
-    var plainPost = {
-      title: 'post title',
-      body: 'post body'
-    };
-
-    before(function() {
-      var newUser = {
-        username: 'test_user',
-        email: 'test_user@example.com',
-        password: 'epochtalk',
-        confirmation: 'epochtalk'
-      };
-      return core.users.create(newUser)
-      .then(function(dbUser) {
-        user = dbUser;
-        var newBoard = { name: 'Board', description: 'Board Desc' };
-        return boards.create(newBoard);
-      })
-      .then(function(board) {
-        return { board_id: board.id };
-      })
-      .then(threads.create)
-      .then(function(thread) {
-        plainThread = thread;
-        plainPost.thread_id = thread.id;
-        plainPost.user_id = user.id;
-        return posts.create(plainPost);
-      })
-      .then(function(post) { plainPost = post; });
-    });
-
-    it('should return the board\'s postCount key', function() {
+  describe('#postCountKeyFromId', function() {
+    it('should return the thread\'s post count key', function() {
       var threadPrefix = config.threads.prefix;
       var sep = config.sep;
-      var postCount = 'post_count';
+      var fakeId = '123456789';
 
-      var thread = new Thread(plainThread);
-      var key = thread.getPostCountKey();
+      var key = Thread.postCountKeyFromId(fakeId);
 
       key.should.be.ok;
       key.should.be.a('string');
-      key.should.be.equal(threadPrefix + sep + thread.id + sep + postCount);
+      key.should.be.equal(threadPrefix + sep + fakeId + sep + 'post_count');
     });
   });
 
-  describe('#getBoardThreadKey', function() {
+  describe('#boardThreadKey', function() {
     var plainThread, user;
     var plainPost = {
       title: 'post title',
@@ -268,7 +291,7 @@ describe('Thread', function() {
       var sep = config.sep;
 
       var thread = new Thread(plainThread);
-      var key = thread.getBoardThreadKey();
+      var key = thread.boardThreadKey();
 
       key.should.be.ok;
       key.should.be.a('string');
@@ -364,14 +387,14 @@ describe('Thread', function() {
       simpleThread.deleted.should.be.true;
       simpleThread.smf.thread_id.should.equal(fullThread.smf.thread_id);
 
-      should.not.exist(simpleThread.getKey);
-      should.not.exist(simpleThread.getLegacyKey);
-      should.not.exist(simpleThread.getPostCountKey);
-      should.not.exist(simpleThread.getBoardThreadKey);
+      should.not.exist(simpleThread.key);
+      should.not.exist(simpleThread.legacyKey);
+      should.not.exist(simpleThread.postCountKey);
+      should.not.exist(simpleThread.boardThreadKey);
       should.not.exist(simpleThread.validate);
       should.not.exist(simpleThread.simple);
-      should.not.exist(simpleThread.getKeyFromId);
-      should.not.exist(simpleThread.getLegacyKeyFromId);
+      should.not.exist(simpleThread.keyFromId);
+      should.not.exist(simpleThread.legacyKeyFromId);
       should.not.exist(simpleThread.prefix);
     });
   });
