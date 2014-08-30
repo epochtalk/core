@@ -212,7 +212,7 @@ describe('Thread', function() {
       .then(function(post) { plainPost = post; });
     });
 
-    it('should return the board\'s legacy key', function() {
+    it('should return the thread\'s legacy key', function() {
       var threadPrefix = config.threads.prefix;
       var sep = config.sep;
 
@@ -286,7 +286,7 @@ describe('Thread', function() {
       .then(function(post) { plainPost = post; });
     });
 
-    it('should return the board\'s boardThread key', function() {
+    it('should return the thread\'s boardThread key', function() {
       var indexPrefix = config.threads.indexPrefix;
       var sep = config.sep;
 
@@ -326,6 +326,7 @@ describe('Thread', function() {
       };
       var thread = new Thread(dateThread);
       var validThread = thread.validate().value();
+      validThread.should.exist;
     });
 
     it('should validate ids are string', function() {
