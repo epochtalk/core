@@ -139,7 +139,7 @@ boards.purge = function(id) {
   .then(function() {
     if (purgeBoard.smf) {
       var legacyKey = purgeBoard.legacyKey();
-      return db.indexes.delAsync(legacyKey);
+      return db.legacy.delAsync(legacyKey);
     }
     else { return; }
   })

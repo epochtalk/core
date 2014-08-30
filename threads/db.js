@@ -142,10 +142,6 @@ threadsDb.purge = function(id) {
     var postCountKey = Thread.postCountKeyFromId(id);
     return db.metadata.delAsync(postCountKey);
   })
-  .then(function() { // remove username Key
-    var threadUsernameKey = Thread.usernameKeyFromId(id);
-    return db.metadata.delAsync(threadUsernameKey);
-  })
   .then(function() { // decrement board thread count
     var boardId = deletedThread.board_id;
     return boardsDb.decThreadCount(boardId);
@@ -153,7 +149,7 @@ threadsDb.purge = function(id) {
   .then(function() {
     if (deletedThread.smf) {
       var legacyKey = deletedThread.legacyKey();
-      return db.indexes.delAsync(legacyKey);
+      return db.legacy.delAsync(legacyKey);
     }
     else { return; }
   })
@@ -186,6 +182,7 @@ threadsDb.find = function(id) {
     thread.title = title;
     var usernameKey = Thread.usernameKeyFromId(id);
     return db.metadata.getAsync(usernameKey);
+    // possibly add catch here if usernameKey doesn't exit
   })
   .then(function(threadUsername) {
     thread.user = {

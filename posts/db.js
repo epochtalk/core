@@ -192,7 +192,14 @@ posts.purge = function(id) {
       var post = Post(version);
       return { type: 'put', key: post.versionKey(), value: post };
     });
-    return db.deleted.batchAsync(batchArray);
+    return db.deleted.batchAsync(batchArray)
+    .then(function() {
+      batchArray = batchArray.map(function(item) {
+        item.type = 'del';
+        return item;
+      });
+      return db.content.batchAsync(batchArray);
+    });
   })
   .then(function() { // remove from this db
     return db.content.delAsync(postKey);
@@ -226,10 +233,11 @@ posts.purge = function(id) {
     });
   })
   // temporarily not handling threadTitle
+  // temporarily not handling thread username
   .then(function() {
     if (deletedPost.smf) {
       var legacyKey = deletedPost.legacyKey();
-      return db.indexes.delAsync(legacyKey);
+      return db.legacy.delAsync(legacyKey);
     }
     else { return; }
   })
