@@ -1280,8 +1280,7 @@ describe('threads', function() {
         return posts.create(plainPost);
       })
       .then(function(post) { plainPost = post; })
-      .then(function() { threads.purge(plainThread.id); })
-      .then(function() { threads.find(plainThread.id); });
+      .then(function() { return threads.purge(plainThread.id); });
     });
 
     it('should have 4 objects in content', function() {
@@ -1380,9 +1379,7 @@ describe('threads', function() {
         return posts.create(plainPost);
       })
       .then(function(post) { plainPost = post; })
-      .then(function() { threads.purge(plainThread.id); })
-      .then(function() { threads.threadByOldId(plainThread.smf.thread_id); })
-      .catch(function(err) {} );
+      .then(function() { return threads.purge(plainThread.id); });
     });
 
     it('should have 4 objects in content', function() {
