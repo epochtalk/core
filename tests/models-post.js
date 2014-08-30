@@ -289,16 +289,21 @@ describe('Post', function() {
 describe('#validate', function() {
 
     it('should validate the minimum post model', function() {
-      var minPost = { title: 'Post Title', body: 'Post Body', user_id: '1A2B3C4D5E', thread_id: '0Z2B3C4D5E' };
+      var minPost = {
+        title: 'Post Title',
+        body: 'Post Body',
+        user_id: '1A2B3C4D5E',
+        thread_id: '0Z2B3C4D5E'
+      };
       var post = new Post(minPost);
-      var validPost = post.validate().value();
+      var validPost = post.validateCreate().value();
       validPost.should.exist;
     });
 
     it('should validate that title is required', function() {
       var postObj = { };
       var post = new Post(postObj);
-      return post.validate()
+      return post.validateCreate()
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('title is required');
@@ -308,7 +313,7 @@ describe('#validate', function() {
     it('should validate that body is required', function() {
       var postObj = { title: 'Post Title' };
       var post = new Post(postObj);
-      return post.validate()
+      return post.validateCreate()
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('body is required');
@@ -318,7 +323,7 @@ describe('#validate', function() {
     it('should validate that user_id is required', function() {
       var postObj = { title: 'Post Title', body: 'Post Body' };
       var post = new Post(postObj);
-      return post.validate()
+      return post.validateCreate()
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('user_id is required');
@@ -328,7 +333,7 @@ describe('#validate', function() {
     it('should validate that thread_id is required', function() {
       var postObj = { title: 'Post Title', body: 'Post Body', user_id: '1234ABCD' };
       var post = new Post(postObj);
-      return post.validate()
+      return post.validateCreate()
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('thread_id is required');
@@ -346,7 +351,7 @@ describe('#validate', function() {
         imported_at: 12314124
       };
       var post = new Post(postObj);
-      var validPost = post.validate().value();
+      var validPost = post.validateCreate().value();
       validPost.should.exist;
     });
 
@@ -359,7 +364,7 @@ describe('#validate', function() {
         id: 'E'
       };
       var post = new Post(postObj);
-      var validPost = post.validate().value();
+      var validPost = post.validateCreate().value();
       validPost.should.exist;
     });
 
@@ -372,7 +377,7 @@ describe('#validate', function() {
         deleted: true
       };
       var post = new Post(deletedPost);
-      var validPost = post.validate().value();
+      var validPost = post.validateCreate().value();
       validPost.should.exist;
     });
 
@@ -385,7 +390,7 @@ describe('#validate', function() {
         version: 12345
       };
       var post = new Post(versionedPost);
-      var validPost = post.validate().value();
+      var validPost = post.validateCreate().value();
       validPost.should.exist;
     });
 
@@ -402,7 +407,7 @@ describe('#validate', function() {
         }
       };
       var post = new Post(smfPost);
-      var validPost = post.validate().value();
+      var validPost = post.validateCreate().value();
       validPost.should.exist;
     });
   });

@@ -10,6 +10,7 @@ var helper = require(path.join(__dirname, '..', 'helper'));
 var Padlock = require('padlock').Padlock;
 var postCountLock = new Padlock();
 var threadCountLock = new Padlock();
+
 /* IMPORT */
 boards.import = function(board) {
   board.imported_at = Date.now();

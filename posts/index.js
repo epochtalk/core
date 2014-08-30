@@ -6,7 +6,7 @@ var Post = require(path.join(__dirname, 'model'));
 
 posts.import = function(data) {
   var newPost = new Post(data);
-  return newPost.validate()
+  return newPost.validateImport()
   .then(function() {
     return postsDb.import(newPost);
   })
@@ -17,7 +17,7 @@ posts.import = function(data) {
 
 posts.create = function(data) {
   var newPost = new Post(data);
-  return newPost.validate()
+  return newPost.validateCreate()
   .then(function() {
     return postsDb.insert(newPost);
   })
@@ -32,7 +32,7 @@ posts.find = function(id) {
 
 posts.update = function(data) {
   var updatePost = new Post(data);
-  return updatePost.validate()
+  return updatePost.validateCreate()
   .then(function() {
     return postsDb.update(updatePost);
   })

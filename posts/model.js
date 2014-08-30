@@ -1,7 +1,7 @@
 module.exports = Post;
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
-var schema = require(path.join(__dirname, 'schema'));
+var validate = require(path.join(__dirname, 'validate'));
 var indexPrefix = config.posts.indexPrefix;
 var prefix = config.posts.prefix;
 var sep = config.sep;
@@ -76,9 +76,14 @@ Post.prototype.versionKey = function() {
   return key;
 };
 
-Post.prototype.validate = function() {
+Post.prototype.validateCreate = function() {
   var post = this.simple();
-  return schema.validate(post);
+  return validate.create(post);
+};
+
+Post.prototype.validateImport = function() {
+  var post = this.simple();
+  return validate.import(post);
 };
 
 Post.prototype.simple = function() {
