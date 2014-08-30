@@ -21,9 +21,14 @@ function User(data) {
   this.smf = data.smf;
 }
 
-User.prototype.validate = function() {
+User.prototype.validateCreate = function() {
   var user = this;
   return validate.create(user);
+};
+
+User.prototype.validateImport = function() {
+  var user = this;
+  return validate.import(user);
 };
 
 User.prototype.key = function() {

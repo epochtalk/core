@@ -11,7 +11,7 @@ var User = require(path.join(__dirname, 'model'));
 
 users.import = function(data) {
   var newUser = new User(data);
-  return newUser.validate()
+  return newUser.validateImport()
   .then(function() {
     return usersDb.import(newUser);
   });
@@ -19,7 +19,7 @@ users.import = function(data) {
 
 users.create = function(data) {
   var newUser = new User(data);
-  return newUser.validate()
+  return newUser.validateCreate()
   .then(function() {
     return usersDb.insert(newUser);
   });
