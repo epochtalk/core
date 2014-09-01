@@ -139,6 +139,18 @@ Board.threadCountKeyFromId = function(id) {
   return keyForBoard(id) + config.sep + 'thread_count';
 };
 
+Board.lastPostUsernameKeyFromId = function(id) {
+  return keyForBoard(id) + config.sep + 'last_post_username';
+};
+
+Board.lastPostCreatedAtKeyFromId = function(id) {
+  return keyForBoard(id) + config.sep + 'last_post_created_at';
+};
+
+Board.lastThreadTitleKeyFromId = function(id) {
+  return keyForBoard(id) + config.sep + 'last_thread_title';
+};
+
 Board.legacyKeyFromId = function(legacyId) {
   return legacyKeyForBoard(legacyId);
 };

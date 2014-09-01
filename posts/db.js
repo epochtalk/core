@@ -7,6 +7,7 @@ var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Post = require(path.join(__dirname, 'model'));
 var Thread = require(path.join(__dirname, '..', 'threads', 'model'));
+var Board = require(path.join(__dirname, '..', 'boards', 'model'));
 var User = require(path.join(__dirname, '..', 'users', 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
@@ -48,8 +49,7 @@ posts.insert = function(post) {
   if (!post.created_at) { post.created_at = timestamp; }
   post.updated_at = timestamp;
   post.id = helper.genId(post.created_at);
-  var postUsername;
-
+  var postUsername, boardId, threadTitle;
   return usersDb.find(post.user_id)
   .then(function(user) {
     postUsername = user.username;
@@ -62,7 +62,6 @@ posts.insert = function(post) {
       { type: 'put', key: postUsernameKey, value: postUsername }
     ];
     if (postCount === 1) { // First Post
-      // TODO: Move key generation into models.
       var threadId = post.thread_id;
       var threadFirstPostIdKey = Thread.firstPostIdKeyFromId(threadId);
       var threadTitleKey = Thread.titleKeyFromId(threadId);
@@ -74,10 +73,23 @@ posts.insert = function(post) {
     return db.metadata.batchAsync(metadataBatch);
   })
   .then(function() {
-    return threadsDb.find(post.thread_id)
-    .then(function(thread) {
-      return boardsDb.incPostCount(thread.board_id);
-    });
+    return threadsDb.find(post.thread_id);
+  })
+  .then(function(thread) {
+    boardId = thread.board_id;
+    threadTitle = thread.title;
+    return boardsDb.incPostCount(boardId);
+  })
+  .then(function() { // Last Post Info, Board Metadata is updated on each post insert
+    var lastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
+    var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
+    var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
+    var metadataBatch = [
+      { type: 'put', key: lastPostUsernameKey, value: postUsername },
+      { type: 'put', key: lastPostCreatedAtKey, value: post.created_at },
+      { type: 'put', key: lastThreadTitleKey, value: threadTitle }
+    ];
+    return db.metadata.batchAsync(metadataBatch);
   })
   .then(function() {
     return db.indexes.putAsync(post.threadPostKey(), post.id);

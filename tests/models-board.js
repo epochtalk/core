@@ -177,6 +177,48 @@ describe('Board', function() {
     });
   });
 
+  describe('#lastPostUsernameKeyFromId', function() {
+    it('should return the board\'s last post username key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Board.lastPostUsernameKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + fakeId + sep + 'last_post_username');
+    });
+  });
+
+  describe('#lastPostCreatedAtKeyFromId', function() {
+    it('should return the board\'s last post created at key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Board.lastPostCreatedAtKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + fakeId + sep + 'last_post_created_at');
+    });
+  });
+
+  describe('#lastThreadTitleKeyFromId', function() {
+    it('should return the board\'s last thread title key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Board.lastThreadTitleKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + fakeId + sep + 'last_thread_title');
+    });
+  });
+
   describe('#legacyKey', function() {
     var plainBoard = {
       name: 'Board',
