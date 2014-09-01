@@ -3,6 +3,7 @@ var Promise = require('bluebird');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var schema = require(path.join(__dirname, 'schema'));
+var boardsDb = require(path.join(__dirname, 'db'));
 var db = require(path.join(__dirname, '..', 'db'));
 var prefix = config.boards.prefix;
 var sep = config.sep;
@@ -65,23 +66,13 @@ Board.prototype.getChildren = function() {
   if (!self.children_ids) { return Promise.resolve([]); }
 
   return Promise.all(self.children_ids.map(function(childId) {
-    var board;
     var boardKeyPrefix = config.boards.prefix + config.sep + childId + config.sep;
     var boardPostCountKey = boardKeyPrefix + 'post_count';
     var boardThreadCountKey = boardKeyPrefix + 'thread_count';
-    return db.content.getAsync(keyForBoard(childId))
-    .then(function(childBoardData) {
-      board = new Board(childBoardData);
-      return db.metadata.getAsync(boardPostCountKey);
-    })
-    .then(function(postCount) {
-      board.post_count = Number(postCount);
-      return db.metadata.getAsync(boardThreadCountKey);
-    })
-    .then(function(threadCount) {
-      board.thread_count = Number(threadCount);
+    return boardsDb.find(childId)
+    .then(function(board) {
       return board;
-    });
+    })
   }));
 };
 
@@ -122,6 +113,9 @@ Board.prototype.simple = function() {
   if (self.children) { board.children = self.children; }
   if (self.post_count) { board.post_count = self.post_count; }
   if (self.thread_count) { board.thread_count = self.thread_count; }
+  if (self.last_post_username) { board.last_post_username = self.last_post_username; }
+  if (self.last_post_created_at) { board.last_post_created_at = self.last_post_created_at; }
+  if (self.last_thread_title) { board.last_thread_title = self.last_thread_title; }
 
   return board;
 };

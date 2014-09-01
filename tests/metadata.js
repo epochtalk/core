@@ -12,7 +12,8 @@ describe('metadata', function() {
   describe('#boards', function() {
     var plainPost = {
       title: 'post title',
-      body: 'post body'
+      body: 'post body',
+      created_at: '1409533100723'
     };
     var boardId, user;
     before(function() {
@@ -69,6 +70,34 @@ describe('metadata', function() {
         });
       });
     });
+
+    describe('#last_post_username', function() {
+      it('should have correct last post username', function() {
+        return boards.find(boardId)
+        .then(function(board) {
+          board.last_post_username.should.equal('test_user');
+        });
+      });
+    });
+
+    describe('#last_post_created_at', function() {
+      it('should have correct last post created at time', function() {
+        return boards.find(boardId)
+        .then(function(board) {
+          board.last_post_created_at.should.equal(plainPost.created_at);
+        });
+      });
+    });
+
+    describe('#last_thread_title', function() {
+      it('should have correct last thread title', function() {
+        return boards.find(boardId)
+        .then(function(board) {
+          board.last_thread_title.should.equal(plainPost.title);
+        });
+      });
+    });
+
   });
 
   describe('#threads', function() {

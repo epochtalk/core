@@ -101,10 +101,10 @@ describe('boards', function() {
       });
     });
 
-    it('should have 2 keys in metadata', function() {
+    it('should have 5 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
-        metadata.should.have.length(2);
+        metadata.should.have.length(5);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -162,10 +162,10 @@ describe('boards', function() {
       });
     });
 
-    it('should have 2 keys in metadata', function() {
+    it('should have 5 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
-        metadata.should.have.length(2);
+        metadata.should.have.length(5);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -224,10 +224,10 @@ describe('boards', function() {
       });
     });
 
-    it('should have 2 keys in metadata', function() {
+    it('should have 5 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
-        metadata.should.have.length(2);
+        metadata.should.have.length(5);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -291,10 +291,10 @@ describe('boards', function() {
       });
     });
 
-    it('should have 2 keys in metadata', function() {
+    it('should have 5 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
-        metadata.should.have.length(2);
+        metadata.should.have.length(5);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -354,10 +354,10 @@ describe('boards', function() {
       });
     });
 
-    it('should have 2 keys in metadata', function() {
+    it('should have 5 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
-        metadata.should.have.length(2);
+        metadata.should.have.length(5);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -412,10 +412,10 @@ describe('boards', function() {
       });
     });
 
-    it('should have 2 keys in metadata', function() {
+    it('should have 5 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
-        metadata.should.have.length(2);
+        metadata.should.have.length(5);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -586,10 +586,10 @@ describe('boards', function() {
       });
     });
 
-    it('should have 4 keys in metadata', function() {
+    it('should have 10 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
-        metadata.should.have.length(4);
+        metadata.should.have.length(10);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });

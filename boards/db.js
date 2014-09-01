@@ -31,8 +31,17 @@ boards.create = function(board) {
   board.updated_at = timestamp;
   board.id = helper.genId(board.created_at);
   var boardKey = board.key();
-
-  return boards.incPostCount(board.id)
+  var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(board.id);
+  var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(board.id);
+  var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(board.id);
+  var metadataBatch = [
+    // TODO: There should be a better solution then initializing with string
+    { type: 'put', key: boardLastPostUsernameKey , value: 'none' },
+    { type: 'put', key: boardLastPostCreatedAtKey , value: 'none' },
+    { type: 'put', key: boardLastThreadTitleKey , value: 'none' }
+  ];
+  return db.metadata.batchAsync(metadataBatch)
+  .then(function() { return boards.incPostCount(board.id); })
   .then(function() { return boards.incThreadCount(board.id); })
   .then(function() { return db.content.putAsync(boardKey, board); })
   .then(function() { return board; });
@@ -62,6 +71,18 @@ boards.find = function(id) {
   })
   .then(function(threadCount) {
     board.thread_count = Number(threadCount);
+    return db.metadata.getAsync(boardLastPostUsernameKey);
+  })
+  .then(function(username) {
+    board.last_post_username = username;
+    return db.metadata.getAsync(boardLastPostCreatedAtKey);
+  })
+  .then(function(created) {
+    board.last_post_created_at = created;
+    return db.metadata.getAsync(boardLastThreadTitleKey);
+  })
+  .then(function(threadTitle) {
+    board.last_thread_title = threadTitle;
     return board;
   });
 };
