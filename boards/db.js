@@ -41,8 +41,11 @@ boards.create = function(board) {
 /* RETRIEVE */
 boards.find = function(id) {
   var boardKey = Board.keyFromId(id);
-  var boardPostCountKey = boardKey + config.sep + 'post_count';
-  var boardThreadCountKey = boardKey + config.sep + 'thread_count';
+  var boardPostCountKey = Board.postCountKeyFromId(id);
+  var boardThreadCountKey = Board.threadCountKeyFromId(id);
+  var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
+  var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
+  var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
   var board;
   return db.content.getAsync(boardKey)
   .then(function(dbBoard) {
@@ -109,6 +112,11 @@ boards.delete = function(boardId) {
 
 boards.purge = function(id) {
   var boardKey = Board.keyFromId(id);
+  var boardPostCountKey = Board.postCountKeyFromId(id);
+  var boardThreadCountKey = Board.threadCountKeyFromId(id);
+  var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
+  var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
+  var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
   var purgeBoard;
 
   // see if board already exists
@@ -125,15 +133,25 @@ boards.purge = function(id) {
   .then(function() {
     return db.content.delAsync(boardKey);
   })
-  // delete postCount index
+  // delete postCount metadata
   .then(function() {
-    var postCountKey = boardKey + config.sep + 'post_count';
-    return db.metadata.delAsync(postCountKey);
+    return db.metadata.delAsync(boardPostCountKey);
   })
-  // delete threadCount index
+  // delete threadCount metadata
   .then(function() {
-    var threadCountKey = boardKey + config.sep + 'thread_count';
-    return db.metadata.delAsync(threadCountKey);
+    return db.metadata.delAsync(boardThreadCountKey);
+  })
+  // delete lastPostUsername metadata
+  .then(function() {
+    return db.metadata.delAsync(boardLastPostUsernameKey);
+  })
+  // delete lastPostCreatedAt metadata
+  .then(function() {
+    return db.metadata.delAsync(boardLastPostCreatedAtKey);
+  })
+  // delete lastThreadTitle metadata
+  .then(function() {
+    return db.metadata.delAsync(boardLastThreadTitleKey);
   })
   // delete legacy key index
   .then(function() {
