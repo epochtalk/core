@@ -33,7 +33,7 @@ function Post(data) {
   if (data.updated_at) { this.updated_at = data.updated_at; }
   if (data.imported_at) { this.imported_at = data.imported_at; }
   if (data.deleted) { this.deleted = data.deleted; }
-  if (data.smf && data.smf.post_id) { this.smf  = data.smf; }
+  if (data.smf && data.smf.ID_MSG) { this.smf  = data.smf; }
   if (data.version) { this.version = data.version; }
   this.thread_id = data.thread_id;
   this.body = data.body;
@@ -56,7 +56,7 @@ Post.prototype.threadPostKey = function() {
 
 Post.prototype.legacyKey = function() {
   var self = this;
-  return legacyKeyForPost(self.smf.post_id);
+  return legacyKeyForPost(self.smf.ID_MSG);
 };
 
 Post.prototype.threadKey = function() {
@@ -98,7 +98,7 @@ Post.prototype.simple = function() {
   if (self.updated_at) { post.updated_at = self.updated_at; }
   if (self.imported_at) { post.imported_at = self.imported_at; }
   if (self.deleted) { post.deleted = self.deleted; }
-  if (self.smf && self.smf.post_id) { post.smf  = self.smf; }
+  if (self.smf && self.smf.ID_MSG) { post.smf  = self.smf; }
   if (self.version) { post.version = self.version; }
   return post;
 };

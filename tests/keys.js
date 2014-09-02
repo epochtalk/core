@@ -1753,7 +1753,7 @@ describe('posts', function() {
       title: 'post title',
       body: 'hello world.',
       smf: {
-        post_id: '123'
+        ID_MSG: '123'
       }
      };
      var user;
@@ -1956,7 +1956,7 @@ describe('posts', function() {
       title: 'post title',
       body: 'hello world.',
       smf: {
-        post_id: '123'
+        ID_MSG: '123'
       }
     };
     var user;
@@ -1983,7 +1983,7 @@ describe('posts', function() {
         return posts.import(plainPost);
       })
       .then(function(post) { plainPost = post; })
-      .then(function() { return posts.postByOldId(plainPost.smf.post_id); });
+      .then(function() { return posts.postByOldId(plainPost.smf.ID_MSG); });
     });
 
     it('should have 5 objects in content', function() {
@@ -2352,7 +2352,7 @@ describe('posts', function() {
       title: 'post title',
       body: 'hello world.',
       smf: {
-        post_id: '123'
+        ID_MSG: '123'
       }
      };
 

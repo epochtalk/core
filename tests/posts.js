@@ -199,7 +199,7 @@ describe('posts', function() {
       title: 'post title',
       body: 'hello world.',
       smf: {
-        post_id: '123'
+        ID_MSG: '123'
       }
      };
      var user;
@@ -238,7 +238,7 @@ describe('posts', function() {
         post.body.should.equal(plainPost.body);
         post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
-        post.smf.post_id.should.equal(plainPost.smf.post_id);
+        post.smf.ID_MSG.should.equal(plainPost.smf.ID_MSG);
         post.thread_id.should.equal(plainPost.thread_id);
         post.version.should.be.a('number');
       });
@@ -250,7 +250,7 @@ describe('posts', function() {
       title: 'post title',
       body: 'hello world.',
       smf: {
-        post_id: '123'
+        ID_MSG: '123'
       }
     };
     var user;
@@ -282,7 +282,7 @@ describe('posts', function() {
     });
 
     it('should verify key mapping for imported posts', function() {
-      return posts.postByOldId(plainPost.smf.post_id)
+      return posts.postByOldId(plainPost.smf.ID_MSG)
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
@@ -291,7 +291,7 @@ describe('posts', function() {
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
         should.not.exist(post.deleted);
-        post.smf.post_id.should.equal(plainPost.smf.post_id);
+        post.smf.ID_MSG.should.equal(plainPost.smf.ID_MSG);
         post.thread_id.should.equal(plainPost.thread_id);
         post.version.should.equal(plainPost.version);
       });
@@ -305,7 +305,7 @@ describe('posts', function() {
       title: 'post title',
       body: 'hello world.',
       smf: {
-        post_id: '123'
+        ID_MSG: '123'
       }
      };
 
@@ -347,10 +347,10 @@ describe('posts', function() {
         post.body.should.equal(plainPost.body);
         post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
-        post.smf.post_id.should.equal(plainPost.smf.post_id);
+        post.smf.ID_MSG.should.equal(plainPost.smf.ID_MSG);
         post.thread_id.should.equal(plainPost.thread_id);
         post.version.should.equal(plainPost.version);
-        return post.smf.post_id;
+        return post.smf.ID_MSG;
       })
       .then(posts.postByOldId)
       .catch(function(err) {

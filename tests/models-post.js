@@ -153,7 +153,7 @@ describe('Post', function() {
       title: 'post title',
       body: 'hello world.',
       smf: {
-        post_id: '9876543210'
+        ID_MSG: '9876543210'
       }
     };
     var user, thread;
@@ -194,7 +194,7 @@ describe('Post', function() {
 
       key.should.be.ok;
       key.should.be.a('string');
-      key.should.be.equal(postPrefix + sep + plainPost.smf.post_id);
+      key.should.be.equal(postPrefix + sep + plainPost.smf.ID_MSG);
     });
   });
 
@@ -401,9 +401,9 @@ describe('#validate', function() {
         user_id: 'C',
         thread_id: 'D',
         smf: {
-          post_id: 2342,
+          ID_MSG: 2342,
           ID_MEMBER: 123123,
-          thread_id: 123123
+          ID_TOPIC: 123123
         }
       };
       var post = new Post(smfPost);
@@ -426,8 +426,8 @@ describe('#validate', function() {
       version: 12345612,
       smf: {
         ID_MEMBER: 123124,
-        thread_id: 2141242,
-        post_id: 223242
+        ID_TOPIC: 2141242,
+        ID_MSG: 223242
       }
     };
 
@@ -444,8 +444,8 @@ describe('#validate', function() {
       simplePost.updated_at.should.equal(fullPost.updated_at);
       simplePost.imported_at.should.equal(fullPost.imported_at);
       simplePost.deleted.should.be.true;
-      simplePost.smf.thread_id.should.equal(fullPost.smf.thread_id);
-      simplePost.smf.post_id.should.equal(fullPost.smf.post_id);
+      simplePost.smf.ID_TOPIC.should.equal(fullPost.smf.ID_TOPIC);
+      simplePost.smf.ID_MSG.should.equal(fullPost.smf.ID_MSG);
       simplePost.smf.ID_MEMBER.should.equal(fullPost.smf.ID_MEMBER);
 
       should.not.exist(simplePost.key);

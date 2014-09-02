@@ -18,8 +18,8 @@ var createSchema = joi.object().keys({
   version: joi.number(),
   smf: {
     ID_MEMBER: joi.number(),
-    thread_id: joi.number(),
-    post_id: joi.number()
+    ID_TOPIC: joi.number(),
+    ID_MSG: joi.number()
   }
 });
 
@@ -40,8 +40,8 @@ var importSchema = joi.object().keys({
   version: joi.number(),
   smf: {
     ID_MEMBER: joi.number(),
-    thread_id: joi.number(),
-    post_id: joi.number()
+    ID_TOPIC: joi.number(),
+    ID_MSG: joi.number()
   }
 });
 
