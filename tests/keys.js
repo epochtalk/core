@@ -138,7 +138,7 @@ describe('boards', function() {
       name: 'Board',
       description: 'Description',
       smf: {
-        board_id: '123'
+        ID_BOARD: '123'
       }
     };
 
@@ -261,7 +261,7 @@ describe('boards', function() {
       name: 'Board',
       description: 'Description',
       smf: {
-        board_id: '123'
+        ID_BOARD: '123'
       }
     };
 
@@ -269,7 +269,7 @@ describe('boards', function() {
       return boards.import(testBoard)
       .then(function(board) { testBoard = board; })
       .then(function() {
-        return boards.boardByOldId(testBoard.smf.board_id)
+        return boards.boardByOldId(testBoard.smf.ID_BOARD)
         .then(function(board) {
           testBoard = board;
         });
@@ -503,7 +503,7 @@ describe('boards', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { board_id: '111' }
+      smf: { ID_BOARD: '111' }
     };
 
     before(function() {

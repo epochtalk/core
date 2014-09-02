@@ -40,7 +40,7 @@ function Board(board) {
   // specific to board
   this.name = board.name;
   if (board.description) { this.description = board.description; }
-  if (board.smf && board.smf.board_id) { this.smf  = board.smf; }
+  if (board.smf && board.smf.ID_BOARD) { this.smf  = board.smf; }
   if (board.parent_id) { this.parent_id = board.parent_id; }
   if (board.children_ids) { this.children_ids = board.children_ids; }
 }
@@ -53,8 +53,8 @@ Board.prototype.key = function() {
 Board.prototype.legacyKey = function() {
   var self = this;
   var legacyKey;
-  if (self.smf.board_id) {
-    legacyKey = legacyKeyForBoard(self.smf.board_id);
+  if (self.smf.ID_BOARD) {
+    legacyKey = legacyKeyForBoard(self.smf.ID_BOARD);
   }
   return legacyKey;
 };
@@ -108,7 +108,7 @@ Board.prototype.simple = function() {
   if (self.parent_id) { board.parent_id = self.parent_id; }
   if (self.children_ids) { board.children_ids = self.children_ids; }
   if (self.deleted) { board.deleted = self.deleted; }
-  if (self.smf && self.smf.board_id) { board.smf = self.smf; }
+  if (self.smf && self.smf.ID_BOARD) { board.smf = self.smf; }
   // this is a generated property
   if (self.children) { board.children = self.children; }
   if (self.post_count) { board.post_count = self.post_count; }

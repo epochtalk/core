@@ -138,7 +138,7 @@ describe('boards', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { board_id: '111' }
+      smf: { ID_BOARD: '111' }
     };
     
     it('should import a board', function() {
@@ -152,7 +152,7 @@ describe('boards', function() {
         should.not.exist(board.deleted);
         board.name.should.equal(importBoard.name);
         board.description.should.equal(importBoard.description);
-        board.smf.board_id.should.equal(importBoard.smf.board_id);
+        board.smf.ID_BOARD.should.equal(importBoard.smf.ID_BOARD);
         should.not.exist(board.parent_id);
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
@@ -164,7 +164,7 @@ describe('boards', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { board_id: '111' }
+      smf: { ID_BOARD: '111' }
     };
 
     before(function() {
@@ -175,7 +175,7 @@ describe('boards', function() {
     });
 
     it('should verify key mapping for imported boards', function() {
-      return boards.boardByOldId(importBoard.smf.board_id)
+      return boards.boardByOldId(importBoard.smf.ID_BOARD)
       .then(function(board) {
         board.id.should.equal(importBoard.id);
         board.created_at.should.equal(importBoard.created_at);
@@ -184,7 +184,7 @@ describe('boards', function() {
         should.not.exist(board.deleted);
         board.name.should.equal(importBoard.name);
         board.description.should.equal(importBoard.description);
-        board.smf.board_id.should.equal(importBoard.smf.board_id);
+        board.smf.ID_BOARD.should.equal(importBoard.smf.ID_BOARD);
         should.not.exist(board.parent_id);
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
@@ -196,7 +196,7 @@ describe('boards', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { board_id: '111' }
+      smf: { ID_BOARD: '111' }
     };
 
     before(function() {
@@ -216,11 +216,11 @@ describe('boards', function() {
         should.not.exist(board.deleted);
         board.name.should.equal(importBoard.name);
         board.description.should.equal(importBoard.description);
-        board.smf.board_id.should.equal(importBoard.smf.board_id);
+        board.smf.ID_BOARD.should.equal(importBoard.smf.ID_BOARD);
         should.not.exist(board.parent_id);
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
-        return board.smf.board_id;
+        return board.smf.ID_BOARD;
       })
       .then(boards.boardByOldId)
       .catch(function(err) {

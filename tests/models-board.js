@@ -224,7 +224,7 @@ describe('Board', function() {
       name: 'Board',
       description: 'Board Description',
       smf: {
-        board_id: '0123456789'
+        ID_BOARD: '0123456789'
       }
     };
 
@@ -244,7 +244,7 @@ describe('Board', function() {
 
       key.should.be.ok;
       key.should.be.a('string');
-      key.should.be.equal(boardPrefix + sep + board.smf.board_id);
+      key.should.be.equal(boardPrefix + sep + board.smf.ID_BOARD);
     });
   });
 
@@ -465,7 +465,7 @@ describe('Board', function() {
       var idBoard = {
         name: 'name',
         smf: {
-          board_id: 1235
+          ID_BOARD: 1235
         }
       };
       var board = new Board(idBoard);
@@ -487,7 +487,7 @@ describe('Board', function() {
       children: [{ name: 'first' }, { name: 'second' }],
       deleted: true,
       smf: {
-        board_id: 234235
+        ID_BOARD: 234235
       }
     };
 
@@ -505,7 +505,7 @@ describe('Board', function() {
       simpleBoard.children_ids.should.be.an('array');
       simpleBoard.children_ids[0].should.equal(fullBoard.children_ids[0]);
       simpleBoard.deleted.should.be.true;
-      simpleBoard.smf.board_id.should.equal(fullBoard.smf.board_id);
+      simpleBoard.smf.ID_BOARD.should.equal(fullBoard.smf.ID_BOARD);
       simpleBoard.children.should.be.an('array');
 
       should.not.exist(simpleBoard.key);
