@@ -266,32 +266,39 @@ posts.byThread = function(threadId, opts) {
     var handler = function() {
       // get post for each postId
       Promise.map(postIds, function(postId) {
-        return posts.find(postId);
+        var post;
+        return posts.find(postId)
+        .then(function(dbPost) {
+          post = dbPost;
+          return usersDb.find(dbPost.user_id);
+        })
+        .then(function(user) {
+          delete user.passhash;
+          delete user.id;
+          delete post.user_id;
+          post.user = user;
+          return post;
+        });
       })
       .then(function(allPosts) {
         return fulfill(allPosts);
       });
     };
-
     // query vars
     var limit = opts.limit ? Number(opts.limit) : 10;
     var sep = config.sep;
     var indexPrefix = config.posts.indexPrefix;
-    var startPostKey = indexPrefix + sep + threadId + sep;
-    var endIndexKey = startPostKey;
+    var startKey = indexPrefix + sep + threadId + sep;
+    var endKey = startKey + '\xff';
     if (opts.startPostId) {
-      endIndexKey += opts.startPostId;
-      startPostKey += '\xff';
-    }
-    else {
-      endIndexKey += '\xff';
+      startKey += opts.startPostId + '\xff';
     }
     var queryOptions = {
       limit: limit,
-      end: endIndexKey,
-      start: startPostKey
+      end: endKey,
+      start: startKey,
+      versionLimit: 1
     };
-
     // query for all posts fir this threadId
     db.indexes.createValueStream(queryOptions)
     .on('data', sorter)
