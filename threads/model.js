@@ -32,7 +32,7 @@ function Thread(data) {
   if (data.updated_at) { this.updated_at = data.updated_at; }
   if (data.imported_at) { this.imported_at = data.imported_at; }
   if (data.deleted) { this.deleted = data.deleted; }
-  if (data.smf && data.smf.thread_id) { this.smf  = data.smf; }
+  if (data.smf && data.smf.ID_TOPIC) { this.smf  = data.smf; }
   this.board_id = data.board_id;
 }
 
@@ -43,7 +43,7 @@ Thread.prototype.key = function() {
 
 Thread.prototype.legacyKey = function() {
   var self = this;
-  return legacyKeyForThread(self.smf.thread_id);
+  return legacyKeyForThread(self.smf.ID_TOPIC);
 };
 
 Thread.prototype.boardThreadKey = function() {
@@ -76,7 +76,7 @@ Thread.prototype.simple = function() {
   if (self.updated_at) { thread.updated_at = self.updated_at; }
   if (self.imported_at) { thread.imported_at = self.imported_at; }
   if (self.deleted) { thread.deleted = self.deleted; }
-  if (self.smf && self.smf.thread_id) { thread.smf  = self.smf; }
+  if (self.smf && self.smf.ID_TOPIC) { thread.smf  = self.smf; }
   // this is a generated property
   if (self.last_post_username) { thread.last_post_username = self.last_post_username; }
   if (self.last_post_created_at) { thread.last_post_created_at = self.last_post_created_at; }

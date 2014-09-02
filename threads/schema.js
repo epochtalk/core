@@ -14,8 +14,8 @@ var threadSchema = joi.object().keys({
   deleted: joi.boolean(),
   smf: {
     ID_MEMBER: joi.number(),
-    thread_id: joi.number(),
-    post_id: joi.number()
+    ID_TOPIC: joi.number(),
+    ID_FIRST_MSG: joi.number()
   }
 });
 

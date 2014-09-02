@@ -138,7 +138,7 @@ describe('threads', function() {
   describe('#import', function() {
     var plainThread = {
       smf: {
-        thread_id: '112'
+        ID_TOPIC: '112'
       }
     };
     var plainPost = {
@@ -183,7 +183,7 @@ describe('threads', function() {
         thread.updated_at.should.be.a('number');
         thread.imported_at.should.be.a('number');
         should.not.exist(thread.deleted);
-        thread.smf.thread_id.should.equal(plainThread.smf.thread_id);
+        thread.smf.ID_TOPIC.should.equal(plainThread.smf.ID_TOPIC);
         should.not.exist(thread.post_count); // no post count for import return
         should.not.exist(thread.title); // title not set yet
         thread.board_id.should.equal(plainThread.board_id);
@@ -194,7 +194,7 @@ describe('threads', function() {
   describe('#import_get', function() {
     var plainThread = {
       smf: {
-        thread_id: '112'
+        ID_TOPIC: '112'
       }
     };
     var plainPost = {
@@ -230,14 +230,14 @@ describe('threads', function() {
     });
 
     it('should verify key mapping for imported threads', function() {
-      return threads.threadByOldId(plainThread.smf.thread_id)
+      return threads.threadByOldId(plainThread.smf.ID_TOPIC)
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.equal(plainThread.created_at);
         thread.updated_at.should.equal(plainThread.updated_at);
         thread.imported_at.should.equal(plainThread.imported_at);
         should.not.exist(thread.deleted);
-        thread.smf.thread_id.should.equal(plainThread.smf.thread_id);
+        thread.smf.ID_TOPIC.should.equal(plainThread.smf.ID_TOPIC);
         thread.post_count.should.equal(1);
         thread.title.should.equal(plainPost.title);
         thread.board_id.should.equal(plainThread.board_id);
@@ -250,7 +250,7 @@ describe('threads', function() {
     var catchCalled = false;
     var plainThread = {
       smf: {
-        thread_id: '112'
+        ID_TOPIC: '112'
       }
     };
     var plainPost = {
@@ -294,11 +294,11 @@ describe('threads', function() {
         thread.updated_at.should.equal(plainThread.updated_at);
         thread.imported_at.should.equal(plainThread.imported_at);
         should.not.exist(thread.deleted);
-        thread.smf.thread_id.should.equal(plainThread.smf.thread_id);
+        thread.smf.ID_TOPIC.should.equal(plainThread.smf.ID_TOPIC);
         should.not.exist(thread.post_count); // no post count for delete return
         should.not.exist(thread.title); // no title for delete return
         thread.board_id.should.equal(plainThread.board_id);
-        return thread.smf.thread_id;
+        return thread.smf.ID_TOPIC;
       })
       .then(threads.threadByOldId)
       .catch(function(err) {

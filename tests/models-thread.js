@@ -176,8 +176,8 @@ describe('Thread', function() {
   describe('#legacyKey', function() {
     var plainThread = {
       smf: {
-        thread_id: '0123456789',
-        post_id: '9876543210'
+        ID_TOPIC: '0123456789',
+        ID_FIRST_MSG: '9876543210'
       }
     };
     var plainPost = {
@@ -221,7 +221,7 @@ describe('Thread', function() {
 
       key.should.be.ok;
       key.should.be.a('string');
-      key.should.be.equal(threadPrefix + sep + newThread.smf.thread_id);
+      key.should.be.equal(threadPrefix + sep + newThread.smf.ID_TOPIC);
     });
   });
 
@@ -353,8 +353,8 @@ describe('Thread', function() {
       var smfThread = {
         board_id: 'test_board_id',
         smf: {
-          thread_id: 1235,
-          post_id: 2342
+          ID_TOPIC: 1235,
+          ID_FIRST_MSG: 2342
         }
       };
       var thread = new Thread(smfThread);
@@ -372,8 +372,8 @@ describe('Thread', function() {
       imported_at: 2323424234,
       deleted: true,
       smf: {
-        thread_id: 234235,
-        post_id: 223242
+        ID_TOPIC: 234235,
+        ID_FIRST_MSG: 223242
       }
     };
 
@@ -386,7 +386,7 @@ describe('Thread', function() {
       simpleThread.updated_at.should.equal(fullThread.updated_at);
       simpleThread.imported_at.should.equal(fullThread.imported_at);
       simpleThread.deleted.should.be.true;
-      simpleThread.smf.thread_id.should.equal(fullThread.smf.thread_id);
+      simpleThread.smf.ID_TOPIC.should.equal(fullThread.smf.ID_TOPIC);
 
       should.not.exist(simpleThread.key);
       should.not.exist(simpleThread.legacyKey);

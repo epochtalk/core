@@ -42,8 +42,8 @@ module.exports = {
     }
 
     // smf sublevel thread key
-    if (post.smf && post.smf.thread_id) {
-      var smfThreadKey = threadPrefix + sep + post.smf.thread_id.toString();
+    if (post.smf && post.smf.ID_TOPIC) {
+      var smfThreadKey = threadPrefix + sep + post.smf.ID_TOPIC.toString();
       associatedKeys.push({ key: smfThreadKey, smf: true });
     }
 

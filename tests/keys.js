@@ -769,7 +769,7 @@ describe('threads', function() {
   describe('#import user, board, thread, post', function() {
     var plainThread = {
       smf: {
-        thread_id: '112'
+        ID_TOPIC: '112'
       }
     };
     var plainPost = {
@@ -977,7 +977,7 @@ describe('threads', function() {
   describe('#threadByOldId', function() {
     var plainThread = {
       smf: {
-        thread_id: '112'
+        ID_TOPIC: '112'
       }
     };
     var plainPost = {
@@ -1010,7 +1010,7 @@ describe('threads', function() {
         return posts.create(plainPost);
       })
       .then(function(post) { plainPost = post; })
-      .then(function() { threads.threadByOldId(plainThread.smf.thread_id); })
+      .then(function() { threads.threadByOldId(plainThread.smf.ID_TOPIC); })
       .then(function(thread) { plainThread = thread; });
     });
 
@@ -1384,7 +1384,7 @@ describe('threads', function() {
     var catchCalled = false;
     var plainThread = {
       smf: {
-        thread_id: '112'
+        ID_TOPIC: '112'
       }
     };
     var plainPost = { title: 'post title', body: 'post body' };
