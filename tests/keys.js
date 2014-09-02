@@ -722,7 +722,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -730,12 +730,14 @@ describe('threads', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
         // thread post count
         // thread first post id
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -829,7 +831,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -837,12 +839,14 @@ describe('threads', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
         // thread first post id
         // thread post count
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -926,7 +930,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -934,12 +938,14 @@ describe('threads', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
         // thread first post id
         // thread post count
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1032,7 +1038,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 10 keys in metadata', function() {
+    it('should have 12 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1040,12 +1046,14 @@ describe('threads', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
         // thread first post id
         // thread post count
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1132,7 +1140,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1140,12 +1148,14 @@ describe('threads', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
         // thread first post id
         // thread post count
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1228,7 +1238,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1236,12 +1246,14 @@ describe('threads', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
         // thread first post id
         // thread post count
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1323,7 +1335,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 9 keys in metadata', function() {
+    it('should have 6 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1331,11 +1343,14 @@ describe('threads', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
-        // thread first post id *** SHOULD BE DELETED?
-        // thread post title *** SHOULD BE DELETED?
-        // thread username  *** SHOULD BE DELETED?
-        metadata.should.have.length(9);
+        // thread view count *** SHOULD BE DELETED? NO (cannot be derived again?)
+        // ------------------------------------------------
+        // thread first post id *** SHOULD BE DELETED? YES
+        // thread post title *** SHOULD BE DELETED? YES
+        // thread username  *** SHOULD BE DELETED? YES
+        // thread last post username *** SHOULD BE DELETED? YES
+        // thread last post created at *** SHOULD BE DELETED? YES
+        metadata.should.have.length(6);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1425,7 +1440,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 9 keys in metadata', function() {
+    it('should have 6 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1433,11 +1448,14 @@ describe('threads', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
-        // thread first post id *** SHOULD BE DELETED?
-        // thread post title *** SHOULD BE DELETED?
-        // thread username *** SHOULD BE DELETED?
-        metadata.should.have.length(9);
+        // thread view count *** SHOULD BE DELETED? NO (cannot be derived again?)
+        // ------------------------------------------------
+        // thread first post id *** SHOULD BE DELETED? YES
+        // thread post title *** SHOULD BE DELETED? YES
+        // thread username  *** SHOULD BE DELETED? YES
+        // thread last post username *** SHOULD BE DELETED? YES
+        // thread last post created at *** SHOULD BE DELETED? YES
+        metadata.should.have.length(6);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1539,7 +1557,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 15 objects in metadata', function() {
+    it('should have 19 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1547,12 +1565,14 @@ describe('threads', function() {
         // board last thread title
         // board post count
         // board thread count
-        // 2 post username
         // 2 thread first post id
         // 2 thread post count
         // 2 thread title
         // 2 thread username
-        metadata.should.have.length(15);
+        // 2 thread last post by
+        // 2 thread last post created at
+        // 2 thread view count
+        metadata.should.have.length(19);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1684,7 +1704,7 @@ describe('posts', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1692,13 +1712,14 @@ describe('posts', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
         // thread post count
         // thread first post id
         // thread title
         // thread username
-        console.log(metadata.length);
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1788,7 +1809,7 @@ describe('posts', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1796,12 +1817,14 @@ describe('posts', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
-        // thread first post id
         // thread post count
+        // thread first post id
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1884,7 +1907,7 @@ describe('posts', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1892,12 +1915,14 @@ describe('posts', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
-        // thread first post id
         // thread post count
+        // thread first post id
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1985,7 +2010,7 @@ describe('posts', function() {
       });
     });
 
-    it('should have 10 keys in metadata', function() {
+    it('should have 12 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1993,12 +2018,14 @@ describe('posts', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
-        // thread first post id
         // thread post count
+        // thread first post id
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -2081,7 +2108,7 @@ describe('posts', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -2089,12 +2116,14 @@ describe('posts', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
-        // thread first post id
         // thread post count
+        // thread first post id
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -2176,7 +2205,7 @@ describe('posts', function() {
       });
     });
 
-    it('should have 10 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -2184,12 +2213,14 @@ describe('posts', function() {
         // board last thread title
         // board post count
         // board thread count
-        // post username
-        // thread first post id
         // thread post count
+        // thread first post id
         // thread title
         // thread username
-        metadata.should.have.length(10);
+        // thread last post username
+        // thread last post created at
+        // thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -2270,7 +2301,7 @@ describe('posts', function() {
       });
     });
 
-    it('should have 8 keys in metadata', function() {
+    it('should have 11 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -2279,11 +2310,13 @@ describe('posts', function() {
         // board post count
         // board thread count
         // thread post count
-        // post username
         // thread post title *** SHOULD BE DELETED?
         // thread username  *** SHOULD BE DELETED?
+        // thread last post username  *** SHOULD BE DELETED?
+        // thread last post created at  *** SHOULD BE DELETED?
+        // thread view count  *** SHOULD BE DELETED?
         // thread first post id (deleted) *** SHOULD BE DELETED?
-        metadata.should.have.length(8);
+        metadata.should.have.length(11);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -2371,7 +2404,7 @@ describe('posts', function() {
       });
     });
 
-    it('should have 8 keys in metadata', function() {
+    it('should have 11 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -2381,9 +2414,12 @@ describe('posts', function() {
         // board thread count
         // thread post count
         // thread post title *** SHOULD BE DELETED?
-        // thread username *** SHOULD BE DELETED?
+        // thread username  *** SHOULD BE DELETED?
+        // thread last post username  *** SHOULD BE DELETED?
+        // thread last post created at  *** SHOULD BE DELETED?
+        // thread view count  *** SHOULD BE DELETED?
         // thread first post id (deleted) *** SHOULD BE DELETED?
-        metadata.should.have.length(8);
+        metadata.should.have.length(11);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -2480,7 +2516,7 @@ describe('posts', function() {
       });
     });
 
-    it('should have 11 objects in metadata', function() {
+    it('should have 12 objects in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -2488,12 +2524,14 @@ describe('posts', function() {
         // board last thread title
         // board post count
         // board thread count
-        // 2 post username
         // 1 thread first post id
         // 1 thread post count
         // 1 thread title
         // 1 thread username
-        metadata.should.have.length(11);
+        // 1 thread last post username
+        // 1 thread last post created at
+        // 1 thread view count
+        metadata.should.have.length(12);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });

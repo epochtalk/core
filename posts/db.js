@@ -46,8 +46,15 @@ posts.insert = function(post) {
   }
 
   var timestamp = Date.now();
-  if (!post.created_at) { post.created_at = timestamp; }
-  post.updated_at = timestamp;
+  // If post created at isn't defined
+  if (!post.created_at) {
+    post.created_at = timestamp;
+    post.updated_at = timestamp;
+  }
+  // If post created at is defined but updated at isn't
+  else if (!post.updated_at) {
+    post.updated_at = post.created_at;
+  }
   post.id = helper.genId(post.created_at);
   var postUsername, boardId, threadTitle;
   return usersDb.find(post.user_id)
@@ -57,20 +64,19 @@ posts.insert = function(post) {
   })
   .then(function(postCount) {
     postCount = Number(postCount);
-    var postUsernameKey = Post.usernameKeyFromId(post.id);
-    var metadataBatch = [
-      { type: 'put', key: postUsernameKey, value: postUsername }
-    ];
     if (postCount === 1) { // First Post
       var threadId = post.thread_id;
       var threadFirstPostIdKey = Thread.firstPostIdKeyFromId(threadId);
       var threadTitleKey = Thread.titleKeyFromId(threadId);
       var threadUsernameKey = Thread.usernameKeyFromId(threadId);
-      metadataBatch.push({ type: 'put', key: threadFirstPostIdKey, value: post.id });
-      metadataBatch.push({ type: 'put', key: threadTitleKey, value: post.title });
-      metadataBatch.push({ type: 'put', key: threadUsernameKey, value: postUsername });
+      var metadataBatch = [
+        { type: 'put', key: threadFirstPostIdKey, value: post.id },
+        { type: 'put', key: threadTitleKey, value: post.title },
+        { type: 'put', key: threadUsernameKey, value: postUsername }
+      ];
+      return db.metadata.batchAsync(metadataBatch);
     }
-    return db.metadata.batchAsync(metadataBatch);
+    else { return; }
   })
   .then(function() {
     return threadsDb.find(post.thread_id);
@@ -80,14 +86,18 @@ posts.insert = function(post) {
     threadTitle = thread.title;
     return boardsDb.incPostCount(boardId);
   })
-  .then(function() { // Last Post Info, Board Metadata is updated on each post insert
-    var lastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
-    var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
-    var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
+  .then(function() { // Last Post Info, Thread/Board Metadata is updated on each post insert
+    var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
+    var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
+    var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
+    var threadLastPostUsernameKey = Thread.lastPostUsernameKeyFromId(post.thread_id);
+    var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(post.thread_id);
     var metadataBatch = [
-      { type: 'put', key: lastPostUsernameKey, value: postUsername },
-      { type: 'put', key: lastPostCreatedAtKey, value: post.created_at },
-      { type: 'put', key: lastThreadTitleKey, value: threadTitle }
+      { type: 'put', key: boardLastPostUsernameKey, value: postUsername },
+      { type: 'put', key: boardLastPostCreatedAtKey, value: post.created_at },
+      { type: 'put', key: boardLastThreadTitleKey, value: threadTitle },
+      { type: 'put', key: threadLastPostUsernameKey, value: postUsername },
+      { type: 'put', key: threadLastPostCreatedAtKey, value: post.created_at }
     ];
     return db.metadata.batchAsync(metadataBatch);
   })
@@ -104,22 +114,10 @@ posts.insert = function(post) {
 };
 
 posts.find = function(id) {
-  var post;
   var postKey = Post.keyFromId(id);
   var postUsernameKey = Post.usernameKeyFromId(id);
   return db.content.getAsync(postKey)
-  .then(function(dbPost) {
-    post = dbPost;
-    return db.metadata.getAsync(postUsernameKey);
-  })
-  .then(function(postUsername) {
-    post.user = {
-      username: postUsername,
-      id: post.user_id
-    };
-    delete post.user_id;
-    return post;
-  });
+  .then(function(post) { return post; });
 };
 
 posts.update = function(post) {
@@ -190,7 +188,6 @@ posts.delete = function(postId) {
 /* deleting first post should remove thread */
 posts.purge = function(id) {
   var postKey = Post.keyFromId(id);
-  var postUsernameKey = Post.usernameKeyFromId(id);
   var deletedPost;
 
   return db.content.getAsync(postKey) // get post
@@ -215,9 +212,6 @@ posts.purge = function(id) {
   })
   .then(function() { // remove from this db
     return db.content.delAsync(postKey);
-  })
-  .then(function() { // remove username metadata from db
-    return db.metadata.delAsync(postUsernameKey);
   })
   .then(function() { // decrement threadPostCount
     return threadsDb.decPostCount(deletedPost.thread_id);

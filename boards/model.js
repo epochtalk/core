@@ -72,7 +72,7 @@ Board.prototype.getChildren = function() {
     return boardsDb.find(childId)
     .then(function(board) {
       return board;
-    })
+    });
   }));
 };
 

@@ -63,9 +63,6 @@ describe('posts', function() {
           should.not.exist(post.imported_at);
           post.title.should.equal('title');
           post.body.should.equal('body');
-          post.user.should.be.ok;
-          post.user.username.should.equal('test_user');
-          post.user.id.should.equal(user.id);
           should.not.exist(post.deleted);
           should.not.exist(post.smf);
           post.thread_id.should.equal(parentThread.id);
@@ -288,9 +285,6 @@ describe('posts', function() {
         post.imported_at.should.equal(plainPost.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
-        post.user.should.be.ok;
-        post.user.username.should.equal('test_user');
-        post.user.id.should.equal(user.id);
         should.not.exist(post.deleted);
         post.smf.post_id.should.equal(plainPost.smf.post_id);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -405,9 +399,6 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
-        post.user.should.be.ok;
-        post.user.username.should.equal('test_user');
-        post.user.id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -477,9 +468,6 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
-        post.user.should.be.ok;
-        post.user.username.should.equal('test_user');
-        post.user.id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -545,9 +533,6 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
-        post.user.should.be.ok;
-        post.user.username.should.equal('test_user');
-        post.user.id.should.equal(user.id);
         post.deleted.should.be.true;
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -615,9 +600,6 @@ describe('posts', function() {
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
-        post.user.should.be.ok;
-        post.user.username.should.equal('test_user');
-        post.user.id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);

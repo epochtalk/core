@@ -78,6 +78,12 @@ Thread.prototype.simple = function() {
   if (self.deleted) { thread.deleted = self.deleted; }
   if (self.smf && self.smf.thread_id) { thread.smf  = self.smf; }
   // this is a generated property
+  if (self.last_post_username) { thread.last_post_username = self.last_post_username; }
+  if (self.last_post_created_at) { thread.last_post_created_at = self.last_post_created_at; }
+  if (self.view_count) { thread.view_count = self.view_count; }
+  if (self.post_count) { thread.post_count = self.post_count; }
+  if (self.first_post_id) { thread.first_post_id = self.first_post_id; }
+  if (self.user) { thread.user = self.user; }
   return thread;
 };
 
@@ -103,6 +109,18 @@ Thread.titleKeyFromId = function(id) {
 
 Thread.usernameKeyFromId = function(id) {
   return keyForThread(id) + config.sep + 'username';
+};
+
+Thread.lastPostUsernameKeyFromId = function(id) {
+  return keyForThread(id) + config.sep + 'last_post_username';
+};
+
+Thread.lastPostCreatedAtKeyFromId = function(id) {
+  return keyForThread(id) + config.sep + 'last_post_created_at';
+};
+
+Thread.viewCountKeyFromId = function(id) {
+  return keyForThread(id) + config.sep + 'view_count';
 };
 
 Thread.prefix = prefix;

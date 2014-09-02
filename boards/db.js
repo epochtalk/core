@@ -27,7 +27,13 @@ boards.import = function(board) {
 boards.create = function(board) {
   // insert into db
   var timestamp = Date.now();
-  if (!board.created_at) { board.created_at = timestamp; }
+  if (!board.created_at) {
+    board.created_at = timestamp;
+    board.updated_at = timestamp;
+  }
+  else if (!board.updated_at) {
+    board.updated_at = board.created_at;
+  }
   board.updated_at = timestamp;
   board.id = helper.genId(board.created_at);
   var boardKey = board.key();
@@ -35,7 +41,7 @@ boards.create = function(board) {
   var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(board.id);
   var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(board.id);
   var metadataBatch = [
-    // TODO: There should be a better solution then initializing with string
+    // TODO: There should be a better solution than initializing with strings
     { type: 'put', key: boardLastPostUsernameKey , value: 'none' },
     { type: 'put', key: boardLastPostCreatedAtKey , value: 'none' },
     { type: 'put', key: boardLastThreadTitleKey , value: 'none' }

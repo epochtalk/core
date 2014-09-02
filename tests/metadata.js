@@ -103,7 +103,8 @@ describe('metadata', function() {
   describe('#threads', function() {
     var plainPost = {
       title: 'post title',
-      body: 'post body'
+      body: 'post body',
+      created_at: '1409533100723'
     };
     var threadId, firstPostId, user;
     var first = true;
@@ -190,48 +191,34 @@ describe('metadata', function() {
         });
       });
     });
-  });
 
-  describe('#posts', function() {
-    var plainThread, user;
-    var plainPost = {
-      title: 'post title',
-      body: 'post body'
-    };
-
-    before(function() {
-      var newUser = {
-        username: 'test_user',
-        email: 'test_user@example.com',
-        password: 'epochtalk',
-        confirmation: 'epochtalk'
-      };
-      return core.users.create(newUser)
-      .then(function(dbUser) {
-        user = dbUser;
-        var newBoard = { name: 'Board', description: 'Board Desc' };
-        return boards.create(newBoard);
-      })
-      .then(function(board) {
-        return { board_id: board.id };
-      })
-      .then(threads.create)
-      .then(function(thread) {
-        plainThread = thread;
-        plainPost.thread_id = thread.id;
-        plainPost.user_id = user.id;
-        return posts.create(plainPost);
-      })
-      .then(function(post) { plainPost = post; });
+    describe('#last_post_username', function() {
+      it('should store the user who posted last in the thread', function() {
+        return threads.find(threadId)
+        .then(function(thread) {
+          thread.last_post_username.should.be.ok;
+          thread.last_post_username.should.equal('test_user');
+        });
+      });
     });
 
-    describe('#user', function() {
-      it('should store the user who created the post', function() {
-        return posts.find(plainPost.id)
+    describe('#last_post_created_at', function() {
+      it('should store the time when the last post in the thread was created', function() {
+        return threads.find(threadId)
         .then(function(thread) {
-          thread.user.should.be.ok;
-          thread.user.username.should.equal('test_user');
-          thread.user.id.should.equal(user.id);
+          thread.last_post_created_at.should.be.ok;
+          thread.last_post_created_at.should.equal(plainPost.created_at);
+        });
+      });
+    });
+
+    describe('#view_count', function() {
+      it('should store the view count of a thread', function() {
+        return threads.find(threadId)
+        .then(function(thread) {
+          thread.view_count.should.exist;
+          // TODO: We need to change this test once view count is implemented fully.
+          thread.view_count.should.deep.equal(0);
         });
       });
     });
