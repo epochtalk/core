@@ -29,10 +29,11 @@ users.find = function(id) {
   var key = modelPrefix + sep + id;
   return db.content.getAsync(key)
   .then(function(user) {
+    delete user.passhash;
+    delete user.id;
     return user;
   });
 };
-
 
 users.all = function(cb) {
   var entries = [];
