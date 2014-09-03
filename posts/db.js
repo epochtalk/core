@@ -3,6 +3,7 @@ module.exports = posts;
 
 var path = require('path');
 var Promise = require('bluebird');
+var bytewise = require('bytewise');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Post = require(path.join(__dirname, 'model'));
@@ -56,27 +57,34 @@ posts.insert = function(post) {
     post.updated_at = post.created_at;
   }
   post.id = helper.genId(post.created_at);
-  var postUsername, boardId, threadTitle;
+  
+  var postUsername, boardId, threadTitle, postCount;
   return usersDb.find(post.user_id)
   .then(function(user) {
     postUsername = user.username;
     return threadsDb.incPostCount(post.thread_id);
   })
-  .then(function(postCount) {
-    postCount = Number(postCount);
+  .then(function(count) {
+    postCount = Number(count);
+    var metadataBatch = [];
+
     if (postCount === 1) { // First Post
       var threadId = post.thread_id;
       var threadFirstPostIdKey = Thread.firstPostIdKeyFromId(threadId);
       var threadTitleKey = Thread.titleKeyFromId(threadId);
       var threadUsernameKey = Thread.usernameKeyFromId(threadId);
-      var metadataBatch = [
+      metadataBatch = [
         { type: 'put', key: threadFirstPostIdKey, value: post.id },
         { type: 'put', key: threadTitleKey, value: post.title },
         { type: 'put', key: threadUsernameKey, value: postUsername }
       ];
-      return db.metadata.batchAsync(metadataBatch);
     }
-    else { return; }
+
+    // post order metadata
+    var postOrderKey = post.postOrderKey();
+    metadataBatch.push({ type: 'put', key: postOrderKey, value: postCount });
+
+    return db.metadata.batchAsync(metadataBatch);
   })
   .then(function() {
     return threadsDb.find(post.thread_id);
@@ -86,7 +94,8 @@ posts.insert = function(post) {
     threadTitle = thread.title;
     return boardsDb.incPostCount(boardId);
   })
-  .then(function() { // Last Post Info, Thread/Board Metadata is updated on each post insert
+  .then(function() {
+    // Last Post Info, Thread/Board Metadata is updated on each post insert
     var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
     var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
     var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
@@ -101,8 +110,9 @@ posts.insert = function(post) {
     ];
     return db.metadata.batchAsync(metadataBatch);
   })
-  .then(function() {
-    return db.indexes.putAsync(post.threadPostKey(), post.id);
+  .then(function() { // threadPostOrder
+    var key = post.threadPostOrderKey(postCount);
+    return db.indexes.putAsync(key, post.id);
   })
   .then(function() {
     post.version = timestamp; // add version
@@ -189,6 +199,7 @@ posts.delete = function(postId) {
 posts.purge = function(id) {
   var postKey = Post.keyFromId(id);
   var deletedPost;
+  var threadId;
 
   return db.content.getAsync(postKey) // get post
   .then(function(post) {
@@ -219,12 +230,21 @@ posts.purge = function(id) {
   .then(function() { // decrement boardPostCount
     return threadsDb.find(deletedPost.thread_id)
     .then(function(thread) {
+      threadId = thread.id;
       return boardsDb.decPostCount(thread.board_id);
     });
   })
-  .then(function() { // delete ThreadPostKey
-    var threadPostKey = deletedPost.threadPostKey();
-    return db.indexes.delAsync(threadPostKey);
+  .then(function() { // delete ThreadPostOrder and PostOrder
+    var postOrderKey = deletedPost.postOrderKey();
+    return db.metadata.getAsync(postOrderKey)
+    .then(function(postOrder) {
+      return db.metadata.delAsync(postOrderKey)
+      .then(function() { return postOrder; });
+    })
+    .then(function(postOrder) {
+      var order = Number(postOrder);
+      return reorderPostOrder(threadId, order);
+    });
   })
   // temporary solution to handling ThreadFirstPostIdKey
   .then(function() { // manage ThreadFirstPostIdKey
@@ -240,7 +260,7 @@ posts.purge = function(id) {
   })
   // temporarily not handling threadTitle
   // temporarily not handling thread username
-  .then(function() {
+  .then(function() { // delete legacy key
     if (deletedPost.smf) {
       var legacyKey = deletedPost.legacyKey();
       return db.legacy.delAsync(legacyKey);
@@ -284,20 +304,26 @@ posts.byThread = function(threadId, opts) {
         return fulfill(allPosts);
       });
     };
+
     // query vars
     var limit = opts.limit ? Number(opts.limit) : 10;
+    var page = opts.page ? Number(opts.page) : 1;
+
+    // query key
+    var postOrderPrefix = config.posts.indexPrefix;
     var sep = config.sep;
-    var indexPrefix = config.posts.indexPrefix;
-    var startKey = indexPrefix + sep + threadId + sep;
+    var startKey = postOrderPrefix + sep + threadId + sep;
     var endKey = startKey + '\xff';
-    if (opts.startPostId) {
-      startKey += opts.startPostId + '\xff';
-    }
+
+    // query start value
+    var pageStart = limit * page - (limit - 1);
+    pageStart = encode(pageStart, 'hex');
+    startKey += pageStart;
+
     var queryOptions = {
       limit: limit,
-      end: endKey,
       start: startKey,
-      versionLimit: 1
+      end: endKey
     };
     // query for all posts fir this threadId
     db.indexes.createValueStream(queryOptions)
@@ -330,3 +356,61 @@ posts.versions = function(id) {
     .on('end', handler);
   });
 };
+
+function reorderPostOrder(threadId, startIndex) {
+  return new Promise(function(fulfill, reject) {
+    var lastIndex = '';
+    var mover = function(entry) {
+      var key = entry.key;
+      var value = entry.value;
+
+      // find index from key
+      var indexStart = Post.indexPrefix + sep + threadId + sep;
+      var currentIndex = key.replace(indexStart, '');
+      lastIndex = Number(currentIndex);
+      var newIndex = lastIndex - 1;
+
+      // handle metadata
+      var metadataKey = Post.prefix + sep + value + sep + 'post_order';
+      db.metadata.putAsync(metdataKey, newIndex);
+
+      // handle index
+      var postOrderKey = Post.indexPrefix + sep + threadId + sep;
+      postOrderKey += encode(newIndex, 'hex');
+      db.indexes.putAsync(postOrderKey, value);
+    };
+    var handler = function() {
+      if (lastIndex === '') { lastIndex = startIndex; }
+      lastIndex = Number(lastIndex);
+      
+      // delete last index position
+      var key = Post.indexPrefix + sep + threadId + sep;
+      key += encode(lastIndex, 'hex');
+      db.indexes.delAsync(key);
+      return fulfill();
+    };
+
+    // query key
+    startIndex = Number(startIndex);
+    var postOrderPrefix = Post.indexPrefix;
+    var sep = config.sep;
+    var startKey = postOrderPrefix + sep + threadId + sep;
+    var endKey = startKey + '\xff';
+    startKey += encode(startIndex + 1, 'hex');
+    var queryOptions = {
+      start: startKey,
+      end: endKey
+    };
+    // query for all posts fir this threadId
+    db.indexes.createReadStream(queryOptions)
+    .on('data', mover)
+    .on('error', reject)
+    .on('close', handler)
+    .on('end', handler);
+  });
+}
+
+function encode(value, encoding) {
+  return bytewise.encode(value).toString(encoding || 'binary');
+}
+

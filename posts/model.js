@@ -1,4 +1,5 @@
 module.exports = Post;
+var bytewise = require('bytewise');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var validate = require(path.join(__dirname, 'validate'));
@@ -50,6 +51,15 @@ Post.prototype.threadPostKey = function() {
   var key;
   if (this.thread_id && this.id) {
     key = indexPrefix + sep + this.thread_id + sep + this.id;
+  }
+  return key;
+};
+
+Post.prototype.threadPostOrderKey = function(count) {
+  var key;
+  if (this.thread_id && count) {
+    var postOrder = encode(count, 'hex');
+    key = config.posts.indexPrefix + sep + this.thread_id + sep + postOrder;
   }
   return key;
 };
@@ -115,4 +125,15 @@ Post.legacyKeyFromId = function(legacyId) {
   return legacyKeyForPost(legacyId);
 };
 
+Post.prototype.postOrderKey = function() {
+  var postKey;
+  if (this.id) { postKey = prefix + sep + this.id + sep + 'post_order'; }
+  return postKey;
+};
+
 Post.prefix = prefix;
+Post.indexPrefix = indexPrefix;
+
+function encode(value, encoding) {
+  return bytewise.encode(value).toString(encoding || 'binary');
+}
