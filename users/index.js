@@ -30,6 +30,7 @@ users.find = function(id) {
   return db.content.getAsync(key)
   .then(function(user) {
     delete user.passhash;
+    delete user.id;
     return user;
   });
 };
