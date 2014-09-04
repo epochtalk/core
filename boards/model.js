@@ -52,11 +52,7 @@ Board.prototype.key = function() {
 
 Board.prototype.legacyKey = function() {
   var self = this;
-  var legacyKey;
-  if (self.smf.ID_BOARD) {
-    legacyKey = legacyKeyForBoard(self.smf.ID_BOARD);
-  }
-  return legacyKey;
+  return legacyKeyForBoard(self.smf.ID_BOARD);
 };
 
 // children in database stored in relation to board index

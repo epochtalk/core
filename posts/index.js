@@ -5,10 +5,10 @@ var postsDb = require(path.join(__dirname, 'db'));
 var Post = require(path.join(__dirname, 'model'));
 
 posts.import = function(data) {
-  var newPost = new Post(data);
-  return newPost.validateImport()
+  var importPost = new Post(data);
+  return importPost.validateImport()
   .then(function() {
-    return postsDb.import(newPost);
+    return postsDb.import(importPost);
   })
   .then(function(post) {
     return post.simple();

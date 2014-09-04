@@ -132,7 +132,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('username must be a string');
-      })
+      });
     });
 
     it('should validate the username min length is 2', function() {
@@ -147,7 +147,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('username length must be at least 2 characters long');
-      })
+      });
     });
 
     it('should validate the username max length is 30', function() {
@@ -162,7 +162,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('username length must be less than or equal to 30 characters long');
-      })
+      });
     });
 
     it('should validate that username is required', function() {
@@ -172,7 +172,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('username is required');
-      })
+      });
     });
 
     it('should validate that email is required', function() {
@@ -182,7 +182,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('email is required');
-      })
+      });
     });
 
     it('should validate the email is a string', function() {
@@ -197,7 +197,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('email must be a string');
-      })
+      });
     });
 
     it('should validate the email is valid', function() {
@@ -212,7 +212,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('email must be a valid email');
-      })
+      });
     });
 
     it('should validate that password is required', function() {
@@ -222,7 +222,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('password is required');
-      })
+      });
     });
 
     it('should validate the password is a string', function() {
@@ -237,7 +237,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('password must be a string');
-      })
+      });
     });
 
     it('should validate that password confirmation is required', function() {
@@ -247,7 +247,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('password missing required peer confirmation');
-      })
+      });
     });
 
     it('should validate the password matches confirmation', function() {
@@ -262,7 +262,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('confirmation must be one of ref:password');
-      })
+      });
     });
   });
 
@@ -297,7 +297,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('ID_MEMBER must be a number');
-      })
+      });
     });
 
     it('should validate the username is string', function() {
@@ -312,7 +312,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('username must be a string');
-      })
+      });
     });
 
     it('should validate the username min length is 2', function() {
@@ -327,7 +327,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('username length must be at least 2 characters long');
-      })
+      });
     });
 
     it('should validate the username max length is 30', function() {
@@ -342,7 +342,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('username length must be less than or equal to 30 characters long');
-      })
+      });
     });
 
     it('should validate that username is required', function() {
@@ -352,7 +352,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('username is required');
-      })
+      });
     });
 
     it('should validate that email is required', function() {
@@ -362,7 +362,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('email is required');
-      })
+      });
     });
 
     it('should validate the email is a string', function() {
@@ -377,7 +377,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('email must be a string');
-      })
+      });
     });
 
     it('should validate the email is valid', function() {
@@ -392,7 +392,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('email must be a valid email');
-      })
+      });
     });
 
     it('should validate that password is required', function() {
@@ -402,7 +402,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('password is required');
-      })
+      });
     });
 
     it('should validate the password is a string', function() {
@@ -417,7 +417,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('password must be a string');
-      })
+      });
     });
 
     it('should validate that password confirmation is required', function() {
@@ -427,7 +427,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('password missing required peer confirmation');
-      })
+      });
     });
 
     it('should validate the password matches confirmation', function() {
@@ -442,7 +442,7 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('confirmation must be one of ref:password');
-      })
+      });
     });
   });
 
