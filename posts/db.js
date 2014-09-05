@@ -58,7 +58,7 @@ posts.insert = function(post) {
   }
   post.id = helper.genId(post.created_at);
   
-  var postUsername, boardId, threadTitle, postCount;
+  var postUsername, boardId, threadTitle, postCount, thread;
   return usersDb.find(post.user_id)
   .then(function(user) {
     postUsername = user.username;
@@ -89,10 +89,19 @@ posts.insert = function(post) {
   .then(function() {
     return threadsDb.find(post.thread_id);
   })
-  .then(function(thread) {
-    boardId = thread.board_id;
-    threadTitle = thread.title;
+  .then(function(dbThread) {
+    boardId = dbThread.board_id;
+    threadTitle = dbThread.title;
+    thread = new Thread(dbThread);
     return boardsDb.incPostCount(boardId);
+  })
+  .then(function() { // remove old thread index value
+    var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(post.thread_id);
+    return db.metadata.getAsync(threadLastPostCreatedAtKey)
+    .then(function(timestamp) {
+      var boardThreadKey = thread.boardThreadKey(timestamp);
+      return db.indexes.delAsync(boardThreadKey);
+    });
   })
   .then(function() {
     // Last Post Info, Thread/Board Metadata is updated on each post insert
@@ -109,6 +118,10 @@ posts.insert = function(post) {
       { type: 'put', key: threadLastPostCreatedAtKey, value: post.created_at }
     ];
     return db.metadata.batchAsync(metadataBatch);
+  })
+  .then(function() { // add new thread index value
+    var boardThreadKey = thread.boardThreadKey(post.created_at);
+    return db.indexes.putAsync(boardThreadKey, post.thread_id);
   })
   .then(function() { // threadPostOrder
     var key = post.threadPostOrderKey(postCount);
@@ -246,7 +259,7 @@ posts.purge = function(id) {
       return reorderPostOrder(threadId, order);
     });
   })
-  // temporary solution to handling ThreadFirstPostIdKey
+  // temporary solution to handling ThreadFirstPostIdKey (first post)
   .then(function() { // manage ThreadFirstPostIdKey
     var threadFirstPostIdKey = Thread.firstPostIdKeyFromId((deletedPost.thread_id));
     return db.metadata.getAsync(threadFirstPostIdKey)
@@ -258,8 +271,10 @@ posts.purge = function(id) {
       else { return; }
     });
   })
-  // temporarily not handling threadTitle
-  // temporarily not handling thread username
+  // temporarily not handling lastPostCreatedAtKey (last post)
+  // temporarily not hanlding lastPostUsernameKey
+  // temporarily not handling threadTitle (first post)
+  // temporarily not handling thread username (first post)
   .then(function() { // delete legacy key
     if (deletedPost.smf) {
       var legacyKey = deletedPost.legacyKey();

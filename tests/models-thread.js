@@ -48,7 +48,6 @@ describe('Thread', function() {
       var thread = new Thread(plainThread);
       thread.id.should.equal(plainThread.id);
       thread.created_at.should.be.a('number');
-      thread.updated_at.should.be.a('number');
       should.not.exist(thread.imported_at);
       should.not.exist(thread.deleted);
       should.not.exist(thread.smf);
@@ -291,11 +290,11 @@ describe('Thread', function() {
       var sep = config.sep;
 
       var thread = new Thread(plainThread);
-      var key = thread.boardThreadKey();
+      var key = thread.boardThreadKey(plainPost.created_at);
 
       key.should.be.ok;
       key.should.be.a('string');
-      key.should.be.equal(indexPrefix + sep + thread.board_id + sep + thread.id);
+      key.should.be.equal(indexPrefix + sep + thread.board_id + sep + plainPost.created_at + sep + thread.id);
     });
   });
 
@@ -321,7 +320,6 @@ describe('Thread', function() {
       var dateThread = {
         board_id: 'test_board_id',
         created_at: 12312312,
-        updated_at: 13124121,
         imported_at: 12314124
       };
       var thread = new Thread(dateThread);
@@ -368,7 +366,6 @@ describe('Thread', function() {
       id: 'asdflkalskdfa',
       board_id: 'test_board_id',
       created_at: 212424525,
-      updated_at: 342523422,
       imported_at: 2323424234,
       deleted: true,
       smf: {
@@ -383,7 +380,6 @@ describe('Thread', function() {
       simpleThread.id.should.equal(fullThread.id);
       simpleThread.board_id.should.equal(fullThread.board_id);
       simpleThread.created_at.should.equal(fullThread.created_at);
-      simpleThread.updated_at.should.equal(fullThread.updated_at);
       simpleThread.imported_at.should.equal(fullThread.imported_at);
       simpleThread.deleted.should.be.true;
       simpleThread.smf.ID_TOPIC.should.equal(fullThread.smf.ID_TOPIC);

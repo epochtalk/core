@@ -65,7 +65,6 @@ describe('threads', function() {
           thread.id.should.be.ok;
           thread.id.should.be.a('string');
           thread.created_at.should.be.a('number');
-          thread.updated_at.should.be.a('number');
           should.not.exist(thread.imported_at);
           should.not.exist(thread.deleted);
           should.not.exist(thread.smf);
@@ -124,7 +123,6 @@ describe('threads', function() {
         thread.id.should.be.ok;
         thread.id.should.be.a('string');
         thread.created_at.should.be.a('number');
-        thread.updated_at.should.be.a('number');
         should.not.exist(thread.imported_at);
         should.not.exist(thread.deleted);
         should.not.exist(thread.smf);
@@ -180,7 +178,6 @@ describe('threads', function() {
         thread.id.should.be.ok;
         thread.id.should.be.a('string');
         thread.created_at.should.be.a('number');
-        thread.updated_at.should.be.a('number');
         thread.imported_at.should.be.a('number');
         should.not.exist(thread.deleted);
         thread.smf.ID_TOPIC.should.equal(plainThread.smf.ID_TOPIC);
@@ -234,7 +231,6 @@ describe('threads', function() {
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.equal(plainThread.created_at);
-        thread.updated_at.should.equal(plainThread.updated_at);
         thread.imported_at.should.equal(plainThread.imported_at);
         should.not.exist(thread.deleted);
         thread.smf.ID_TOPIC.should.equal(plainThread.smf.ID_TOPIC);
@@ -291,7 +287,6 @@ describe('threads', function() {
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.equal(plainThread.created_at);
-        thread.updated_at.should.equal(plainThread.updated_at);
         thread.imported_at.should.equal(plainThread.imported_at);
         should.not.exist(thread.deleted);
         thread.smf.ID_TOPIC.should.equal(plainThread.smf.ID_TOPIC);
@@ -351,7 +346,6 @@ describe('threads', function() {
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.be.equal(plainThread.created_at);
-        thread.updated_at.should.be.equal(plainThread.updated_at);
         thread.user.should.be.ok;
         thread.user.username.should.equal('test_user');
         should.not.exist(thread.imported_at);
@@ -403,7 +397,6 @@ describe('threads', function() {
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.be.equal(plainThread.created_at);
-        thread.updated_at.should.be.a('number');
         should.not.exist(thread.imported_at);
         thread.deleted.should.be.true;
         should.not.exist(thread.smf);
@@ -416,7 +409,6 @@ describe('threads', function() {
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.be.equal(plainThread.created_at);
-        thread.updated_at.should.be.a('number');
         thread.user.should.be.ok;
         thread.user.username.should.equal('test_user');
         should.not.exist(thread.imported_at);
@@ -470,7 +462,6 @@ describe('threads', function() {
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.be.equal(plainThread.created_at);
-        thread.updated_at.should.be.a('number');
         should.not.exist(thread.imported_at);
         should.not.exist(thread.deleted);
         should.not.exist(thread.smf);
@@ -483,7 +474,6 @@ describe('threads', function() {
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.be.equal(plainThread.created_at);
-        thread.updated_at.should.be.a('number');
         thread.user.should.be.ok;
         thread.user.username.should.equal('test_user');
         should.not.exist(thread.imported_at);
@@ -536,7 +526,6 @@ describe('threads', function() {
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.equal(plainThread.created_at);
-        thread.updated_at.should.equal(plainThread.updated_at);
         should.not.exist(thread.imported_at);
         should.not.exist(thread.deleted);
         should.not.exist(thread.smf);

@@ -32,14 +32,9 @@ threadsDb.insert = function(thread) {
   // If created at doesnt exist
   if (!thread.created_at) {
     thread.created_at = timestamp;
-    thread.updated_at = timestamp;
-  }
-  // Created at exists but updated at does not
-  else if (!thread.updated_at) {
-    thread.updated_at = thread.created_at;
   }
   thread.id = helper.genId(thread.created_at);
-  var boardThreadKey = thread.boardThreadKey();
+  var boardThreadKey = thread.boardThreadKey(thread.created_at);
   var threadKey = thread.key();
   var lastPostUsernameKey = Thread.lastPostUsernameKeyFromId(thread.id);
   var lastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(thread.id);
@@ -47,7 +42,7 @@ threadsDb.insert = function(thread) {
   var metadataBatch = [
     // TODO: There should be a better solution than initializing with strings
     { type: 'put', key: lastPostUsernameKey, value: 'none' },
-    { type: 'put', key: lastPostCreatedAtKey, value: 'none' },
+    { type: 'put', key: lastPostCreatedAtKey, value: thread.created_at },
     { type: 'put', key: viewCountKey , value: 0 }
   ];
   return db.metadata.batchAsync(metadataBatch)
@@ -142,7 +137,6 @@ threadsDb.purge = function(id) {
   var threadKey = Thread.keyFromId(id);
   var postCountKey = Thread.postCountKeyFromId(id);
   var lastPostUsernameKey = Thread.lastPostUsernameKeyFromId(id);
-  var lastPostUsernameKey = Thread.lastPostUsernameKeyFromId(id);
   var lastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(id);
   var viewCountKey = Thread.viewCountKeyFromId(id);
   var firstPostIdKey = Thread.firstPostIdKeyFromId(id);
@@ -159,8 +153,11 @@ threadsDb.purge = function(id) {
     return db.content.delAsync(threadKey);
   })
   .then(function() { // remove board - thread index
-    var boardThreadKey = deletedThread.boardThreadKey();
-    return db.indexes.delAsync(boardThreadKey);
+    return db.metadata.getAsync(lastPostCreatedAtKey)
+    .then(function(timestamp) {
+      var boardThreadKey = deletedThread.boardThreadKey(timestamp);
+      return db.indexes.delAsync(boardThreadKey);
+    });
   })
   .then(function() { // remove post count Key
     return db.metadata.delAsync(postCountKey);

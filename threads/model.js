@@ -29,7 +29,6 @@ function Thread(data) {
   // data.id signifies existing thread
   if (data.id) { this.id = data.id; }
   if (data.created_at) { this.created_at = data.created_at; }
-  if (data.updated_at) { this.updated_at = data.updated_at; }
   if (data.imported_at) { this.imported_at = data.imported_at; }
   if (data.deleted) { this.deleted = data.deleted; }
   if (data.smf && data.smf.ID_TOPIC) { this.smf  = data.smf; }
@@ -46,10 +45,10 @@ Thread.prototype.legacyKey = function() {
   return legacyKeyForThread(self.smf.ID_TOPIC);
 };
 
-Thread.prototype.boardThreadKey = function() {
+Thread.prototype.boardThreadKey = function(timestamp) {
   var boardThreadKey;
   if (this.id && this.board_id) {
-    boardThreadKey = indexPrefix + sep + this.board_id + sep + this.id;
+    boardThreadKey = indexPrefix + sep + this.board_id + sep + timestamp + sep + this.id;
   }
   return boardThreadKey;
 };
@@ -73,7 +72,6 @@ Thread.prototype.simple = function() {
   if (self.id) { thread.id = self.id; }
   if (self.board_id) { thread.board_id = self.board_id; }
   if (self.created_at) { thread.created_at = self.created_at; }
-  if (self.updated_at) { thread.updated_at = self.updated_at; }
   if (self.imported_at) { thread.imported_at = self.imported_at; }
   if (self.deleted) { thread.deleted = self.deleted; }
   if (self.smf && self.smf.ID_TOPIC) { thread.smf  = self.smf; }
