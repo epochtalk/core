@@ -72,11 +72,6 @@ boards.find = function(id) {
   .then(function(children) {
     if (children.length > 0) {
       board.children = children;
-      // append all children counts
-      children.forEach(function(child) {
-        board.post_count += Number(child.post_count);
-        board.thread_count += Number(child.thread_count);
-      });
     }
     return db.metadata.getAsync(boardPostCountKey);
   })
