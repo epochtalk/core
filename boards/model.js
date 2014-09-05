@@ -62,13 +62,7 @@ Board.prototype.getChildren = function() {
   if (!self.children_ids) { return Promise.resolve([]); }
 
   return Promise.all(self.children_ids.map(function(childId) {
-    var boardKeyPrefix = config.boards.prefix + config.sep + childId + config.sep;
-    var boardPostCountKey = boardKeyPrefix + 'post_count';
-    var boardThreadCountKey = boardKeyPrefix + 'thread_count';
-    return boardsDb.find(childId)
-    .then(function(board) {
-      return board;
-    });
+    return boardsDb.find(childId);
   }));
 };
 

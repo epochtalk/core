@@ -65,18 +65,27 @@ boards.find = function(id) {
   return db.content.getAsync(boardKey)
   .then(function(dbBoard) {
     board = new Board(dbBoard);
+    board.post_count = 0;
+    board.thread_count = 0;
     return board.getChildren();
   })
   .then(function(children) {
-    if (children.length > 0) { board.children = children; }
+    if (children.length > 0) {
+      board.children = children;
+      // append all children counts
+      children.forEach(function(child) {
+        board.post_count += Number(child.post_count);
+        board.thread_count += Number(child.thread_count);
+      });
+    }
     return db.metadata.getAsync(boardPostCountKey);
   })
   .then(function(postCount) {
-    board.post_count = Number(postCount);
+    board.post_count += Number(postCount);
     return db.metadata.getAsync(boardThreadCountKey);
   })
   .then(function(threadCount) {
-    board.thread_count = Number(threadCount);
+    board.thread_count += Number(threadCount);
     return db.metadata.getAsync(boardLastPostUsernameKey);
   })
   .then(function(username) {
@@ -217,7 +226,7 @@ boards.all = function() {
         var boards = [];
         allBoards.forEach(function(board) {
           if (!board.parent_id) {
-            boards.push(board);
+            boards.push(board.simple());
           }
         });
         return fulfill(boards);
