@@ -322,7 +322,7 @@ posts.byThread = function(threadId, opts) {
 
     // query vars
     var limit = opts.limit ? Number(opts.limit) : 10;
-    var page = opts.page ? Number(opts.page) : 1;
+    var page = opts.page ? Math.abs(Number(opts.page)) : 1;
 
     // query key
     var postOrderPrefix = config.posts.indexPrefix;

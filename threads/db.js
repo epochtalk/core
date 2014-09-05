@@ -257,7 +257,13 @@ threadsDb.threadByOldId = function(oldId) {
 threadsDb.byBoard = function(boardId, opts) {
   return new Promise(function(fulfill, reject) {
     var entries = [];
-    var sorter = function(value) { entries.push(value); };
+    var counted = 0;
+    var sorter = function(value) {
+      if (counted >= pushStart) {
+        entries.push(value);
+      }
+      else { counted++; }
+    };
     var handler = function() {
       Promise.map(entries, function(entry) {
         return threadsDb.find(entry);
@@ -268,16 +274,26 @@ threadsDb.byBoard = function(boardId, opts) {
     };
 
     // query vars
-    var startThreadKey = config.threads.indexPrefix + config.sep + boardId + config.sep;
-    var endThreadKey = startThreadKey;
     var limit = opts.limit ? Number(opts.limit) : 10;
-    startThreadKey += '\xff';
-    endThreadKey += '\x00';
+    var page = opts.page ? Math.abs(Number(opts.page)) : 1;
+
+    // query keys
+    var threadOrderPrefix = config.threads.indexPrefix;
+    var sep = config.sep;
+    var startKey = threadOrderPrefix + sep + boardId + sep;
+    var endKey = startKey;
+    startKey += '\xff';
+    endKey += '\x00';
+
+    // query counting
+    var pushStart = limit * page - limit;
+    var stopLimit = limit * page;
+
     var queryOptions = {
-      limit: limit,
+      limit: stopLimit,
       reverse: true,
-      start: startThreadKey,
-      end: endThreadKey
+      start: startKey,
+      end: endKey
     };
     // query thread Index
     db.indexes.createValueStream(queryOptions)
