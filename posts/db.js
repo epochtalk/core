@@ -57,7 +57,7 @@ posts.insert = function(post) {
     post.updated_at = post.created_at;
   }
   post.id = helper.genId(post.created_at);
-  
+
   var postUsername, boardId, threadTitle, postCount, thread;
   return usersDb.find(post.user_id)
   .then(function(user) {
@@ -108,12 +108,14 @@ posts.insert = function(post) {
     var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
     var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
     var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
+    var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(boardId);
     var threadLastPostUsernameKey = Thread.lastPostUsernameKeyFromId(post.thread_id);
     var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(post.thread_id);
     var metadataBatch = [
       { type: 'put', key: boardLastPostUsernameKey, value: postUsername },
       { type: 'put', key: boardLastPostCreatedAtKey, value: post.created_at },
       { type: 'put', key: boardLastThreadTitleKey, value: threadTitle },
+      { type: 'put', key: boardLastThreadIdKey, value: post.thread_id },
       { type: 'put', key: threadLastPostUsernameKey, value: postUsername },
       { type: 'put', key: threadLastPostCreatedAtKey, value: post.created_at }
     ];
@@ -274,6 +276,7 @@ posts.purge = function(id) {
   // temporarily not handling lastPostCreatedAtKey (last post)
   // temporarily not hanlding lastPostUsernameKey
   // temporarily not handling threadTitle (first post)
+  // temporarily not handling lastThreadId
   // temporarily not handling thread username (first post)
   .then(function() { // delete legacy key
     if (deletedPost.smf) {
@@ -397,7 +400,7 @@ function reorderPostOrder(threadId, startIndex) {
     var handler = function() {
       if (lastIndex === '') { lastIndex = startIndex; }
       lastIndex = Number(lastIndex);
-      
+
       // delete last index position
       var key = Post.indexPrefix + sep + threadId + sep;
       key += encode(lastIndex, 'hex');

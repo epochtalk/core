@@ -106,6 +106,7 @@ Board.prototype.simple = function() {
   if (self.last_post_username) { board.last_post_username = self.last_post_username; }
   if (self.last_post_created_at) { board.last_post_created_at = self.last_post_created_at; }
   if (self.last_thread_title) { board.last_thread_title = self.last_thread_title; }
+  if (self.last_thread_id) { board.last_thread_id = self.last_thread_id; }
 
   return board;
 };
@@ -133,6 +134,10 @@ Board.lastPostCreatedAtKeyFromId = function(id) {
 
 Board.lastThreadTitleKeyFromId = function(id) {
   return keyForBoard(id) + config.sep + 'last_thread_title';
+};
+
+Board.lastThreadIdKeyFromId = function(id) {
+  return keyForBoard(id) + config.sep + 'last_thread_id';
 };
 
 Board.legacyKeyFromId = function(legacyId) {

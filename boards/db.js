@@ -40,11 +40,13 @@ boards.create = function(board) {
   var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(board.id);
   var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(board.id);
   var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(board.id);
+  var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(board.id);
   var metadataBatch = [
     // TODO: There should be a better solution than initializing with strings
     { type: 'put', key: boardLastPostUsernameKey , value: 'none' },
     { type: 'put', key: boardLastPostCreatedAtKey , value: 'none' },
-    { type: 'put', key: boardLastThreadTitleKey , value: 'none' }
+    { type: 'put', key: boardLastThreadTitleKey , value: 'none' },
+    { type: 'put', key: boardLastThreadIdKey , value: 'none' }
   ];
   return db.metadata.batchAsync(metadataBatch)
   .then(function() { return boards.incPostCount(board.id); })
@@ -61,6 +63,7 @@ boards.find = function(id) {
   var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
   var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
   var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
+  var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(id);
   var board;
   return db.content.getAsync(boardKey)
   .then(function(dbBoard) {
@@ -93,6 +96,10 @@ boards.find = function(id) {
   })
   .then(function(threadTitle) {
     board.last_thread_title = threadTitle;
+    return db.metadata.getAsync(boardLastThreadIdKey);
+  })
+  .then(function(threadId) {
+    board.last_thread_id = threadId;
     return board;
   });
 };
@@ -148,6 +155,7 @@ boards.purge = function(id) {
   var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
   var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
   var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
+  var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(id);
   var purgeBoard;
 
   // see if board already exists
@@ -183,6 +191,10 @@ boards.purge = function(id) {
   // delete lastThreadTitle metadata
   .then(function() {
     return db.metadata.delAsync(boardLastThreadTitleKey);
+  })
+  // delete lastThreadId metadata
+  .then(function() {
+    return db.metadata.delAsync(boardLastThreadIdKey);
   })
   // delete legacy key index
   .then(function() {

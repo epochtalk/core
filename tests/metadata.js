@@ -15,7 +15,7 @@ describe('metadata', function() {
       body: 'post body',
       created_at: '1409533100723'
     };
-    var boardId, user;
+    var boardId, user, tempPost;
     before(function() {
       var newUser = {
         username: 'test_user',
@@ -39,7 +39,7 @@ describe('metadata', function() {
         return Promise.map(threadArray, function(threadToCreate) {
           return threads.create(threadToCreate)
           .then(function(thread) {
-            var tempPost = plainPost;
+            tempPost = plainPost;
             tempPost.thread_id = thread.id;
             tempPost.user_id = user.id;
             return [tempPost, tempPost, tempPost];
@@ -94,6 +94,15 @@ describe('metadata', function() {
         return boards.find(boardId)
         .then(function(board) {
           board.last_thread_title.should.equal(plainPost.title);
+        });
+      });
+    });
+
+    describe('#last_thread_id', function() {
+      it('should have correct last thread id', function() {
+        return boards.find(boardId)
+        .then(function(board) {
+          board.last_thread_id.should.equal(tempPost.thread_id);
         });
       });
     });
