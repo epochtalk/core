@@ -5,10 +5,10 @@ var threadsDb = require(path.join(__dirname, 'db'));
 var Thread = require(path.join(__dirname, 'model'));
 
 threads.import = function(data) {
-  var newThread = new Thread(data);
-  return newThread.validate()
+  var importThread = new Thread(data);
+  return importThread.validate()
   .then(function() {
-    return threadsDb.import(newThread);
+    return threadsDb.import(importThread);
   })
   .then(function(thread) {
     return thread.simple();
@@ -31,11 +31,11 @@ threads.find = function(id) {
 };
 
 threads.update = function(data) {
-  var thread = new Thread(data);
+  var updateThread = new Thread(data);
 
-  return thread.validate()
+  return updateThread.validate()
   .then(function() {
-    return threadsDb.update(thread);
+    return threadsDb.update(updateThread);
   })
   .then(function(thread) {
     return thread.simple();

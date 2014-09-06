@@ -6,28 +6,25 @@ var db = require(path.join(__dirname, 'db'));
 var Board = require(path.join(__dirname, 'model'));
 
 boards.import = function(json) {
-  var board = new Board(json);
+  var importBoard = new Board(json);
 
-  // validation
-  return board.validate()
-  // import into db
+  return importBoard.validate()
   .then(function() {
-    return db.import(board);
+    return db.import(importBoard);
   })
-  // return json version of board
-  .then(function() {
+  .then(function(board) {
     return board.simple();
   });
 };
 
 boards.create = function(json) {
-  var board = new Board(json);
+  var newBoard = new Board(json);
 
-  return board.validate()
+  return newBoard.validate()
   .then(function() {
-    return db.create(board);
+    return db.create(newBoard);
   })
-  .then(function() {
+  .then(function(board) {
     return board.simple();
   });
 };
@@ -40,13 +37,13 @@ boards.find = function(id) {
 };
 
 boards.update = function(json) {
-  var board = new Board(json);
+  var updateBoard = new Board(json);
 
-  return board.validate()
+  return updateBoard.validate()
   .then(function() {
-    return db.update(board);
+    return db.update(updateBoard);
   })
-  .then(function() {
+  .then(function(board) {
     return board.simple();
   });
 };

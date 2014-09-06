@@ -2,6 +2,7 @@ var users = {};
 module.exports = users;
 
 var path = require('path');
+var Promise = require('bluebird');
 var db = require(path.join(__dirname, '..', 'db'));
 var config = require(path.join(__dirname, '..', 'config'));
 var modelPrefix = config.users.prefix;
@@ -32,34 +33,55 @@ users.create = function(data) {
 };
 
 users.find = function(id) {
-  return usersDb.find(id)
-  .then(function(user) {
-    delete user.passhash; // which one is it?
-    delete user.password; // or this one?
-    delete user.id;
-    return user; // already simple
-  });
+  return usersDb.find(id); // already simple
 };
 
 users.userByOldId = function(oldId) {
-  return usersDb.userByOldId(oldId)
+  return usersDb.findByLegacyId(oldId); // already simple
+};
+
+users.update = function(data) {
+  var updateUser = new User(data);
+
+  return updateUser.validateUpdate()
+  .then(function(data) {
+    return usersDb.update(updateUser);
+  })
   .then(function(user) {
-    delete user.passhash; // which one is it?
-    delete user.password; // or this one?
-    delete user.id;
-    return user;
+    return user.simple();
   });
 };
 
-// update
+users.delete = function(id) {
+  return usersDb.delete(id)
+  .then(function(user) {
+    return user.simple();
+  });
+};
 
-// delete
+users.purge = function(id) {
+  return usersDb.purge(id)
+  .then(function(user) {
+    return user.simple();
+  });
+};
 
-users.all = function(cb) {
-  var entries = [];
-  db.createReadStream({ start: modelPrefix, end: modelPrefix + '\xff'})
-    .on('data', function (entry) { entries.push(entry); })
-    .on('close', function () { cb(null, entries); })
-    .on('end', function () { cb(null, entries); });
+users.all = function() {
+  return new Promise(function(fulfill, reject) {
+    var entries = [];
+    var sorter = function(entry) {
+      entries.push(entry.value);
+    };
+    var handler = function() {
+      return fulfill(entries);
+    };
+    
+    var query = { start: modelPrefix, end: modelPrefix + '\xff'};
+    db.content.createReadStream(query)
+    .on('data', sorter)
+    .on('error', reject)
+    .on('close', handler)
+    .on('end', handler);
+  });
 };
 

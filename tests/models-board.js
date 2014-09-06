@@ -1,7 +1,8 @@
 var rimraf = require('rimraf');
 var should = require('chai').should();
-var dbName = 'test-epoch.db';
 var path = require('path');
+var probe = require(path.join(__dirname, '..', 'probe'));
+var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 var boards = core.boards;
 var Board = require(path.join(__dirname, '..', 'boards', 'model'));
@@ -413,6 +414,9 @@ describe('Board', function() {
       var nameBoard = { description: 'hello' };
       var board = new Board(nameBoard);
       return board.validate()
+      .then(function(data) {
+        should.not.exist(data);
+      })
       .catch(function(err) {
         err.should.exist;
       });
@@ -517,6 +521,12 @@ describe('Board', function() {
       should.not.exist(simpleBoard.keyFromId);
       should.not.exist(simpleBoard.legacyKeyFromId);
       should.not.exist(simpleBoard.prefix);
+    });
+  });
+
+  describe('#CLEANING', function() {
+    it('cleaning all db', function() {
+      return probe.clean();
     });
   });
 

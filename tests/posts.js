@@ -1,6 +1,7 @@
 var should = require('chai').should();
 var rimraf = require('rimraf');
 var path = require('path');
+var probe = require(path.join(__dirname, '..', 'probe'));
 var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 var posts = core.posts;
@@ -451,7 +452,7 @@ describe('posts', function() {
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.a('number');
+        post.updated_at.should.be.above(plainPost.created_at);
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
@@ -469,7 +470,7 @@ describe('posts', function() {
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.a('number');
+        post.updated_at.should.be.above(plainPost.created_at);
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
@@ -518,7 +519,7 @@ describe('posts', function() {
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.a('number');
+        post.updated_at.should.be.above(plainPost.created_at);
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
@@ -534,7 +535,7 @@ describe('posts', function() {
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.a('number');
+        post.updated_at.should.be.above(plainPost.created_at);
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
@@ -585,7 +586,7 @@ describe('posts', function() {
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.a('number');
+        post.updated_at.should.be.above(plainPost.created_at);
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
@@ -601,7 +602,7 @@ describe('posts', function() {
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.a('number');
+        post.updated_at.should.be.above(plainPost.created_at);
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
@@ -651,7 +652,7 @@ describe('posts', function() {
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.a('number');
+        post.updated_at.should.equal(plainPost.updated_at);
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
         post.body.should.equal(plainPost.body);
@@ -671,6 +672,12 @@ describe('posts', function() {
       .then(function() {
         catchCalled.should.be.true;
       });
+    });
+  });
+
+  describe('#CLEANING', function() {
+    it('cleaning all db', function() {
+      return probe.clean();
     });
   });
 

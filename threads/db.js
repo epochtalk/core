@@ -104,7 +104,8 @@ threadsDb.update = function(thread) {
     updateThread = new Thread(oldThread);
 
     // update thread values
-    updateThread.deleted = thread.deleted;
+    if (thread.deleted) { updateThread.deleted = thread.deleted; }
+    else { delete updateThread.deleted; }
     updateThread.updated_at = Date.now();
 
     // insert back into db

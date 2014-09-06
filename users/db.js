@@ -57,23 +57,75 @@ users.findByLegacyId = function(legacyId) {
   .then(users.find);
 };
 
-// update
+users.update = function(user) {
+  var userKey = user.key();
+  var updateUser;
 
-users.remove = function(id) {
+  return db.content.getAsync(userKey)
+  .then(function(userData) {
+    updateUser = new User(userData);
+
+    if (user.username) { updateUser.username = user.username; }
+    if (user.email) { updateUser.email = user.email; }
+    // prepare for storage or match
+    if (user.password) {
+      updateUser.passhash = bcrypt.hashSync(user.password, 12);
+    }
+    if (user.deleted) { updateUser.deleted = user.deleted; }
+    else { delete updateUser.deleted; }
+    updateUser.updated_at = Date.now();
+
+    delete updateUser.password;
+    delete updateUser.confirmation;
+
+    // insert back into db
+    return db.content.putAsync(userKey, updateUser);
+  })
+  .then(function() {
+    return updateUser;
+  });
+};
+
+users.delete = function(id) {
   var userKey = User.keyFromId(id);
   var deletedUser;
 
   return db.content.getAsync(userKey)
   .then(function(userData) {
-    deletedUser = userData;
-    return db.deleted.putAsync(userKey, userData);
-  })
-  .then(function() {
-    return db.content.delAsync(userKey);
+    deletedUser = new User(userData);
+
+    // add deleted: true flag to board
+    deletedUser.deleted = true;
+    deletedUser.updated_at = Date.now();
+
+    // insert back into db
+    return db.content.putAsync(userKey, deletedUser);
   })
   .then(function() {
     return deletedUser;
   });
 };
 
-// purge
+users.purge = function(id) {
+  var userKey = User.keyFromId(id);
+  var purgeUser;
+
+  return db.content.getAsync(userKey)
+  .then(function(userData) {
+    purgeUser = new User(userData);
+    return db.deleted.putAsync(userKey, userData);
+  })
+  .then(function() {
+    return db.content.delAsync(userKey);
+  })
+  .then(function() {
+    if (purgeUser.smf) {
+      var legacyKey = purgeUser.legacyKey();
+      return db.legacy.delAsync(legacyKey);
+    }
+    else { return; }
+  })
+  .then(function() {
+    return purgeUser;
+  });
+};

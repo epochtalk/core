@@ -1,6 +1,7 @@
 var should = require('chai').should();
 var rimraf = require('rimraf');
 var path = require('path');
+var probe = require(path.join(__dirname, '..', 'probe'));
 var dbName = 'test-epoch.db';
 var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var core = require(path.join(__dirname, '..'))(dbName);
@@ -457,6 +458,21 @@ describe('boards', function() {
         should.not.exist(board.parent_id);
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
+        return board.id;
+      })
+      .then(boards.find)
+      .then(function(board) {
+        board.id.should.equal(testBoard.id);
+        board.created_at.should.equal(testBoard.created_at);
+        board.updated_at.should.be.a('number');
+        should.not.exist(board.imported_at);
+        should.not.exist(board.deleted);
+        board.name.should.equal(testBoard.name);
+        board.description.should.equal(testBoard.description);
+        should.not.exist(board.smf);
+        should.not.exist(board.parent_id);
+        should.not.exist(board.children_ids);
+        should.not.exist(board.children);
       });
     });
   });
@@ -493,6 +509,12 @@ describe('boards', function() {
         err.should.not.be.null;
         err.type.should.equal('NotFoundError');
       });
+    });
+  });
+
+  describe('#CLEANING', function() {
+    it('cleaning all db', function() {
+      return probe.clean();
     });
   });
 

@@ -1,6 +1,7 @@
 var path = require('path');
 var rimraf = require('rimraf');
 var should = require('chai').should();
+var probe = require(path.join(__dirname, '..', 'probe'));
 var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 
@@ -52,6 +53,13 @@ describe('hierarchy', function() {
       });
     });
   });
+  
+  describe('#CLEANING', function() {
+    it('cleaning all db', function() {
+      return probe.clean();
+    });
+  });
+
   after(function(done) {
     rimraf(path.join(__dirname, '..', dbName), done);
   });

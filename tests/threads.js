@@ -1,6 +1,7 @@
 var should = require('chai').should();
 var rimraf = require('rimraf');
 var path = require('path');
+var probe = require(path.join(__dirname, '..', 'probe'));
 var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 var threads = core.threads;
@@ -543,6 +544,12 @@ describe('threads', function() {
       .then(function() {
         catchCalled.should.be.true;
       });
+    });
+  });
+
+  describe('#CLEANING', function() {
+    it('cleaning all db', function() {
+      return probe.clean();
     });
   });
 

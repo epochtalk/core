@@ -2,6 +2,7 @@ var rimraf = require('rimraf');
 var should = require('chai').should();
 var Promise = require('bluebird');
 var path = require('path');
+var probe = require(path.join(__dirname, '..', 'probe'));
 var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 var threads = core.threads;
@@ -106,7 +107,6 @@ describe('metadata', function() {
         });
       });
     });
-
   });
 
   describe('#threads', function() {
@@ -230,6 +230,12 @@ describe('metadata', function() {
           thread.view_count.should.deep.equal(0);
         });
       });
+    });
+  });
+
+  describe('#CLEANING', function() {
+    it('cleaning all db', function() {
+      return probe.clean();
     });
   });
 

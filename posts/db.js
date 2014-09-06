@@ -167,9 +167,10 @@ posts.update = function(post) {
     var timestamp = Date.now();
 
     // update post values
-    updatePost.title = post.title;
-    updatePost.body = post.body;
-    updatePost.deleted = post.deleted;
+    if (post.title) { updatePost.title = post.title; }
+    if (post.body) { updatePost.body = post.body; }
+    if (post.deleted) { updatePost.deleted = post.deleted; }
+    else { delete updatePost.deleted; }
     updatePost.updated_at = timestamp;
     updatePost.version = timestamp;
 

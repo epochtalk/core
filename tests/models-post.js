@@ -1,7 +1,8 @@
 var rimraf = require('rimraf');
 var should = require('chai').should();
-var dbName = 'test-epoch.db';
 var path = require('path');
+var probe = require(path.join(__dirname, '..', 'probe'));
+var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 var boards = core.boards;
 var threads = core.threads;
@@ -304,6 +305,9 @@ describe('#validate', function() {
       var postObj = { };
       var post = new Post(postObj);
       return post.validateCreate()
+      .then(function(data) {
+        should.not.exist(data);
+      })
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('title is required');
@@ -314,6 +318,9 @@ describe('#validate', function() {
       var postObj = { title: 'Post Title' };
       var post = new Post(postObj);
       return post.validateCreate()
+      .then(function(data) {
+        should.not.exist(data);
+      })
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('body is required');
@@ -324,6 +331,9 @@ describe('#validate', function() {
       var postObj = { title: 'Post Title', body: 'Post Body' };
       var post = new Post(postObj);
       return post.validateCreate()
+      .then(function(data) {
+        should.not.exist(data);
+      })
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('user_id is required');
@@ -334,6 +344,9 @@ describe('#validate', function() {
       var postObj = { title: 'Post Title', body: 'Post Body', user_id: '1234ABCD' };
       var post = new Post(postObj);
       return post.validateCreate()
+      .then(function(data) {
+        should.not.exist(data);
+      })
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('thread_id is required');
@@ -486,6 +499,12 @@ describe('#validate', function() {
       key.should.be.ok;
       key.should.be.a('string');
       key.should.be.equal(postPrefix + sep + fakeId);
+    });
+  });
+
+  describe('#CLEANING', function() {
+    it('cleaning all db', function() {
+      return probe.clean();
     });
   });
 

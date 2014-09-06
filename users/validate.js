@@ -31,5 +31,25 @@ validator.import = function(user) {
   return validate(user, importSchema);
 };
 
+var updateSchema = joi.object().keys({
+  id: joi.string(),
+  created_at: joi.number(),
+  updated_at: joi.number(),
+  imported_at: joi.number(),
+  deleted: joi.boolean(),
+  username: joi.string(),
+  email: joi.string(),
+  password: joi.string().regex(/[a-zA-Z0-9]{3,30}/),
+  confirmation: joi.ref('password'),
+  passhash: joi.string(),
+  smf: {
+    ID_MEMBER: joi.number()
+  }
+}).with('password', 'confirmation');
+
+validator.update = function(user) {
+  return validate(user, updateSchema);
+};
+
 module.exports = validator;
 

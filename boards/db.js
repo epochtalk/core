@@ -17,7 +17,7 @@ boards.import = function(board) {
   return boards.create(board) // create board first to handle id
   .then(function(dbBoard) {
     if (dbBoard.smf) {
-      db.legacy.putAsync(board.legacyKey(), dbBoard.id)
+      return db.legacy.putAsync(board.legacyKey(), dbBoard.id)
       .then(function() { return dbBoard; });
     }
   });
@@ -115,11 +115,12 @@ boards.update = function(board) {
     updateBoard = new Board(oldBoard);
 
     // update board values
-    updateBoard.name = board.name;
-    updateBoard.description = board.description;
-    updateBoard.parent_id = board.parent_id;
-    updateBoard.children_ids = board.children_ids;
-    updateBoard.deleted = board.deleted;
+    if (board.name) { updateBoard.name = board.name; }
+    if (board.description) { updateBoard.description = board.description; }
+    if (board.updateBoard) { updateBoard.parent_id = board.parent_id; }
+    if (board.children_ids) { updateBoard.children_ids = board.children_ids; }
+    if (board.deleted) { updateBoard.deleted = board.deleted; }
+    else { delete updateBoard.deleted; }
     updateBoard.updated_at = Date.now();
 
     // insert back into db
@@ -131,7 +132,7 @@ boards.update = function(board) {
 /* DELETE */
 boards.delete = function(boardId) {
   var boardKey = Board.keyFromId(boardId);
-  var deleteBoard = null;
+  var deleteBoard;
 
   // see if board already exists
   return db.content.getAsync(boardKey)

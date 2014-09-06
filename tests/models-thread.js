@@ -1,7 +1,8 @@
 var rimraf = require('rimraf');
 var should = require('chai').should();
-var dbName = 'test-epoch.db';
 var path = require('path');
+var probe = require(path.join(__dirname, '..', 'probe'));
+var dbName = 'test-epoch.db';
 var core = require(path.join(__dirname, '..'))(dbName);
 var threads = core.threads;
 var boards = core.boards;
@@ -311,6 +312,9 @@ describe('Thread', function() {
       var boardIdThread = { };
       var thread = new Thread(boardIdThread);
       return thread.validate()
+      .then(function(data) {
+        should.not.exist(data);
+      })
       .catch(function(err) {
         err.should.exist;
       });
@@ -393,6 +397,12 @@ describe('Thread', function() {
       should.not.exist(simpleThread.keyFromId);
       should.not.exist(simpleThread.legacyKeyFromId);
       should.not.exist(simpleThread.prefix);
+    });
+  });
+
+  describe('#CLEANING', function() {
+    it('cleaning all db', function() {
+      return probe.clean();
     });
   });
 

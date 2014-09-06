@@ -32,6 +32,7 @@ posts.find = function(id) {
 
 posts.update = function(data) {
   var updatePost = new Post(data);
+
   return updatePost.validateCreate()
   .then(function() {
     return postsDb.update(updatePost);
@@ -50,8 +51,8 @@ posts.delete = function(id) {
 
 posts.purge = function(id) {
   return postsDb.purge(id)
-  .then(function(board) {
-    return board.simple();
+  .then(function(post) {
+    return post.simple();
   });
 };
 

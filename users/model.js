@@ -18,9 +18,10 @@ function User(data) {
   if (data.deleted) { this.deleted = data.deleted; }
 
   this.username = data.username;
-  this.password = data.password;
   this.email = data.email;
+  this.password = data.password;
   this.confirmation = data.confirmation;
+  if (data.passhash) { this.passhash = data.passhash; }
 
   if (data.smf && data.smf.ID_MEMBER) { this.smf = data.smf; }
 }
@@ -35,6 +36,11 @@ User.prototype.validateImport = function() {
   return validate.import(user);
 };
 
+User.prototype.validateUpdate = function() {
+  var user = this;
+  return validate.update(user);
+};
+
 User.prototype.simple = function() {
   var user = {};
   var self = this;
@@ -47,8 +53,9 @@ User.prototype.simple = function() {
   if (self.smf && self.smf.ID_MEMBER) { user.smf = self.smf; }
 
   if (self.username) { user.username = self.username; }
-  if (self.password) { user.password = self.password; }
   if (self.email) { user.email = self.email; }
+  if (self.password) { user.password = self.password; }
+  if (self.passhash) { user.passhash = self.passhash; }
   if (self.confirmation) { user.confirmation = self.confirmation; }
 
   return user;
@@ -70,7 +77,7 @@ User.keyFromId = function(id) {
   return keyForUser(id);
 };
 
-User.legacyKeyForId = function(legacyId) {
+User.legacyKeyFromId = function(legacyId) {
   return legacyKeyForUser(legacyId);
 };
 
