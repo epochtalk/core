@@ -118,7 +118,7 @@ describe('User', function() {
     });
   });
 
-  describe('#legacyKeyForId', function() {
+  describe('#legacyKeyFromId', function() {
     it('should return a user\'s legacyKey', function() {
       var userPrefix = config.users.prefix;
       var sep = config.sep;
@@ -160,7 +160,7 @@ describe('User', function() {
     });
   });
 
-  describe('#legacyKeyForId', function() {
+  describe('#usernameKeyFromInput', function() {
     it('should return a user\'s legacyKey', function() {
       var indexPrefix = config.users.indexPrefix;
       var sep = config.sep;
@@ -173,6 +173,47 @@ describe('User', function() {
     });
   });
 
+  describe('#emailKey', function() {
+    var newUser = {
+      username: 'test_user',
+      email: 'test_user@example.com',
+      password: 'epochtalk',
+      confirmation: 'epochtalk'
+    };
+
+    before(function() {
+      return users.create(newUser)
+      .then(function(dbUser) {
+        newUser = dbUser;
+      });
+    });
+    
+    it('should return a user\'s emailKey', function() {
+      var indexPrefix = config.users.indexPrefix;
+      var sep = config.sep;
+      var email = newUser.email;
+
+      var user = new User(newUser);
+      var key = user.emailKey();
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(indexPrefix + sep + 'email' + sep + email);
+    });
+  });
+
+  describe('#emailKeyFromInput', function() {
+    it('should return a user\'s emailKey', function() {
+      var indexPrefix = config.users.indexPrefix;
+      var sep = config.sep;
+      var email = 'email';
+      var key = User.emailKeyFromInput(email);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(indexPrefix + sep + 'email' + sep + email);
+    });
+  });
 
   describe('#validateCreate', function() {
     it('should validate the minimum user model', function() {

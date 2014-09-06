@@ -40,6 +40,14 @@ users.userByOldId = function(oldId) {
   return usersDb.findByLegacyId(oldId); // already simple
 };
 
+users.userByUsername = function(username) {
+  return usersDb.findByUsername(username); // already simple
+};
+
+users.userByEmail = function(email) {
+  return usersDb.findByEmail(email); // already simple
+};
+
 users.update = function(data) {
   var updateUser = new User(data);
 

@@ -77,6 +77,11 @@ User.prototype.usernameKey = function() {
   return usernameKeyForUser(self.username);
 };
 
+User.prototype.emailKey = function() {
+  var self = this;
+  return emailKeyForUser(self.email);
+};
+
 // Static Methods
 
 User.keyFromId = function(id) {
@@ -89,6 +94,10 @@ User.legacyKeyFromId = function(legacyId) {
 
 User.usernameKeyFromInput = function(username) {
   return usernameKeyForUser(username);
+};
+
+User.emailKeyFromInput = function(email) {
+  return emailKeyForUser(email);
 };
 
 // Helper Functions
@@ -114,6 +123,14 @@ var usernameKeyForUser = function(username) {
     usernameKey = indexPrefix + sep + 'username' + sep + username;
   }
   return usernameKey;
+};
+
+var emailKeyForUser = function(email) {
+  var emailKey;
+  if (email) {
+    emailKey = indexPrefix + sep + 'email' + sep + email;
+  }
+  return emailKey;
 };
 
 // Static Properties

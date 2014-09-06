@@ -241,6 +241,72 @@ describe('users', function() {
     });
   });
 
+  describe('#FIND_BY_USERNAME', function() {
+    var testUser = {
+      username: 'testuser',
+      email: 'testuser@randomdomain1234.org',
+      password: 'asdf1234',
+      confirmation: 'asdf1234'
+    };
+
+    before(function() {
+      return users.create(testUser)
+      .then(function(user) {
+        testUser = user;
+      });
+    });
+
+    it('should find a user from the db by username', function() {
+      return users.userByUsername(testUser.username)
+      .then(function(user) {
+        user.id.should.equal(testUser.id);
+        user.created_at.should.equal(testUser.created_at);
+        user.updated_at.should.equal(testUser.updated_at);
+        should.not.exist(user.imported_at);
+        user.username.should.equal(testUser.username);
+        user.email.should.equal(testUser.email);
+        should.not.exist(user.password);
+        should.not.exist(user.confirmation);
+        user.passhash.should.equal(testUser.passhash);
+        should.not.exist(user.deleted);
+        should.not.exist(user.smf);
+      });
+    });
+  });
+
+  describe('#FIND_BY_EMAIL', function() {
+    var testUser = {
+      username: 'testuser',
+      email: 'testuser@randomdomain1234.org',
+      password: 'asdf1234',
+      confirmation: 'asdf1234'
+    };
+
+    before(function() {
+      return users.create(testUser)
+      .then(function(user) {
+        testUser = user;
+      });
+    });
+
+    it('should find a user from the db by email', function() {
+      return users.userByEmail(testUser.email)
+      .then(function(user) {
+        user.id.should.equal(testUser.id);
+        user.created_at.should.equal(testUser.created_at);
+        user.updated_at.should.equal(testUser.updated_at);
+        should.not.exist(user.imported_at);
+        user.username.should.equal(testUser.username);
+        user.email.should.equal(testUser.email);
+        should.not.exist(user.password);
+        should.not.exist(user.confirmation);
+        user.passhash.should.equal(testUser.passhash);
+        should.not.exist(user.deleted);
+        should.not.exist(user.smf);
+      });
+    });
+  });
+
   describe('#UPDATE', function() {
     var testUser = {
       username: 'testuser',

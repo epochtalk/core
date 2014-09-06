@@ -40,9 +40,13 @@ users.insert = function(user) {
   delete user.confirmation;
 
   return db.content.putAsync(user.key(), user)
-  .then(function() { // insert username metadata
+  .then(function() { // insert username index
     var usernameKey = user.usernameKey();
-    return db.metadata.putAsync(usernameKey, user.id);
+    return db.indexes.putAsync(usernameKey, user.id);
+  })
+  .then(function() { // inset email index
+    var emailKey = user.emailKey();
+    return db.indexes.putAsync(emailKey, user.id);
   })
   .then(function() {
     return user;
@@ -61,6 +65,20 @@ users.findByLegacyId = function(legacyId) {
   .then(users.find);
 };
 
+users.findByUsername = function(username) {
+  var usernameKey = User.usernameKeyFromInput(username);
+
+  return db.indexes.getAsync(usernameKey)
+  .then(users.find);
+};
+
+users.findByEmail = function(email) {
+  var emailKey = User.emailKeyFromInput(email);
+
+  return db.indexes.getAsync(emailKey)
+  .then(users.find);
+};
+
 users.update = function(user) {
   var userKey = user.key();
   var updateUser;
@@ -71,13 +89,30 @@ users.update = function(user) {
     var newUsername = user.username;
 
     if (oldUsername !== newUsername) {
-      // remove old username metadata
+      // remove old username index
       var oldUsernameKey = User.usernameKeyFromInput(oldUsername);
-      return db.metadata.delAsync(oldUsernameKey)
-      // insert new username metadata
+      return db.indexes.delAsync(oldUsernameKey)
+      // insert new username index
       .then(function() {
         var newUsernameKey = user.usernameKey();
-        return db.metadata.putAsync(newUsernameKey, user.id);
+        return db.indexes.putAsync(newUsernameKey, user.id);
+      })
+      .then(function() { return userData; });
+    }
+    else { return userData; }
+  })
+  .then(function(userData) { // handle email change
+    var oldEmail = userData.email;
+    var newEmail = user.email;
+
+    if (oldEmail !== newEmail) {
+      // remove old email index
+      var oldEmailKey = User.emailKeyFromInput(oldEmail);
+      return db.indexes.delAsync(oldEmailKey)
+      // insert new email index
+      .then(function() {
+        var newEmailKey = user.emailKey();
+        return db.indexes.putAsync(newEmailKey, user.id);
       })
       .then(function() { return userData; });
     }
@@ -141,7 +176,11 @@ users.purge = function(id) {
   })
   .then(function() { // delete usernameKey
     var usernameKey = purgeUser.usernameKey();
-    return db.metadata.delAsync(usernameKey);
+    return db.indexes.delAsync(usernameKey);
+  })
+  .then(function() { // delete emailKey
+    var emailKey = purgeUser.emailKey();
+    return db.indexes.delAsync(emailKey);
   })
   .then(function() { // delete legacykey
     if (purgeUser.smf) {
