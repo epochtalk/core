@@ -40,6 +40,10 @@ users.insert = function(user) {
   delete user.confirmation;
 
   return db.content.putAsync(user.key(), user)
+  .then(function() { // insert username metadata
+    var usernameKey = user.usernameKey();
+    return db.metadata.putAsync(usernameKey, user.id);
+  })
   .then(function() {
     return user;
   });
@@ -62,7 +66,24 @@ users.update = function(user) {
   var updateUser;
 
   return db.content.getAsync(userKey)
-  .then(function(userData) {
+  .then(function(userData) { // handle username change
+    var oldUsername = userData.username;
+    var newUsername = user.username;
+
+    if (oldUsername !== newUsername) {
+      // remove old username metadata
+      var oldUsernameKey = User.usernameKeyFromInput(oldUsername);
+      return db.metadata.delAsync(oldUsernameKey)
+      // insert new username metadata
+      .then(function() {
+        var newUsernameKey = user.usernameKey();
+        return db.metadata.putAsync(newUsernameKey, user.id);
+      })
+      .then(function() { return userData; });
+    }
+    else { return userData; }
+  })
+  .then(function(userData) { // update user data
     updateUser = new User(userData);
 
     if (user.username) { updateUser.username = user.username; }
@@ -118,7 +139,11 @@ users.purge = function(id) {
   .then(function() {
     return db.content.delAsync(userKey);
   })
-  .then(function() {
+  .then(function() { // delete usernameKey
+    var usernameKey = purgeUser.usernameKey();
+    return db.metadata.delAsync(usernameKey);
+  })
+  .then(function() { // delete legacykey
     if (purgeUser.smf) {
       var legacyKey = purgeUser.legacyKey();
       return db.legacy.delAsync(legacyKey);

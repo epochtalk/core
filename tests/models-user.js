@@ -60,7 +60,7 @@ describe('User', function() {
       });
     });
     
-    it('should return a user object\'s key', function() {
+    it('should return a user\'s key', function() {
       var userPrefix = config.users.prefix;
       var sep = config.sep;
 
@@ -105,7 +105,7 @@ describe('User', function() {
       });
     });
     
-    it('should return a user object\'s legacyKey', function() {
+    it('should return a user\'s legacyKey', function() {
       var userPrefix = config.users.prefix;
       var sep = config.sep;
 
@@ -119,7 +119,7 @@ describe('User', function() {
   });
 
   describe('#legacyKeyForId', function() {
-    it('should return a user object\'s legacyKey', function() {
+    it('should return a user\'s legacyKey', function() {
       var userPrefix = config.users.prefix;
       var sep = config.sep;
       var id = 12345;
@@ -130,6 +130,49 @@ describe('User', function() {
       key.should.be.equal(userPrefix + sep + id);
     });
   });
+
+  describe('#usernameKey', function() {
+    var newUser = {
+      username: 'test_user',
+      email: 'test_user@example.com',
+      password: 'epochtalk',
+      confirmation: 'epochtalk'
+    };
+
+    before(function() {
+      return users.create(newUser)
+      .then(function(dbUser) {
+        newUser = dbUser;
+      });
+    });
+    
+    it('should return a user\'s usernameKey', function() {
+      var indexPrefix = config.users.indexPrefix;
+      var sep = config.sep;
+      var username = newUser.username;
+
+      var user = new User(newUser);
+      var key = user.usernameKey();
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(indexPrefix + sep + 'username' + sep + username);
+    });
+  });
+
+  describe('#legacyKeyForId', function() {
+    it('should return a user\'s legacyKey', function() {
+      var indexPrefix = config.users.indexPrefix;
+      var sep = config.sep;
+      var username = 'username';
+      var key = User.usernameKeyFromInput(username);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(indexPrefix + sep + 'username' + sep + username);
+    });
+  });
+
 
   describe('#validateCreate', function() {
     it('should validate the minimum user model', function() {

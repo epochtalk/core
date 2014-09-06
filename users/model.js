@@ -3,6 +3,7 @@ var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var validate = require(path.join(__dirname, 'validate'));
 var prefix = config.users.prefix;
+var indexPrefix = config.users.indexPrefix;
 var sep = config.sep;
 
 function User(data) {
@@ -71,6 +72,11 @@ User.prototype.legacyKey = function() {
   return legacyKeyForUser(self.smf.ID_MEMBER);
 };
 
+User.prototype.usernameKey = function() {
+  var self = this;
+  return usernameKeyForUser(self.username);
+};
+
 // Static Methods
 
 User.keyFromId = function(id) {
@@ -79,6 +85,10 @@ User.keyFromId = function(id) {
 
 User.legacyKeyFromId = function(legacyId) {
   return legacyKeyForUser(legacyId);
+};
+
+User.usernameKeyFromInput = function(username) {
+  return usernameKeyForUser(username);
 };
 
 // Helper Functions
@@ -98,6 +108,15 @@ var legacyKeyForUser = function(legacyId) {
   return legacyKey;
 };
 
+var usernameKeyForUser = function(username) {
+  var usernameKey;
+  if (username) {
+    usernameKey = indexPrefix + sep + 'username' + sep + username;
+  }
+  return usernameKey;
+};
+
 // Static Properties
 
 User.prefix = prefix;
+User.indexPrefix = indexPrefix;
