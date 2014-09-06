@@ -2910,477 +2910,317 @@ describe('users', function() {
     });
   });
 
-  // describe('#postByOldId', function() {
-  //   var plainPost = {
-  //     title: 'post title',
-  //     body: 'hello world.',
-  //     smf: {
-  //       post_id: '123'
-  //     }
-  //   };
-  //   var user;
-  //   before(function() {
-  //     var newUser = {
-  //       username: 'test_user',
-  //       email: 'test_user@example.com',
-  //       password: 'epochtalk',
-  //       confirmation: 'epochtalk'
-  //     };
-  //     return core.users.create(newUser)
-  //     .then(function(dbUser) {
-  //       user = dbUser;
-  //       var newBoard = { name: 'Board', description: 'Board Desc' };
-  //       return boards.create(newBoard);
-  //     })
-  //     .then(function(board) {
-  //       return { board_id: board.id };
-  //     })
-  //     .then(core.threads.create)
-  //     .then(function(thread) {
-  //       plainPost.thread_id = thread.id;
-  //       plainPost.user_id = user.id;
-  //       return posts.import(plainPost);
-  //     })
-  //     .then(function(post) { plainPost = post; })
-  //     .then(function() { return posts.postByOldId(plainPost.smf.post_id); });
-  //   });
+  describe('#userByOldId', function() {
+    var user = {
+      username: 'test_user',
+      email: 'test_user@example.com',
+      password: 'epochtalk',
+      confirmation: 'epochtalk',
+      smf: {
+        ID_MEMBER: 123
+      }
+    };
 
-  //   it('should have 5 objects in content', function() {
-  //     return probe.all(CONTENT)
-  //     .then(function(content) {
-  //       // board, post and version, thread, user
-  //       content.should.have.length(5);
-  //       return Promise.map(content, function(data) {
-  //         return probe.del(CONTENT, data.key);
-  //       });
-  //     });
-  //   });
+    before(function() {
+      return users.import(user)
+      .then(function(dbUser) { user = dbUser; })
+      .then(function() { return users.userByOldId(user.smf.ID_MEMBER); });
+    });
 
-  //   it('should have 2 indexes in indexes', function() {
-  //     return probe.all(INDEXES)
-  //     .then(function(indexes) {
-  //       // post index
-  //       // thread index
-  //       indexes.should.have.length(2);
-  //       return Promise.map(indexes, function(data) {
-  //         return probe.del(INDEXES, data.key);
-  //       });
+    it('should have 1 object in content', function() {
+      return probe.all(CONTENT)
+      .then(function(content) {
+        // one user
+        content.should.have.length(1);
+        return Promise.map(content, function(data) {
+          return probe.del(CONTENT, data.key);
+        });
+      });
+    });
 
-  //     });
-  //   });
+    it('should have nothing in indexes', function() {
+      return probe.all(INDEXES)
+      .then(function(indexes) {
+        indexes.should.have.length(0);
+      });
+    });
 
-  //   it('should have 7 keys in metadata', function() {
-  //     return probe.all(METADATA)
-  //     .then(function(metadata) {
-  //       // board post count
-  //       // board thread count
-  //       // post username
-  //       // thread first post id
-  //       // thread post count
-  //       // thread title
-  //       // thread username
-  //       metadata.should.have.length(7);
-  //       return Promise.map(metadata, function(data) {
-  //         return probe.del(METADATA, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have nothing in metadata', function() {
+      return probe.all(METADATA)
+      .then(function(metadata) {
+        metadata.should.have.length(0);
+      });
+    });
 
-  //   it('should have nothing in deleted', function() {
-  //     return probe.all(DELETED)
-  //     .then(function(deleted) {
-  //       deleted.should.have.length(0);
-  //     });
-  //   });
+    it('should have nothing in deleted', function() {
+      return probe.all(DELETED)
+      .then(function(deleted) {
+        deleted.should.have.length(0);
+      });
+    });
 
-  //   it('should have 1 key in legacy', function() {
-  //     return probe.all(LEGACY)
-  //     .then(function(legacy) {
-  //       legacy.should.have.length(1);
-  //       return probe.del(LEGACY, legacy[0].key);
-  //     });
-  //   });
+    it('should have 1 object in legacy', function() {
+      return probe.all(LEGACY)
+      .then(function(legacy) {
+        legacy.should.have.length(1);
+        return Promise.map(legacy, function(data) {
+          return probe.del(LEGACY, data.key);
+        });
+      });
+    });
 
-  //   it('should have nothing in messages', function() {
-  //     return probe.all(MESSAGES)
-  //     .then(function(messages) {
-  //       messages.should.have.length(0);
-  //     });
-  //   });
-  // });
+    it('should have nothing in messages', function() {
+      return probe.all(MESSAGES)
+      .then(function(messages) {
+        messages.should.have.length(0);
+      });
+    });
+  });
 
-  // describe('#update', function() {
-  //   var plainPost = { title: 'post title', body: 'hello world.' };
-  //   var user;
-  //   before(function() {
-  //     var newUser = {
-  //       username: 'test_user',
-  //       email: 'test_user@example.com',
-  //       password: 'epochtalk',
-  //       confirmation: 'epochtalk'
-  //     };
-  //     return core.users.create(newUser)
-  //     .then(function(dbUser) {
-  //       user = dbUser;
-  //       var newBoard = { name: 'Board', description: 'Board Desc' };
-  //       return boards.create(newBoard);
-  //     })
-  //     .then(function(board) {
-  //       return { board_id: board.id };
-  //     })
-  //     .then(threads.create)
-  //     .then(function(thread) {
-  //       plainPost.thread_id = thread.id;
-  //       plainPost.user_id = user.id;
-  //       return plainPost;
-  //     })
-  //     .then(posts.create)
-  //     .then(function(post) { plainPost = post; })
-  //     .then(function() { return posts.update(plainPost); });
-  //   });
+  describe('#update', function() {
+    var user = {
+      username: 'test_user',
+      email: 'test_user@example.com',
+      password: 'epochtalk',
+      confirmation: 'epochtalk'
+    };
 
-  //   it('should have 5 objects in content', function() {
-  //     return probe.all(CONTENT)
-  //     .then(function(content) {
-  //       // board, post and 2 versions, thread, user
-  //       content.should.have.length(6);
-  //       return Promise.map(content, function(data) {
-  //         return probe.del(CONTENT, data.key);
-  //       });
-  //     });
-  //   });
+    before(function() {
+      return users.create(user)
+      .then(function(dbUser) { user = dbUser; })
+      .then(function() {
+        user.email = "anotheruser@example.com";
+        return users.update(user);
+      });
+    });
 
-  //   it('should have 2 indexes in indexes', function() {
-  //     return probe.all(INDEXES)
-  //     .then(function(indexes) {
-  //       // post index
-  //       // thread index
-  //       indexes.should.have.length(2);
-  //       return Promise.map(indexes, function(data) {
-  //         return probe.del(INDEXES, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have 1 object in content', function() {
+      return probe.all(CONTENT)
+      .then(function(content) {
+        // one user
+        content.should.have.length(1);
+        return Promise.map(content, function(data) {
+          return probe.del(CONTENT, data.key);
+        });
+      });
+    });
 
-  //   it('should have 7 objects in metadata', function() {
-  //     return probe.all(METADATA)
-  //     .then(function(metadata) {
-  //       // board post count
-  //       // board thread count
-  //       // post username
-  //       // thread first post id
-  //       // thread post count
-  //       // thread title
-  //       // thread username
-  //       metadata.should.have.length(7);
-  //       return Promise.map(metadata, function(data) {
-  //         return probe.del(METADATA, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have nothing in indexes', function() {
+      return probe.all(INDEXES)
+      .then(function(indexes) {
+        indexes.should.have.length(0);
+      });
+    });
 
-  //   it('should have nothing in deleted', function() {
-  //     return probe.all(DELETED)
-  //     .then(function(deleted) {
-  //       deleted.should.have.length(0);
-  //     });
-  //   });
+    it('should have nothing in metadata', function() {
+      return probe.all(METADATA)
+      .then(function(metadata) {
+        metadata.should.have.length(0);
+      });
+    });
 
-  //   it('should have nothing in legacy', function() {
-  //     return probe.all(LEGACY)
-  //     .then(function(legacy) {
-  //       legacy.should.have.length(0);
-  //     });
-  //   });
+    it('should have nothing in deleted', function() {
+      return probe.all(DELETED)
+      .then(function(deleted) {
+        deleted.should.have.length(0);
+      });
+    });
 
-  //   it('should have nothing in messages', function() {
-  //     return probe.all(MESSAGES)
-  //     .then(function(messages) {
-  //       messages.should.have.length(0);
-  //     });
-  //   });
-  // });
+    it('should have nothing in legacy', function() {
+      return probe.all(LEGACY)
+      .then(function(legacy) {
+        legacy.should.have.length(0);
+      });
+    });
 
-  // describe('#delete', function() {
-  //   var plainPost = { title: 'post title', body: 'hello world.' };
-  //   var user;
-  //   before(function() {
-  //     var newUser = {
-  //       username: 'test_user',
-  //       email: 'test_user@example.com',
-  //       password: 'epochtalk',
-  //       confirmation: 'epochtalk'
-  //     };
-  //     return core.users.create(newUser)
-  //     .then(function(dbUser) {
-  //       user = dbUser;
-  //       var newBoard = { name: 'Board', description: 'Board Desc' };
-  //       return boards.create(newBoard);
-  //     })
-  //     .then(function(board) {
-  //       return { board_id: board.id };
-  //     })
-  //     .then(threads.create)
-  //     .then(function(thread) {
-  //       plainPost.thread_id = thread.id;
-  //       plainPost.user_id = user.id;
-  //       return plainPost;
-  //     })
-  //     .then(posts.create)
-  //     .then(function(post) { plainPost = post; })
-  //     .then(function() { return posts.delete(plainPost.id); });
-  //   });
+    it('should have nothing in messages', function() {
+      return probe.all(MESSAGES)
+      .then(function(messages) {
+        messages.should.have.length(0);
+      });
+    });
+  });
 
-  //   it('should have 5 objects in content', function() {
-  //     return probe.all(CONTENT)
-  //     .then(function(content) {
-  //       // board, post and 2 versions, threads, user
-  //       content.should.have.length(6);
-  //       return Promise.map(content, function(data) {
-  //         return probe.del(CONTENT, data.key);
-  //       });
-  //     });
-  //   });
+  describe('#delete', function() {
+    var user = {
+      username: 'test_user',
+      email: 'test_user@example.com',
+      password: 'epochtalk',
+      confirmation: 'epochtalk'
+    };
+    before(function() {
+      return users.create(user)
+      .then(function(dbUser) { user = dbUser; })
+      .then(function() { return users.delete(user.id); });
+    });
 
-  //   it('should have 2 indexes in indexes', function() {
-  //     return probe.all(INDEXES)
-  //     .then(function(indexes) {
-  //       // post index
-  //       // thread index
-  //       indexes.should.have.length(2);
-  //       return Promise.map(indexes, function(data) {
-  //         return probe.del(INDEXES, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have 1 object in content', function() {
+      return probe.all(CONTENT)
+      .then(function(content) {
+        // one user
+        content.should.have.length(1);
+        return Promise.map(content, function(data) {
+          return probe.del(CONTENT, data.key);
+        });
+      });
+    });
 
-  //   it('should have 7 objects in metadata', function() {
-  //     return probe.all(METADATA)
-  //     .then(function(metadata) {
-  //       // board post count
-  //       // board thread count
-  //       // post username
-  //       // thread first post id
-  //       // thread post count
-  //       // thread title
-  //       // thread username
-  //       metadata.should.have.length(7);
-  //       return Promise.map(metadata, function(data) {
-  //         return probe.del(METADATA, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have nothing in indexes', function() {
+      return probe.all(INDEXES)
+      .then(function(indexes) {
+        indexes.should.have.length(0);
+      });
+    });
 
-  //   it('should have nothing in deleted', function() {
-  //     return probe.all(DELETED)
-  //     .then(function(deleted) {
-  //       deleted.should.have.length(0);
-  //     });
-  //   });
+    it('should have nothing in metadata', function() {
+      return probe.all(METADATA)
+      .then(function(metadata) {
+        metadata.should.have.length(0);
+      });
+    });
 
-  //   it('should have nothing in legacy', function() {
-  //     return probe.all(LEGACY)
-  //     .then(function(legacy) {
-  //       legacy.should.have.length(0);
-  //     });
-  //   });
+    it('should have nothing in deleted', function() {
+      return probe.all(DELETED)
+      .then(function(deleted) {
+        deleted.should.have.length(0);
+      });
+    });
 
-  //   it('should have nothing in messages', function() {
-  //     return probe.all(MESSAGES)
-  //     .then(function(messages) {
-  //       messages.should.have.length(0);
-  //     });
-  //   });
-  // });
+    it('should have nothing in legacy', function() {
+      return probe.all(LEGACY)
+      .then(function(legacy) {
+        legacy.should.have.length(0);
+      });
+    });
 
-  // describe('#purge', function() {
-  //   var plainPost = { title: 'post title', body: 'hello world.' };
-  //   var user;
-  //   before(function() {
-  //     var newUser = {
-  //       username: 'test_user',
-  //       email: 'test_user@example.com',
-  //       password: 'epochtalk',
-  //       confirmation: 'epochtalk'
-  //     };
-  //     return core.users.create(newUser)
-  //     .then(function(dbUser) {
-  //       user = dbUser;
-  //       var newBoard = { name: 'Board', description: 'Board Desc' };
-  //       return boards.create(newBoard);
-  //     })
-  //     .then(function(board) {
-  //       return { board_id: board.id };
-  //     })
-  //     .then(threads.create)
-  //     .then(function(thread) {
-  //       plainPost.thread_id = thread.id;
-  //       plainPost.user_id = user.id;
-  //       return plainPost;
-  //     })
-  //     .then(posts.create)
-  //     .then(function(post) { plainPost = post; })
-  //     .then(function() { return posts.purge(plainPost.id); });
-  //   });
+    it('should have nothing in messages', function() {
+      return probe.all(MESSAGES)
+      .then(function(messages) {
+        messages.should.have.length(0);
+      });
+    });
+  });
 
-  //   it('should have 3 objects in content', function() {
-  //     return probe.all(CONTENT)
-  //     .then(function(content) {
-  //       // board, thread, and user
-  //       content.should.have.length(3);
-  //       return Promise.map(content, function(data) {
-  //         return probe.del(CONTENT, data.key);
-  //       });
-  //     });
-  //   });
+  describe('#purge', function() {
+    var user = {
+      username: 'test_user',
+      email: 'test_user@example.com',
+      password: 'epochtalk',
+      confirmation: 'epochtalk'
+    };
+    before(function() {
+      return users.create(user)
+      .then(function(dbUser) { user = dbUser; })
+      .then(function() { return users.purge(user.id); });
+    });
 
-  //   it('should have 1 index in indexes', function() {
-  //     return probe.all(INDEXES)
-  //     .then(function(indexes) {
-  //       // thread index
-  //       indexes.should.have.length(1);
-  //       return Promise.map(indexes, function(data) {
-  //         return probe.del(INDEXES, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have nothing in content', function() {
+      return probe.all(CONTENT)
+      .then(function(content) {
+        content.should.have.length(0);
+      });
+    });
 
-  //   it('should have 5 keys in metadata', function() {
-  //     return probe.all(METADATA)
-  //     .then(function(metadata) {
-  //       // board post count
-  //       // board thread count
-  //       // thread post count
-  //       // post username
-  //       // thread post title *** SHOULD BE DELETED?
-  //       // thread username  *** SHOULD BE DELETED?
-  //       // thread first post id (deleted) *** SHOULD BE DELETED?
-  //       metadata.should.have.length(5);
-  //       return Promise.map(metadata, function(data) {
-  //         return probe.del(METADATA, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have nothing in indexes', function() {
+      return probe.all(INDEXES)
+      .then(function(indexes) {
+        indexes.should.have.length(0);
+      });
+    });
 
-  //   it('should have 1 object in deleted', function() {
-  //     return probe.all(DELETED)
-  //     .then(function(deleted) {
-  //       deleted.should.have.length(1);
-  //       return probe.del(DELETED, deleted[0].key);
-  //     });
-  //   });
+    it('should have nothing in metadata', function() {
+      return probe.all(METADATA)
+      .then(function(metadata) {
+        metadata.should.have.length(0);
+      });
+    });
 
-  //   it('should have nothing in legacy', function() {
-  //     return probe.all(LEGACY)
-  //     .then(function(legacy) {
-  //       legacy.should.have.length(0);
-  //     });
-  //   });
+    it('should have 1 object in deleted', function() {
+      return probe.all(DELETED)
+      .then(function(deleted) {
+        deleted.should.have.length(1);
+        return probe.del(DELETED, deleted[0].key);
+      });
+    });
 
-  //   it('should have nothing in messages', function() {
-  //     return probe.all(MESSAGES)
-  //     .then(function(messages) {
-  //       messages.should.have.length(0);
-  //     });
-  //   });
-  // });
+    it('should have nothing in legacy', function() {
+      return probe.all(LEGACY)
+      .then(function(legacy) {
+        legacy.should.have.length(0);
+      });
+    });
 
-  // describe('#import purge', function() {
-  //   var user;
-  //   var plainPost = {
-  //     title: 'post title',
-  //     body: 'hello world.',
-  //     smf: {
-  //       post_id: '123'
-  //     }
-  //    };
+    it('should have nothing in messages', function() {
+      return probe.all(MESSAGES)
+      .then(function(messages) {
+        messages.should.have.length(0);
+      });
+    });
+  });
 
-  //   before(function() {
-  //     var newUser = {
-  //       username: 'test_user',
-  //       email: 'test_user@example.com',
-  //       password: 'epochtalk',
-  //       confirmation: 'epochtalk'
-  //     };
-  //     return core.users.create(newUser)
-  //     .then(function(dbUser) {
-  //       user = dbUser;
-  //       var newBoard = { name: 'Board', description: 'Board Desc' };
-  //       return boards.create(newBoard);
-  //     })
-  //     .then(function(board) {
-  //       return { board_id: board.id };
-  //     })
-  //     .then(core.threads.create)
-  //     .then(function(thread) {
-  //       plainPost.thread_id = thread.id;
-  //       plainPost.user_id = user.id;
-  //       return posts.import(plainPost);
-  //     })
-  //     .then(function(post) { plainPost = post; })
-  //     .then(function() { return posts.purge(plainPost.id); });
-  //   });
+  describe('#import purge', function() {
+    var user = {
+      username: 'test_user',
+      email: 'test_user@example.com',
+      password: 'epochtalk',
+      confirmation: 'epochtalk',
+      smf: {
+        ID_MEMBER: 123
+      }
+    };
+    before(function() {
+      return users.import(user)
+      .then(function(dbUser) {
+        user = dbUser;
+      })
+      .then(function() {
+        return users.purge(user.id);
+      });
+    });
 
-  //   it('should have 3 objects in content', function() {
-  //     return probe.all(CONTENT)
-  //     .then(function(content) {
-  //       // board, thread, user
-  //       content.should.have.length(3);
-  //       return Promise.map(content, function(data) {
-  //         return probe.del(CONTENT, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have nothing in content', function() {
+      return probe.all(CONTENT)
+      .then(function(content) {
+        content.should.have.length(0);
+      });
+    });
 
-  //   it('should have 1 index in indexes', function() {
-  //     return probe.all(INDEXES)
-  //     .then(function(indexes) {
-  //       // thread index
-  //       indexes.should.have.length(1);
-  //       return Promise.map(indexes, function(data) {
-  //         return probe.del(INDEXES, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have nothing in indexes', function() {
+      return probe.all(INDEXES)
+      .then(function(indexes) {
+        indexes.should.have.length(0);
+      });
+    });
 
-  //   it('should have 5 keys in metadata', function() {
-  //     return probe.all(METADATA)
-  //     .then(function(metadata) {
-  //       // board post count
-  //       // board thread count
-  //       // thread post count
-  //       // thread post title *** SHOULD BE DELETED?
-  //       // thread username *** SHOULD BE DELETED?
-  //       // thread first post id (deleted) *** SHOULD BE DELETED?
-  //       metadata.should.have.length(5);
-  //       return Promise.map(metadata, function(data) {
-  //         return probe.del(METADATA, data.key);
-  //       });
-  //     });
-  //   });
+    it('should have nothing in metadata', function() {
+      return probe.all(METADATA)
+      .then(function(metadata) {
+        metadata.should.have.length(0);
+      });
+    });
 
-  //   it('should have 1 object in deleted', function() {
-  //     return probe.all(DELETED)
-  //     .then(function(deleted) {
-  //       deleted.should.have.length(1);
-  //       return probe.del(DELETED, deleted[0].key);
-  //     });
-  //   });
+    it('should have 1 object in deleted', function() {
+      return probe.all(DELETED)
+      .then(function(deleted) {
+        deleted.should.have.length(1);
+        return probe.del(DELETED, deleted[0].key);
+      });
+    });
 
-  //   it('should have nothing in legacy', function() {
-  //     return probe.all(LEGACY)
-  //     .then(function(legacy) {
-  //       legacy.should.have.length(0);
-  //     });
-  //   });
+    it('should have nothing in legacy', function() {
+      return probe.all(LEGACY)
+      .then(function(legacy) {
+        legacy.should.have.length(0);
+      });
+    });
 
-  //   it('should have nothing in messages', function() {
-  //     return probe.all(MESSAGES)
-  //     .then(function(messages) {
-  //       messages.should.have.length(0);
-  //     });
-  //   });
-  // });
+    it('should have nothing in messages', function() {
+      return probe.all(MESSAGES)
+      .then(function(messages) {
+        messages.should.have.length(0);
+      });
+    });
+  });
 
   describe('#all', function() {
     var user1 = {
