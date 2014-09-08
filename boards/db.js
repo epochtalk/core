@@ -285,20 +285,19 @@ boards.all = function() {
 
 
 boards.incTotalPostCount = function(id) {
-  var parentId;
-  var board = boards.find(id);
+  var count;
   var totalPostCountKey = Board.totalPostCountKeyFromId(id);
 
   return new Promise(function(fulfill, reject) {
-    board.then(function(board) { parentId = board.parent_id; })
-    .catch(function(err) { reject(err); });
-
     postCountLock.runwithlock(function () {
       var promise = { fulfill: fulfill, reject: reject };
       increment(totalPostCountKey, postCountLock, promise);
     });
   })
-  .then(function(count) {
+  .then(function(dbCount) { count = dbCount; })
+  .then(function() { return boards.find(id); })
+  .then(function(board) { return board.parent_id; })
+  .then(function(parentId) {
     if (parentId && count > 0) {
       return boards.incTotalPostCount(parentId)
       .then(function() { return count; });
@@ -308,20 +307,19 @@ boards.incTotalPostCount = function(id) {
 };
 
 boards.decTotalPostCount = function(id) {
-  var parentId;
-  var board = boards.find(id);
+  var count;
   var totalPostCountKey = Board.totalPostCountKeyFromId(id);
 
   return new Promise(function(fulfill, reject) {
-    board.then(function(board) { parentId = board.parent_id; })
-    .catch(function(err) { reject(err); });
-
     postCountLock.runwithlock(function () {
       var promise = { fulfill: fulfill, reject: reject };
       decrement(totalPostCountKey, postCountLock, promise);
     });
   })
-  .then(function(count) {
+  .then(function(dbCount) { count = dbCount; })
+  .then(function() { return boards.find(id); })
+  .then(function(board) { return board.parent_id; })
+  .then(function(parentId) {
     if (parentId && count > 0) {
       return boards.decTotalPostCount(parentId)
       .then(function() { return count; });
@@ -331,20 +329,19 @@ boards.decTotalPostCount = function(id) {
 };
 
 boards.incTotalThreadCount = function(id) {
-  var parentId;
-  var board = boards.find(id);
+  var count;
   var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
 
   return new Promise(function(fulfill, reject) {
-    board.then(function(board) { parentId = board.parent_id; })
-    .catch(function(err) { reject(err); });
-
     threadCountLock.runwithlock(function () {
       var promise = { fulfill: fulfill, reject: reject };
       increment(totalThreadCountKey, threadCountLock, promise);
     });
   })
-  .then(function(count) {
+  .then(function(dbCount) { count = dbCount; })
+  .then(function() { return boards.find(id); })
+  .then(function(board) { return board.parent_id; })
+  .then(function(parentId) {
     if (parentId && count > 0) {
       return boards.incTotalThreadCount(parentId)
       .then(function() { return count; });
@@ -354,20 +351,19 @@ boards.incTotalThreadCount = function(id) {
 };
 
 boards.decTotalThreadCount = function(id) {
-  var parentId;
-  var board = boards.find(id);
+  var count;
   var totalThreadCountKey = Board.postCountKeyFromId(id);
 
   return new Promise(function(fulfill, reject) {
-    board.then(function(board) { parentId = board.parent_id; })
-    .catch(function(err) { reject(err); });
-
     threadCountLock.runwithlock(function () {
       var promise = { fulfill: fulfill, reject: reject };
       decrement(totalThreadCountKey, threadCountLock, promise);
     });
   })
-  .then(function(count) {
+  .then(function(dbCount) { count = dbCount; })
+  .then(function() { return boards.find(id); })
+  .then(function(board) { return board.parent_id; })
+  .then(function(parentId) {
     if (parentId && count > 0) {
       return boards.decTotalThreadCount(parentId)
       .then(function() { return count; });
@@ -377,25 +373,13 @@ boards.decTotalThreadCount = function(id) {
 };
 
 boards.incPostCount = function(id) {
-  var parentId;
-  var board = boards.find(id);
   var postCountKey = Board.postCountKeyFromId(id);
 
   return new Promise(function(fulfill, reject) {
-    board.then(function(board) { parentId = board.parent_id; })
-    .catch(function(err) { console.log(err); reject(err); });
-
     postCountLock.runwithlock(function () {
       var promise = { fulfill: fulfill, reject: reject };
       increment(postCountKey, postCountLock, promise);
     });
-  })
-  .then(function(count) {
-    if (parentId && count > 0) {
-      return boards.incTotalPostCount(parentId)
-      .then(function() { return count; });
-    }
-    else { return count; }
   })
   .then(function(count) {
     return boards.incTotalPostCount(id)
@@ -404,25 +388,13 @@ boards.incPostCount = function(id) {
 };
 
 boards.decPostCount = function(id) {
-  var parentId;
-  var board = boards.find(id);
   var postCountKey = Board.postCountKeyFromId(id);
 
   return new Promise(function(fulfill, reject) {
-    board.then(function(board) { parentId = board.parent_id; })
-    .catch(function(err) { reject(err); });
-
     postCountLock.runwithlock(function () {
       var promise = { fulfill: fulfill, reject: reject };
       decrement(postCountKey, postCountLock, promise);
     });
-  })
-  .then(function(count) {
-    if (parentId && count > 0) {
-      return boards.decTotalPostCount(parentId)
-      .then(function() { return count; });
-    }
-    else { return count; }
   })
   .then(function(count) {
     return boards.decTotalPostCount(id)
@@ -431,25 +403,13 @@ boards.decPostCount = function(id) {
 };
 
 boards.incThreadCount = function(id) {
-  var parentId;
-  var board = boards.find(id);
   var threadCountKey = Board.threadCountKeyFromId(id);
-  
-  return new Promise(function(fulfill, reject) {
-    board.then(function(board) { parentId = board.parent_id; })
-    .catch(function(err) { reject(err); });
 
+  return new Promise(function(fulfill, reject) {
     threadCountLock.runwithlock(function () {
       var promise = { fulfill: fulfill, reject: reject };
       increment(threadCountKey, threadCountLock, promise);
     });
-  })
-  .then(function(count) {
-    if (parentId && count > 0) {
-      return boards.incTotalThreadCount(parentId)
-      .then(function() { return count; });
-    }
-    else { return count; }
   })
   .then(function(count) {
     return boards.incTotalThreadCount(id)
@@ -458,25 +418,13 @@ boards.incThreadCount = function(id) {
 };
 
 boards.decThreadCount = function(id) {
-  var parentId;
-  var board = boards.find(id);
   var threadCountKey = Board.threadCountKeyFromId(id);
 
   return new Promise(function(fulfill, reject) {
-    board.then(function(board) { parentId = board.parent_id; })
-    .catch(function(err) { reject(err); });
-
     threadCountLock.runwithlock(function () {
       var promise = { fulfill: fulfill, reject: reject };
       decrement(threadCountKey, threadCountLock, promise);
     });
-  })
-  .then(function(count) {
-    if (parentId && count > 0) {
-      return boards.decTotalThreadCount(parentId)
-      .then(function() { return count; });
-    }
-    else { return count; }
   })
   .then(function(count) {
     return boards.decTotalThreadCount(id)

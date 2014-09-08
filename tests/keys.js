@@ -3,6 +3,7 @@ var rimraf = require('rimraf');
 var path = require('path');
 var Promise = require('bluebird');
 var dbName = 'test-epoch.db';
+var config = require(path.join(__dirname, '..', 'config'));
 var core = require(path.join(__dirname, '..'))(dbName);
 var boards = core.boards;
 var threads = core.threads;
@@ -655,6 +656,148 @@ describe('boards', function() {
         // 2 total post count
         // 2 total thread count
         metadata.should.have.length(16);
+        return Promise.map(metadata, function(data) {
+          return probe.del(METADATA, data.key);
+        });
+      });
+    });
+
+    it('should have nothing in deleted', function() {
+      return probe.all(DELETED)
+      .then(function(deleted) {
+        deleted.should.have.length(0);
+      });
+    });
+
+    it('should have nothing in legacy', function() {
+      return probe.all(LEGACY)
+      .then(function(legacy) {
+        legacy.should.have.length(0);
+      });
+    });
+
+    it('should have nothing in messages', function() {
+      return probe.all(MESSAGES)
+      .then(function(messages) {
+        messages.should.have.length(0);
+      });
+    });
+  });
+
+  describe('#totals', function() {
+    var testBoard = { name: 'Board', description: 'Description' };
+    var childBoard = { name: 'child', description: 'child' };
+    var plainPost = { title: 'post title', body: 'hello world.' };
+    var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+
+    before(function() {
+      return core.users.create(newUser)
+      .then(function(user) {
+        newUser = user;
+        return boards.create(testBoard);
+      })
+      .then(function(board) {
+        testBoard = board;
+        childBoard.parent_id = board.id;
+        return childBoard;
+      })
+      .then(boards.create)
+      .then(function(board) {
+        childBoard = board;
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainPost.thread_id = thread.id;
+        plainPost.user_id = newUser.id;
+      })
+      .then(function() {
+        return posts.create(plainPost);
+      });
+    });
+
+    it('should have 6 objects in content', function() {
+      return probe.all(CONTENT)
+      .then(function(content) {
+        // user, 2 boards, thread, post and version
+        content.should.have.length(6);
+        return Promise.map(content, function(data) {
+          return probe.del(CONTENT, data.key);
+        });
+      });
+    });
+
+    it('should have 4 objects in indexes', function() {
+      return probe.all(INDEXES)
+      .then(function(indexes) {
+        // posts index
+        // threads index
+        // username index
+        // email index
+        indexes.should.have.length(4);
+        return Promise.map(indexes, function(data) {
+          return probe.del(INDEXES, data.key);
+        });
+      });
+    });
+
+    it('should 1 post for parent totals', function() {
+      var postTotalKey = config.boards.prefix + config.sep + testBoard.id + config.sep + 'total_post_count';
+      return probe.get(METADATA, postTotalKey)
+      .then(function(postTotal) {
+        postTotal.should.be.equal('1');
+      });
+    });
+
+    it('should 1 thread for parent totals', function() {
+      var postTotalKey = config.boards.prefix + config.sep + testBoard.id + config.sep + 'total_thread_count';
+      return probe.get(METADATA, postTotalKey)
+      .then(function(postTotal) {
+        postTotal.should.be.equal('1');
+      });
+    });
+
+    it('should 1 post for child totals', function() {
+      var postTotalKey = config.boards.prefix + config.sep + childBoard.id + config.sep + 'total_post_count';
+      return probe.get(METADATA, postTotalKey)
+      .then(function(postTotal) {
+        postTotal.should.be.equal('1');
+      });
+    });
+
+    it('should 1 thread for child totals', function() {
+      var postTotalKey = config.boards.prefix + config.sep + childBoard.id + config.sep + 'total_thread_count';
+      return probe.get(METADATA, postTotalKey)
+      .then(function(postTotal) {
+        postTotal.should.be.equal('1');
+      });
+    });
+
+    it('should have 24 keys in metadata', function() {
+      return probe.all(METADATA)
+      .then(function(metadata) {
+        // 2 board last post created at
+        // 2 board last post username 
+        // 2 board last thread id
+        // 2 board last thread title
+        // 2 board post count
+        // 2 board thread count
+        // 2 board total post count
+        // 2 board total thread count
+        // post post order
+        // thread first post id
+        // thread last post created at
+        // thread last post username
+        // thread post count
+        // thread title
+        // thread username
+        // view count
+        metadata.should.have.length(24);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
