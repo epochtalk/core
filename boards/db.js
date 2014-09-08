@@ -41,16 +41,23 @@ boards.create = function(board) {
   var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(board.id);
   var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(board.id);
   var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(board.id);
+  var totalPostCountKey = Board.totalPostCountKeyFromId(board.id);
+  var totalThreadCountKey = Board.totalThreadCountKeyFromId(board.id);
+  var postCountKey = Board.postCountKeyFromId(board.id);
+  var threadCountKey = Board.threadCountKeyFromId(board.id);
+  
   var metadataBatch = [
     // TODO: There should be a better solution than initializing with strings
     { type: 'put', key: boardLastPostUsernameKey , value: 'none' },
     { type: 'put', key: boardLastPostCreatedAtKey , value: 'none' },
     { type: 'put', key: boardLastThreadTitleKey , value: 'none' },
-    { type: 'put', key: boardLastThreadIdKey , value: 'none' }
+    { type: 'put', key: boardLastThreadIdKey , value: 'none' },
+    { type: 'put', key: totalPostCountKey , value: 0 },
+    { type: 'put', key: totalThreadCountKey , value: 0 },
+    { type: 'put', key: postCountKey , value: 0 },
+    { type: 'put', key: threadCountKey , value: 0 }
   ];
   return db.metadata.batchAsync(metadataBatch)
-  .then(function() { return boards.incPostCount(board.id); })
-  .then(function() { return boards.incThreadCount(board.id); })
   .then(function() { return db.content.putAsync(boardKey, board); })
   .then(function() { return board; });
 };
@@ -58,12 +65,14 @@ boards.create = function(board) {
 /* RETRIEVE */
 boards.find = function(id) {
   var boardKey = Board.keyFromId(id);
-  var boardPostCountKey = Board.postCountKeyFromId(id);
-  var boardThreadCountKey = Board.threadCountKeyFromId(id);
-  var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
-  var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
-  var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
-  var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(id);
+  var postCountKey = Board.postCountKeyFromId(id);
+  var threadCountKey = Board.threadCountKeyFromId(id);
+  var totalPostCountKey = Board.totalPostCountKeyFromId(id);
+  var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
+  var lastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
+  var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
+  var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
+  var lastThreadIdKey = Board.lastThreadIdKeyFromId(id);
   var board;
   return db.content.getAsync(boardKey)
   .then(function(dbBoard) {
@@ -76,27 +85,35 @@ boards.find = function(id) {
     if (children.length > 0) {
       board.children = children;
     }
-    return db.metadata.getAsync(boardPostCountKey);
+    return db.metadata.getAsync(postCountKey);
   })
   .then(function(postCount) {
     board.post_count += Number(postCount);
-    return db.metadata.getAsync(boardThreadCountKey);
+    return db.metadata.getAsync(threadCountKey);
   })
   .then(function(threadCount) {
     board.thread_count += Number(threadCount);
-    return db.metadata.getAsync(boardLastPostUsernameKey);
+    return db.metadata.getAsync(totalPostCountKey);
+  })
+  .then(function(totalPostCount) {
+    board.total_post_count = Number(totalPostCount);
+    return db.metadata.getAsync(totalThreadCountKey);
+  })
+  .then(function(totalThreadCount) {
+    board.total_thread_count = Number(totalThreadCount);
+    return db.metadata.getAsync(lastPostUsernameKey);
   })
   .then(function(username) {
     board.last_post_username = username;
-    return db.metadata.getAsync(boardLastPostCreatedAtKey);
+    return db.metadata.getAsync(lastPostCreatedAtKey);
   })
   .then(function(created) {
     board.last_post_created_at = created;
-    return db.metadata.getAsync(boardLastThreadTitleKey);
+    return db.metadata.getAsync(lastThreadTitleKey);
   })
   .then(function(threadTitle) {
     board.last_thread_title = threadTitle;
-    return db.metadata.getAsync(boardLastThreadIdKey);
+    return db.metadata.getAsync(lastThreadIdKey);
   })
   .then(function(threadId) {
     board.last_thread_id = threadId;
@@ -151,12 +168,14 @@ boards.delete = function(boardId) {
 
 boards.purge = function(id) {
   var boardKey = Board.keyFromId(id);
-  var boardPostCountKey = Board.postCountKeyFromId(id);
-  var boardThreadCountKey = Board.threadCountKeyFromId(id);
-  var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
-  var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
-  var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
-  var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(id);
+  var postCountKey = Board.postCountKeyFromId(id);
+  var threadCountKey = Board.threadCountKeyFromId(id);
+  var totalPostCountKey = Board.totalPostCountKeyFromId(id);
+  var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
+  var lastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
+  var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
+  var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
+  var lastThreadIdKey = Board.lastThreadIdKeyFromId(id);
   var purgeBoard;
 
   // see if board already exists
@@ -175,27 +194,35 @@ boards.purge = function(id) {
   })
   // delete postCount metadata
   .then(function() {
-    return db.metadata.delAsync(boardPostCountKey);
+    return db.metadata.delAsync(postCountKey);
   })
   // delete threadCount metadata
   .then(function() {
-    return db.metadata.delAsync(boardThreadCountKey);
+    return db.metadata.delAsync(threadCountKey);
+  })
+  // delete totalPostCount metadata
+  .then(function() {
+    return db.metadata.delAsync(totalPostCountKey);
+  })
+  // delete totalThreadCount metadata
+  .then(function() {
+    return db.metadata.delAsync(totalThreadCountKey);
   })
   // delete lastPostUsername metadata
   .then(function() {
-    return db.metadata.delAsync(boardLastPostUsernameKey);
+    return db.metadata.delAsync(lastPostUsernameKey);
   })
   // delete lastPostCreatedAt metadata
   .then(function() {
-    return db.metadata.delAsync(boardLastPostCreatedAtKey);
+    return db.metadata.delAsync(lastPostCreatedAtKey);
   })
   // delete lastThreadTitle metadata
   .then(function() {
-    return db.metadata.delAsync(boardLastThreadTitleKey);
+    return db.metadata.delAsync(lastThreadTitleKey);
   })
   // delete lastThreadId metadata
   .then(function() {
-    return db.metadata.delAsync(boardLastThreadIdKey);
+    return db.metadata.delAsync(lastThreadIdKey);
   })
   // delete legacy key index
   .then(function() {
@@ -256,86 +283,239 @@ boards.all = function() {
   });
 };
 
-boards.incPostCount = function(id) {
-  var postCountKey = Board.postCountKeyFromId(id);
+
+boards.incTotalPostCount = function(id) {
+  var parentId;
+  var board = boards.find(id);
+  var totalPostCountKey = Board.totalPostCountKeyFromId(id);
+
   return new Promise(function(fulfill, reject) {
+    board.then(function(board) { parentId = board.parent_id; })
+    .catch(function(err) { reject(err); });
+
     postCountLock.runwithlock(function () {
-      var newPostCount = 0;
-      db.metadata.getAsync(postCountKey)
-      .then(function(postCount) {
-        newPostCount = Number(postCount);
-        newPostCount++;
-        return newPostCount;
-      })
-      .catch(function() { return newPostCount; })
-      .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
-      .then(function() { fulfill(newPostCount); })
-      .catch(function(err) { reject(err); })
-      .finally(function() { postCountLock.release(); });
+      var promise = { fulfill: fulfill, reject: reject };
+      increment(totalPostCountKey, postCountLock, promise);
     });
+  })
+  .then(function(count) {
+    if (parentId && count > 0) {
+      return boards.incTotalPostCount(parentId)
+      .then(function() { return count; });
+    }
+    else { return count; }
+  });
+};
+
+boards.decTotalPostCount = function(id) {
+  var parentId;
+  var board = boards.find(id);
+  var totalPostCountKey = Board.totalPostCountKeyFromId(id);
+
+  return new Promise(function(fulfill, reject) {
+    board.then(function(board) { parentId = board.parent_id; })
+    .catch(function(err) { reject(err); });
+
+    postCountLock.runwithlock(function () {
+      var promise = { fulfill: fulfill, reject: reject };
+      decrement(totalPostCountKey, postCountLock, promise);
+    });
+  })
+  .then(function(count) {
+    if (parentId && count > 0) {
+      return boards.decTotalPostCount(parentId)
+      .then(function() { return count; });
+    }
+    else { return count; }
+  });
+};
+
+boards.incTotalThreadCount = function(id) {
+  var parentId;
+  var board = boards.find(id);
+  var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
+
+  return new Promise(function(fulfill, reject) {
+    board.then(function(board) { parentId = board.parent_id; })
+    .catch(function(err) { reject(err); });
+
+    threadCountLock.runwithlock(function () {
+      var promise = { fulfill: fulfill, reject: reject };
+      increment(totalThreadCountKey, threadCountLock, promise);
+    });
+  })
+  .then(function(count) {
+    if (parentId && count > 0) {
+      return boards.incTotalThreadCount(parentId)
+      .then(function() { return count; });
+    }
+    else { return count; }
+  });
+};
+
+boards.decTotalThreadCount = function(id) {
+  var parentId;
+  var board = boards.find(id);
+  var totalThreadCountKey = Board.postCountKeyFromId(id);
+
+  return new Promise(function(fulfill, reject) {
+    board.then(function(board) { parentId = board.parent_id; })
+    .catch(function(err) { reject(err); });
+
+    threadCountLock.runwithlock(function () {
+      var promise = { fulfill: fulfill, reject: reject };
+      decrement(totalThreadCountKey, threadCountLock, promise);
+    });
+  })
+  .then(function(count) {
+    if (parentId && count > 0) {
+      return boards.decTotalThreadCount(parentId)
+      .then(function() { return count; });
+    }
+    else { return count; }
+  });
+};
+
+boards.incPostCount = function(id) {
+  var parentId;
+  var board = boards.find(id);
+  var postCountKey = Board.postCountKeyFromId(id);
+
+  return new Promise(function(fulfill, reject) {
+    board.then(function(board) { parentId = board.parent_id; })
+    .catch(function(err) { console.log(err); reject(err); });
+
+    postCountLock.runwithlock(function () {
+      var promise = { fulfill: fulfill, reject: reject };
+      increment(postCountKey, postCountLock, promise);
+    });
+  })
+  .then(function(count) {
+    if (parentId && count > 0) {
+      return boards.incTotalPostCount(parentId)
+      .then(function() { return count; });
+    }
+    else { return count; }
+  })
+  .then(function(count) {
+    return boards.incTotalPostCount(id)
+    .then(function() { return count; });
   });
 };
 
 boards.decPostCount = function(id) {
+  var parentId;
+  var board = boards.find(id);
   var postCountKey = Board.postCountKeyFromId(id);
+
   return new Promise(function(fulfill, reject) {
+    board.then(function(board) { parentId = board.parent_id; })
+    .catch(function(err) { reject(err); });
+
     postCountLock.runwithlock(function () {
-      var newPostCount = 0;
-      db.metadata.getAsync(postCountKey)
-      .then(function(postCount) {
-        newPostCount = Number(postCount);
-        if (newPostCount > 0) {
-          newPostCount--;
-        }
-        return newPostCount;
-      })
-      .catch(function() { return newPostCount; })
-      .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
-      .then(function() { fulfill(newPostCount); })
-      .catch(function(err) { reject(err); })
-      .finally(function() { postCountLock.release(); });
+      var promise = { fulfill: fulfill, reject: reject };
+      decrement(postCountKey, postCountLock, promise);
     });
+  })
+  .then(function(count) {
+    if (parentId && count > 0) {
+      return boards.decTotalPostCount(parentId)
+      .then(function() { return count; });
+    }
+    else { return count; }
+  })
+  .then(function(count) {
+    return boards.decTotalPostCount(id)
+    .then(function() { return count; });
   });
 };
 
 boards.incThreadCount = function(id) {
+  var parentId;
+  var board = boards.find(id);
   var threadCountKey = Board.threadCountKeyFromId(id);
+  
   return new Promise(function(fulfill, reject) {
+    board.then(function(board) { parentId = board.parent_id; })
+    .catch(function(err) { reject(err); });
+
     threadCountLock.runwithlock(function () {
-      var newThreadCount = 0;
-      db.metadata.getAsync(threadCountKey)
-      .then(function(threadCount) {
-        newThreadCount = Number(threadCount);
-        newThreadCount++;
-        return newThreadCount;
-      })
-      .catch(function() { return newThreadCount; })
-      .then(function(count) { return db.metadata.putAsync(threadCountKey, count);})
-      .then(function() { fulfill(newThreadCount); })
-      .catch(function(err) { reject(err); })
-      .finally(function() { threadCountLock.release(); });
+      var promise = { fulfill: fulfill, reject: reject };
+      increment(threadCountKey, threadCountLock, promise);
     });
+  })
+  .then(function(count) {
+    if (parentId && count > 0) {
+      return boards.incTotalThreadCount(parentId)
+      .then(function() { return count; });
+    }
+    else { return count; }
+  })
+  .then(function(count) {
+    return boards.incTotalThreadCount(id)
+    .then(function() { return count; });
   });
 };
 
 boards.decThreadCount = function(id) {
+  var parentId;
+  var board = boards.find(id);
   var threadCountKey = Board.threadCountKeyFromId(id);
+
   return new Promise(function(fulfill, reject) {
+    board.then(function(board) { parentId = board.parent_id; })
+    .catch(function(err) { reject(err); });
+
     threadCountLock.runwithlock(function () {
-      var newThreadCount = 0;
-      db.metadata.getAsync(threadCountKey)
-      .then(function(threadCount) {
-        newThreadCount = Number(threadCount);
-        if (newThreadCount > 0) {
-          newThreadCount--;
-        }
-        return newThreadCount;
-      })
-      .catch(function() { return newThreadCount; })
-      .then(function(count) { return db.metadata.putAsync(threadCountKey, count);})
-      .then(function() { fulfill(newThreadCount); })
-      .catch(function(err) { reject(err); })
-      .finally(function() { threadCountLock.release(); });
+      var promise = { fulfill: fulfill, reject: reject };
+      decrement(threadCountKey, threadCountLock, promise);
     });
+  })
+  .then(function(count) {
+    if (parentId && count > 0) {
+      return boards.decTotalThreadCount(parentId)
+      .then(function() { return count; });
+    }
+    else { return count; }
+  })
+  .then(function(count) {
+    return boards.decTotalThreadCount(id)
+    .then(function() { return count; });
   });
+};
+
+var increment = function(key, lock, promise) {
+  var count = 0;
+  db.metadata.getAsync(key)
+  .then(function(dbCount) {
+    count = Number(dbCount);
+    count++;
+    return count;
+  })
+  .catch(function() { return count; })
+  .then(function(newCount) {
+    return db.metadata.putAsync(key, newCount);
+  })
+  .then(function() { promise.fulfill(count); })
+  .catch(function(err) { promise.reject(err); })
+  .finally(function() { lock.release(); });
+};
+
+var decrement = function(key, lock, promise) {
+  var count = 0;
+  db.metadata.getAsync(key)
+  .then(function(dbCount) {
+    count = Number(dbCount);
+    if (count > 0) {
+      count--;
+    }
+    return count;
+  })
+  .catch(function() { return count; })
+  .then(function(newCount) {
+    return db.metadata.putAsync(key, newCount);
+  })
+  .then(function() { promise.fulfill(count); })
+  .catch(function(err) { promise.reject(err); })
+  .finally(function() { lock.release(); });
 };

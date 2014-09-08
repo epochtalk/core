@@ -103,6 +103,8 @@ Board.prototype.simple = function() {
   if (self.children) { board.children = self.children; }
   if (self.post_count) { board.post_count = self.post_count; }
   if (self.thread_count) { board.thread_count = self.thread_count; }
+  if (self.total_post_count) { board.total_post_count = self.total_post_count; }
+  if (self.total_thread_count) { board.total_thread_count = self.total_thread_count; }
   if (self.last_post_username) { board.last_post_username = self.last_post_username; }
   if (self.last_post_created_at) { board.last_post_created_at = self.last_post_created_at; }
   if (self.last_thread_title) { board.last_thread_title = self.last_thread_title; }
@@ -122,6 +124,14 @@ Board.postCountKeyFromId = function(id) {
 
 Board.threadCountKeyFromId = function(id) {
   return keyForBoard(id) + config.sep + 'thread_count';
+};
+
+Board.totalPostCountKeyFromId = function(id) {
+  return keyForBoard(id) + config.sep + 'total_post_count';
+};
+
+Board.totalThreadCountKeyFromId = function(id) {
+  return keyForBoard(id) + config.sep + 'total_thread_count';
 };
 
 Board.lastPostUsernameKeyFromId = function(id) {

@@ -178,6 +178,34 @@ describe('Board', function() {
     });
   });
 
+  describe('#totalPostCountKeyFromId', function() {
+    it('should return the board\'s total post count key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Board.totalPostCountKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + fakeId + sep + 'total_post_count');
+    });
+  });
+
+  describe('#totalThreadCountKeyFromId', function() {
+    it('should return the board\'s total thread count key', function() {
+      var boardPrefix = config.boards.prefix;
+      var sep = config.sep;
+      var fakeId = '123456789';
+
+      var key = Board.totalThreadCountKeyFromId(fakeId);
+
+      key.should.be.ok;
+      key.should.be.a('string');
+      key.should.be.equal(boardPrefix + sep + fakeId + sep + 'total_thread_count');
+    });
+  });
+
   describe('#lastPostUsernameKeyFromId', function() {
     it('should return the board\'s last post username key', function() {
       var boardPrefix = config.boards.prefix;

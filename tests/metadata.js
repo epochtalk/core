@@ -33,7 +33,6 @@ describe('metadata', function() {
       .then(function(board) {
         boardId = board.id;
         var threadData = { board_id: board.id };
-        // BREAKS IF CHANGED TO Promise.map DUE TO SYNCHRONICITY ISSUE WITH METADATA INCREMENTS
         return [ threadData, threadData, threadData ];
       })
       .then(function(threadArray) {
@@ -68,6 +67,24 @@ describe('metadata', function() {
         return boards.find(boardId)
         .then(function(board) {
           board.thread_count.should.equal(3);
+        });
+      });
+    });
+
+    describe('#total_post_count', function() {
+      it('should have correct post count', function() {
+        return boards.find(boardId)
+        .then(function(board) {
+          board.total_post_count.should.equal(9);
+        });
+      });
+    });
+
+    describe('#total_thread_count', function() {
+      it('should have correct thread count', function() {
+        return boards.find(boardId)
+        .then(function(board) {
+          board.total_thread_count.should.equal(3);
         });
       });
     });
