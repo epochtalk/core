@@ -3,6 +3,7 @@ module.exports = boards;
 
 var path = require('path');
 var Promise = require('bluebird');
+var _ = require('lodash');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Board = require(path.join(__dirname, 'model'));
@@ -10,6 +11,7 @@ var helper = require(path.join(__dirname, '..', 'helper'));
 var Padlock = require('padlock').Padlock;
 var postCountLock = new Padlock();
 var threadCountLock = new Padlock();
+var updateParentLock = new Padlock();
 
 /* IMPORT */
 boards.import = function(board) {
@@ -45,7 +47,7 @@ boards.create = function(board) {
   var totalThreadCountKey = Board.totalThreadCountKeyFromId(board.id);
   var postCountKey = Board.postCountKeyFromId(board.id);
   var threadCountKey = Board.threadCountKeyFromId(board.id);
-  
+
   var metadataBatch = [
     // TODO: There should be a better solution than initializing with strings
     { type: 'put', key: boardLastPostUsernameKey , value: 'none' },
@@ -58,6 +60,12 @@ boards.create = function(board) {
     { type: 'put', key: threadCountKey , value: 0 }
   ];
   return db.metadata.batchAsync(metadataBatch)
+  .then(function() {
+    if (board.parent_id) {
+      return addChildToBoard(board.id, board.parent_id);
+    }
+    else { return; }
+  })
   .then(function() { return db.content.putAsync(boardKey, board); })
   .then(function() { return board; });
 };
@@ -192,6 +200,13 @@ boards.purge = function(id) {
   .then(function() {
     return db.content.delAsync(boardKey);
   })
+  // delete id from parent board if necessary
+  .then(function() {
+    if (purgeBoard.parent_id) {
+      return removeChildFromBoard(purgeBoard.id, purgeBoard.parent_id);
+    }
+    else { return; }
+  })
   // delete postCount metadata
   .then(function() {
     return db.metadata.delAsync(postCountKey);
@@ -282,7 +297,6 @@ boards.all = function() {
     .on('end', handler);
   });
 };
-
 
 boards.incTotalPostCount = function(id) {
   var count;
@@ -466,4 +480,53 @@ var decrement = function(key, lock, promise) {
   .then(function() { promise.fulfill(count); })
   .catch(function(err) { promise.reject(err); })
   .finally(function() { lock.release(); });
+};
+
+var addChildToBoard = function(childId, parentId) {
+  var parentBoard;
+  return new Promise(function(fulfill, reject) {
+    updateParentLock.runwithlock(function () {
+      var parentBoardKey = Board.keyFromId(parentId);
+      return db.content.getAsync(parentBoardKey)
+      .then(function(dbParentBoard) {
+        parentBoard = dbParentBoard;
+        var childIds = parentBoard.children_ids;
+        parentBoard.children_ids = childIds ? childIds : [];
+        if (!_.contains(parentBoard.children_ids, childId)) {
+          parentBoard.children_ids.push(childId);
+          return db.content.putAsync(parentBoardKey, parentBoard);
+        }
+        else { return; } // parent board already has child board id in children_ids
+      })
+      .then(function() { fulfill(parentBoard); })
+      .catch(function(err) { reject(err); })
+      .finally(function() { updateParentLock.release(); })
+    });
+  });
+};
+
+var removeChildFromBoard = function(childId, parentId) {
+  var parentBoard;
+  return new Promise(function(fulfill, reject) {
+    updateParentLock.runwithlock(function () {
+      var parentBoardKey = Board.keyFromId(parentId);
+      return db.content.getAsync(parentBoardKey)
+      .then(function(dbParentBoard) {
+        parentBoard = dbParentBoard;
+        if (parentBoard.children_ids && _.contains(parentBoard.children_ids, childId)) {
+          if (parentBoard.children_ids.length === 1) {
+            delete parentBoard.children_ids;
+          }
+          else {
+            parentBoard.children_ids = _.pull(parentBoard.children_ids, childId);
+          }
+          return db.content.putAsync(parentBoardKey, parentBoard);
+        }
+        else { return; } // parent board doesn't have child board id in children_ids
+      })
+      .then(function() { fulfill(parentBoard); })
+      .catch(function(err) { reject(err); })
+      .finally(function() { updateParentLock.release(); })
+    });
+  });
 };

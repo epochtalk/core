@@ -8,7 +8,7 @@ var core = require(path.join(__dirname, '..'))(dbName);
 var boards = core.boards;
 
 describe('boards', function() {
-  
+
   describe('#ALL', function() {
     before(function(done) {
       seed.initDb(path.join(__dirname, '..', dbName));
@@ -40,7 +40,7 @@ describe('boards', function() {
       name: 'Test Board',
       description: 'Test Board Description'
     };
-    
+
     it('should create and return the created board', function() {
       return boards.create(testBoard)
       .then(function(board) {
@@ -64,7 +64,7 @@ describe('boards', function() {
     var parentBoard = { name: 'Parent Board', description: 'Description' };
     var childABoard = { name: 'Child A Board', description: 'Description' };
     var childBBoard = { name: 'Child B Board', description: 'Description' };
-    
+
     before(function() {
       return boards.create(parentBoard)
       .then(function(board) {
@@ -113,8 +113,7 @@ describe('boards', function() {
         });
       })
       .then(function() {
-        parentBoard.children_ids = [childABoard.id, childBBoard.id];
-        return boards.update(parentBoard)
+        return boards.find(parentBoard.id)
         .then(function(board) {
           board.id.should.equal(parentBoard.id);
           board.created_at.should.equal(parentBoard.created_at);
@@ -129,7 +128,10 @@ describe('boards', function() {
           board.children_ids.should.have.length(2);
           board.children_ids[0].should.equal(childABoard.id);
           board.children_ids[1].should.equal(childBBoard.id);
-          should.not.exist(board.children);
+          board.children.should.be.an('array');
+          board.children.should.have.length(2);
+          board.children[0].id.should.equal(childABoard.id);
+          board.children[1].id.should.equal(childBBoard.id);
         });
       });
     });
@@ -141,7 +143,7 @@ describe('boards', function() {
       description: 'import description',
       smf: { ID_BOARD: '111' }
     };
-    
+
     it('should import a board', function() {
       return boards.import(importBoard)
       .then(function(board) {
@@ -274,7 +276,7 @@ describe('boards', function() {
         childABoard.parent_id = parentBoard.id;
         childBBoard.parent_id = parentBoard.id;
       })
-      .then(function() { 
+      .then(function() {
         return boards.create(childABoard)
         .then(function(board) {
           childABoard = board;
@@ -285,10 +287,6 @@ describe('boards', function() {
         .then(function(secondBoard) {
           childBBoard = secondBoard;
         });
-      })
-      .then(function() {
-        parentBoard.children_ids = [childABoard.id, childBBoard.id];
-        return boards.update(parentBoard);
       });
     });
 
@@ -478,36 +476,57 @@ describe('boards', function() {
   });
 
   describe('#PURGE', function() {
+    var parentBoard = { name: 'Parent Board', description: 'Parent Description' };
     var testBoard = {
       name: 'Test Board',
       description: 'Test Board Description'
     };
 
     before(function() {
-      return boards.create(testBoard)
-      .then(function(board) { testBoard = board; });
+      return boards.create(parentBoard)
+      .then(function(board) {
+        parentBoard = board;
+        testBoard.parent_id = board.id;
+        return boards.create(testBoard);
+      })
+      .then(function(board) {
+        testBoard = board;
+      });
     });
 
     it('should purge the specified board', function() {
-      return boards.purge(testBoard.id)
+      return boards.find(parentBoard.id)
+      .then(function(board) { // Check parent to make sure child exists
+        board.children_ids.should.be.an('array');
+        board.children_ids.should.have.length(1);
+        board.children_ids[0].should.equal(testBoard.id);
+        board.children.should.be.an('array');
+        board.children.should.have.length(1);
+        board.children[0].id.should.equal(testBoard.id);
+        return boards.purge(testBoard.id)
+      })
       .then(function(board) {
         board.id.should.equal(testBoard.id);
         board.created_at.should.equal(testBoard.created_at);
         board.updated_at.should.equal(testBoard.updated_at);
+        board.parent_id.should.equal(parentBoard.id);
         should.not.exist(board.imported_at);
         should.not.exist(board.deleted);
         board.name.should.equal(testBoard.name);
         board.description.should.equal(testBoard.description);
         should.not.exist(board.smf);
-        should.not.exist(board.parent_id);
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
-        return board.id;
+        return boards.find(board.id);
       })
-      .then(boards.find)
       .catch(function(err) {
         err.should.not.be.null;
         err.type.should.equal('NotFoundError');
+        return boards.find(parentBoard.id);
+      })
+      .then(function(board) { // verify purged child was removed.
+        should.not.exist(board.children_ids);
+        should.not.exist(board.children);
       });
     });
   });
