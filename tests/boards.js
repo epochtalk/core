@@ -144,9 +144,19 @@ describe('boards', function() {
       smf: { ID_BOARD: '111' }
     };
 
+    var importChildBoard = {
+      name: 'import child name',
+      description: 'import child description',
+      smf: {
+        ID_BOARD: '112',
+        ID_PARENT: '111'
+      }
+    };
+
     it('should import a board', function() {
       return boards.import(importBoard)
       .then(function(board) {
+        importBoard = board;
         board.id.should.be.ok;
         board.id.should.be.a('string');
         board.created_at.should.be.a('number');
@@ -159,6 +169,45 @@ describe('boards', function() {
         should.not.exist(board.parent_id);
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
+      });
+    });
+
+    it('should import a child board', function() {
+      return boards.import(importChildBoard) // verify child gets parent board's id
+      .then(function(board) {
+        importChildBoard = board;
+        board.id.should.be.ok;
+        board.id.should.be.a('string');
+        board.created_at.should.be.a('number');
+        board.updated_at.should.be.a('number');
+        board.imported_at.should.be.a('number');
+        should.not.exist(board.deleted);
+        board.name.should.equal(importChildBoard.name);
+        board.description.should.equal(importChildBoard.description);
+        board.smf.ID_BOARD.should.equal(importChildBoard.smf.ID_BOARD);
+        board.smf.ID_PARENT.should.equal(importChildBoard.smf.ID_PARENT);
+        board.parent_id.should.be.ok;
+        board.parent_id.should.be.a('string');
+        board.parent_id.should.equal(importBoard.id)
+        return boards.find(importBoard.id);
+      })
+      .then(function(parentBoard) { // verify parent is aware of child after import
+        parentBoard.id.should.be.ok;
+        parentBoard.id.should.be.a('string');
+        parentBoard.created_at.should.be.a('number');
+        parentBoard.updated_at.should.be.a('number');
+        parentBoard.imported_at.should.be.a('number');
+        should.not.exist(parentBoard.deleted);
+        parentBoard.name.should.equal(importBoard.name);
+        parentBoard.description.should.equal(importBoard.description);
+        parentBoard.smf.ID_BOARD.should.equal(importBoard.smf.ID_BOARD);
+        should.not.exist(parentBoard.parent_id);
+        parentBoard.children_ids.should.be.an('array');
+        parentBoard.children_ids.should.have.length(1);
+        parentBoard.children_ids[0].should.equal(importChildBoard.id);
+        parentBoard.children.should.be.an('array');
+        parentBoard.children.should.have.length(1);
+        parentBoard.children[0].id.should.equal(importChildBoard.id);
       });
     });
   });

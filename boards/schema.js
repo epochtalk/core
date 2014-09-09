@@ -17,7 +17,8 @@ var boardSchema = joi.object().keys({
   children: joi.array(joi.object()),
   deleted: joi.boolean(),
   smf: {
-    ID_BOARD: joi.number()
+    ID_BOARD: joi.number(),
+    ID_PARENT: joi.number()
   }
 });
 

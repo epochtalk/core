@@ -15,14 +15,29 @@ var updateParentLock = new Padlock();
 
 /* IMPORT */
 boards.import = function(board) {
+  var insertBoard = function() {
+    return boards.create(board) // create board first to handle id
+    .then(function(dbBoard) {
+      if (dbBoard.smf) {
+        return db.legacy.putAsync(board.legacyKey(), dbBoard.id)
+        .then(function() { return dbBoard; });
+      }
+    });
+  }
+
   board.imported_at = Date.now();
-  return boards.create(board) // create board first to handle id
-  .then(function(dbBoard) {
-    if (dbBoard.smf) {
-      return db.legacy.putAsync(board.legacyKey(), dbBoard.id)
-      .then(function() { return dbBoard; });
-    }
-  });
+  var promise;
+  if (board.smf.ID_PARENT) {
+    promise = db.legacy.getAsync(Board.legacyKeyFromId(board.smf.ID_PARENT))
+    .then(function(parentBoardId) {
+      board.parent_id = parentBoardId;
+    })
+    .then(insertBoard);
+  }
+  else {
+    promise = insertBoard();
+  }
+  return promise;
 };
 
 /* CREATE */
