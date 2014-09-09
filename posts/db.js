@@ -103,22 +103,22 @@ posts.insert = function(post) {
       return db.indexes.delAsync(boardThreadKey);
     });
   })
-  .then(function() {
-    // Last Post Info, Thread/Board Metadata is updated on each post insert
-    var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
-    var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
-    var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
-    var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(boardId);
+  .then(function() { // build metadata batch array
     var threadLastPostUsernameKey = Thread.lastPostUsernameKeyFromId(post.thread_id);
     var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(post.thread_id);
     var metadataBatch = [
-      { type: 'put', key: boardLastPostUsernameKey, value: postUsername },
-      { type: 'put', key: boardLastPostCreatedAtKey, value: post.created_at },
-      { type: 'put', key: boardLastThreadTitleKey, value: threadTitle },
-      { type: 'put', key: boardLastThreadIdKey, value: post.thread_id },
       { type: 'put', key: threadLastPostUsernameKey, value: postUsername },
       { type: 'put', key: threadLastPostCreatedAtKey, value: post.created_at }
     ];
+    var metadata = {
+      username: postUsername,
+      createdAt: post.created_at,
+      threadTitle: threadTitle,
+      threadId: post.thread_id
+    }
+    return buildMetadataBatch(boardId, metadata, metadataBatch);
+  })
+  .then(function(metadataBatch) { // insert metadata
     return db.metadata.batchAsync(metadataBatch);
   })
   .then(function() { // add new thread index value
@@ -137,6 +137,23 @@ posts.insert = function(post) {
   .then(function() { return db.content.putAsync(post.key(), post); })
   .then(function() { return post; });
 };
+
+var buildMetadataBatch = function(boardId, metadata, batchArray) {
+  if (!boardId) { return batchArray }
+  var boardKey = Board.keyFromId(boardId);
+  return db.content.getAsync(boardKey)
+  .then(function(board) {
+    var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
+    var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
+    var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
+    var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(boardId);
+    batchArray.push({ type: 'put', key: boardLastPostUsernameKey, value: metadata.username });
+    batchArray.push({ type: 'put', key: boardLastPostCreatedAtKey, value: metadata.createdAt });
+    batchArray.push({ type: 'put', key: boardLastThreadTitleKey, value: metadata.threadTitle });
+    batchArray.push({ type: 'put', key: boardLastThreadIdKey, value: metadata.threadId });
+    return buildMetadataBatch(board.parent_id, metadata, batchArray);
+  });
+}
 
 posts.find = function(id) {
   var postKey = Post.keyFromId(id);
