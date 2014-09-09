@@ -163,13 +163,17 @@ boards.delete = function(boardId) {
   return db.content.getAsync(boardKey)
   .then(function(boardData) {
     deleteBoard = new Board(boardData);
+    if (deleteBoard.children_ids && deleteBoard.children_ids.length > 0) {
+      throw new Error('Cannot delete parent board with child boards.');
+    }
+    else {
+      // add deleted: true flag to board
+      deleteBoard.deleted = true;
+      deleteBoard.updated_at = Date.now();
 
-    // add deleted: true flag to board
-    deleteBoard.deleted = true;
-    deleteBoard.updated_at = Date.now();
-
-    // insert back into db
-    return db.content.putAsync(boardKey, deleteBoard);
+      // insert back into db
+      return db.content.putAsync(boardKey, deleteBoard);
+    }
   })
   .then(function() { return deleteBoard; });
 };
@@ -191,6 +195,9 @@ boards.purge = function(id) {
   // set board to function scope
   .then(function(boardData) {
     purgeBoard = new Board(boardData);
+    if (purgeBoard.children_ids && purgeBoard.children_ids.length > 0) {
+      throw new Error('Cannot purge parent board with child boards.');
+    }
   })
   // move board to deleted db
   .then(function() {
