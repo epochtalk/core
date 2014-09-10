@@ -1,16 +1,16 @@
 {
   "name": "epochcore",
-  "version": "0.5.0",
-  "description": "Epochtalk Backend",
+  "version": "0.5.1",
+  "description": "Epochtalk Core",
   "main": "index.js",
   "scripts": {
     "test": "rm -rf ./test-epoch.db & ./node_modules/.bin/mocha -R spec ./tests"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/epochtalk/epoch.git"
+    "url": "git://github.com/epochtalk/core.git"
   },
-  "author": "James Wang <jw@slickage.com>",
+  "author": "James Wang <info@slickage.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/epochtalk/epoch/issues"
@@ -43,3 +43,4 @@
     "mocha": "^1.21.0"
   }
 }
+
