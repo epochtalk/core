@@ -1,6 +1,6 @@
 {
   "name": "epochcore",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Epochtalk Core",
   "main": "index.js",
   "scripts": {
