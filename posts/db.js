@@ -29,7 +29,7 @@ posts.import = function(post) {
   post.imported_at = Date.now();
   var promise;
   if (post.smf.ID_MEMBER) {
-    promise = db.legacy.getAsync(User.legacyKeyForId(post.smf.ID_MEMBER))
+    promise = db.legacy.getAsync(User.legacyKeyFromId(post.smf.ID_MEMBER))
     .then(function(userId) {
       post.user_id = userId;
     })
