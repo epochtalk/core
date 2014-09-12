@@ -249,6 +249,7 @@ posts.purge = function(id) {
     .then(function() {
       batchArray = batchArray.map(function(item) {
         item.type = 'del';
+        delete item.value;
         return item;
       });
       return db.content.batchAsync(batchArray);
