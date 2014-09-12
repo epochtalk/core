@@ -34,7 +34,8 @@
     "replify": "^1.2.0",
     "replpad": "^0.11.9",
     "rimraf": "^2.2.8",
-    "speakeasy": "^1.0.3"
+    "speakeasy": "^1.0.3",
+    "sublevel": "^2.4.0"
   },
   "devDependencies": {
     "benchmark": "^1.0.0",
@@ -43,4 +44,3 @@
     "mocha": "^1.21.0"
   }
 }
-
