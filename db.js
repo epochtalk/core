@@ -7,6 +7,7 @@ var sublevel = require('level-sublevel');
 var Promise = require('bluebird');
 var mkdirp = require('mkdirp');
 var config = require(path.join(__dirname, 'config'));
+var Sublevel = require('level-sublevel');
 
 mkdirp.sync(config.dbPath);
 
@@ -14,14 +15,12 @@ var dbPath = config.dbPath;
 var jsonEncoding = {valueEncoding: 'json'};
 var utfEncoding = {valueEncoding: 'utf8'};
 
-var db = sublevel(levelup(dbPath));
-
-var content = db.sublevel('content');
-var messages = db.sublevel('messages');
-var deleted = db.sublevel('deleted');
-var metadata = db.sublevel('metadata');
-var indexes = db.sublevel('indexes');
-var legacy = db.sublevel('legacy');
+var content = Sublevel(levelup(path.join(dbPath, 'content'), jsonEncoding));
+var messages = content.sublevel('messages');
+var deleted = content.sublevel('deleted');
+var metadata = content.sublevel('metadata');
+var indexes = content.sublevel('indexes');
+var legacy = content.sublevel('legacy');
 
 db.content = Promise.promisifyAll(content);
 db.messages = Promise.promisifyAll(messages);

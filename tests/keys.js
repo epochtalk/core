@@ -107,7 +107,7 @@ describe('boards', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // last post created at
-        // last post username 
+        // last post username
         // last thread id
         // last thread title
         // post count
@@ -177,7 +177,7 @@ describe('boards', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // last post created at
-        // last post username 
+        // last post username
         // last thread id
         // last thread title
         // post count
@@ -249,7 +249,7 @@ describe('boards', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // last post created at
-        // last post username 
+        // last post username
         // last thread id
         // last thread title
         // post count
@@ -325,7 +325,7 @@ describe('boards', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // last post created at
-        // last post username 
+        // last post username
         // last thread id
         // last thread title
         // post count
@@ -398,7 +398,7 @@ describe('boards', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // last post created at
-        // last post username 
+        // last post username
         // last thread id
         // last thread title
         // post count
@@ -465,7 +465,7 @@ describe('boards', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // last post created at
-        // last post username 
+        // last post username
         // last thread id
         // last thread title
         // post count
@@ -648,7 +648,7 @@ describe('boards', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // 2 last post created at
-        // 2 last post username 
+        // 2 last post username
         // 2 last thread id
         // 2 last thread title
         // 2 post count
@@ -750,7 +750,7 @@ describe('boards', function() {
       var postTotalKey = config.boards.prefix + config.sep + testBoard.id + config.sep + 'total_post_count';
       return probe.get(METADATA, postTotalKey)
       .then(function(postTotal) {
-        postTotal.should.be.equal('1');
+        postTotal.should.be.equal(1);
       });
     });
 
@@ -758,7 +758,7 @@ describe('boards', function() {
       var postTotalKey = config.boards.prefix + config.sep + testBoard.id + config.sep + 'total_thread_count';
       return probe.get(METADATA, postTotalKey)
       .then(function(postTotal) {
-        postTotal.should.be.equal('1');
+        postTotal.should.be.equal(1);
       });
     });
 
@@ -766,7 +766,7 @@ describe('boards', function() {
       var postTotalKey = config.boards.prefix + config.sep + childBoard.id + config.sep + 'total_post_count';
       return probe.get(METADATA, postTotalKey)
       .then(function(postTotal) {
-        postTotal.should.be.equal('1');
+        postTotal.should.be.equal(1);
       });
     });
 
@@ -774,7 +774,7 @@ describe('boards', function() {
       var postTotalKey = config.boards.prefix + config.sep + childBoard.id + config.sep + 'total_thread_count';
       return probe.get(METADATA, postTotalKey)
       .then(function(postTotal) {
-        postTotal.should.be.equal('1');
+        postTotal.should.be.equal(1);
       });
     });
 
@@ -782,7 +782,7 @@ describe('boards', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // 2 board last post created at
-        // 2 board last post username 
+        // 2 board last post username
         // 2 board last thread id
         // 2 board last thread title
         // 2 board post count
@@ -2654,7 +2654,7 @@ describe('posts', function() {
       return probe.all(INDEXES)
       .then(function(indexes) {
         // thread index
-        // username index 
+        // username index
         // email index
         indexes.should.have.length(3);
         return Promise.map(indexes, function(data) {
