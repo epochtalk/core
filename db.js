@@ -1,6 +1,7 @@
 var db = {};
 module.exports = db;
 
+var SCHEMA_VERSION = '1410581123532';
 var path = require('path');
 var levelup = require('levelup');
 var sublevel = require('level-sublevel');
@@ -29,3 +30,21 @@ db.metadata = Promise.promisifyAll(metadata);
 db.indexes = Promise.promisifyAll(indexes);
 db.legacy = Promise.promisifyAll(legacy);
 
+var echoSchemaVersion = function() {
+  console.log('Schema Version: ' + SCHEMA_VERSION);
+};
+
+db.content.getAsync('schema_version')
+.then(function(version) {
+  if (version && version === SCHEMA_VERSION) {
+    echoSchemaVersion();
+  }
+  else {
+    console.log('Unable to start: Schema migration needed.');
+    process.exit(1);
+  }
+})
+.catch(function(e) {
+  db.content.putAsync('schema_version', SCHEMA_VERSION)
+  .then(echoSchemaVersion());
+});
