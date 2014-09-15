@@ -9,7 +9,8 @@ var Thread = require(path.join(__dirname, 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
 var Padlock = require('padlock').Padlock;
-var lock = new Padlock();
+var postCountLock = new Padlock();
+var viewCountLock = new Padlock();
 
 threadsDb.import = function(thread) {
   thread.imported_at = Date.now();
@@ -53,10 +54,30 @@ threadsDb.insert = function(thread) {
   .then(function() { return thread; });
 };
 
+threadsDb.incViewCount = function(id) {
+  var viewCountKey = Thread.viewCountKeyFromId(id);
+  return new Promise(function(fulfill, reject) {
+    viewCountLock.runwithlock(function() {
+      var newViewCount = 0;
+      db.metadata.getAsync(viewCountKey)
+      .then(function(viewCount) {
+        newViewCount = Number(viewCount);
+        newViewCount++;
+        return newViewCount;
+      })
+      .catch(function() { return newViewCount; })
+      .then(function(viewCount) { return db.metadata.putAsync(viewCountKey, viewCount); })
+      .then(function() { fulfill(newViewCount); })
+      .catch(function(err) { reject(err); })
+      .finally(function() { viewCountLock.release(); });
+    });
+  });
+};
+
 threadsDb.incPostCount = function(id) {
   var postCountKey = Thread.postCountKeyFromId(id);
   return new Promise(function(fulfill, reject) {
-    lock.runwithlock(function () {
+    postCountLock.runwithlock(function() {
       var newPostCount = 0;
       db.metadata.getAsync(postCountKey)
       .then(function(postCount) {
@@ -68,7 +89,7 @@ threadsDb.incPostCount = function(id) {
       .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
       .then(function() { fulfill(newPostCount); })
       .catch(function(err) { reject(err); })
-      .finally(function() { lock.release(); });
+      .finally(function() { postCountLock.release(); });
     });
   });
 };
@@ -76,7 +97,7 @@ threadsDb.incPostCount = function(id) {
 threadsDb.decPostCount = function(id) {
   var postCountKey = Thread.postCountKeyFromId(id);
   return new Promise(function(fulfill, reject) {
-    lock.runwithlock(function () {
+    postCountLock.runwithlock(function() {
       var newPostCount = 0;
       db.metadata.getAsync(postCountKey)
       .then(function(postCount) {
@@ -90,7 +111,7 @@ threadsDb.decPostCount = function(id) {
       .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
       .then(function() { fulfill(newPostCount); })
       .catch(function(err) { reject(err); })
-      .finally(function() { lock.release(); });
+      .finally(function() { postCountLock.release(); });
     });
   });
 };
