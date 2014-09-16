@@ -40,6 +40,7 @@ function Board(board) {
   // specific to board
   this.name = board.name;
   if (board.description) { this.description = board.description; }
+  if (board.category) { this.category = board.category; }
   if (board.smf && board.smf.ID_BOARD) { this.smf  = board.smf; }
   if (board.parent_id) { this.parent_id = board.parent_id; }
   if (board.children_ids) { this.children_ids = board.children_ids; }
@@ -92,6 +93,7 @@ Board.prototype.simple = function() {
   if (self.id) { board.id = self.id; }
   board.name = self.name;
   if (self.description) { board.description = self.description; }
+  if (self.category) { board.category = self.category; }
   if (self.created_at) { board.created_at = self.created_at; }
   if (self.updated_at) { board.updated_at = self.updated_at; }
   if (self.imported_at) { board.imported_at = self.imported_at; }

@@ -552,3 +552,24 @@ var removeChildFromBoard = function(childId, parentId) {
     });
   });
 };
+
+// Categories
+
+// Used to handle reordering/removing/renaming of multiple categories at once
+boards.updateCategories = function(categories) {
+  // 1) Delete all categories if they exist
+
+  // 2) Re-populate categories using 'categories' array (encode cat pos)
+
+  // 3) Update Boards categories to be in sync with updated categories
+
+};
+
+// Used to bring back all boards in their respective categories
+boards.allCategories = function() {
+  // 1) Create readstream on cat~ prefix
+
+  // 2) Lookup Boards using boards array of ids (include child boards)
+
+  // 3) return array of category objects
+};

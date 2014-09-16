@@ -8,6 +8,7 @@ var validate = Promise.promisify(joi.validate);
 var boardSchema = joi.object().keys({
   id: joi.string(),
   name: joi.string().required(),
+  category: joi.number(),
   description: joi.string(),
   created_at: joi.number(),
   updated_at: joi.number(),
