@@ -15,7 +15,7 @@ var dbPath = config.dbPath;
 var jsonEncoding = {valueEncoding: 'json'};
 var utfEncoding = {valueEncoding: 'utf8'};
 
-var content = Sublevel(levelup(path.join(dbPath, 'content'), jsonEncoding));
+var content = Sublevel(levelup(path.join(dbPath), jsonEncoding));
 var messages = content.sublevel('messages');
 var deleted = content.sublevel('deleted');
 var metadata = content.sublevel('metadata');
