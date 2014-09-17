@@ -12,6 +12,7 @@ var Padlock = require('padlock').Padlock;
 var postCountLock = new Padlock();
 var threadCountLock = new Padlock();
 var updateParentLock = new Padlock();
+var catLock = new Padlock();
 
 /* IMPORT */
 boards.import = function(board) {
@@ -157,6 +158,8 @@ boards.update = function(board) {
     // update board values
     if (board.name) { updateBoard.name = board.name; }
     if (board.description) { updateBoard.description = board.description; }
+    if (board.category_id) { updateBoard.category_id = board.category_id; }
+    else if (board.category_id === null) { delete updateBoard.category_id }
     if (board.updateBoard) { updateBoard.parent_id = board.parent_id; }
     if (board.children_ids) { updateBoard.children_ids = board.children_ids; }
     if (board.deleted) { updateBoard.deleted = board.deleted; }
@@ -214,14 +217,6 @@ boards.purge = function(id) {
       throw new Error('Cannot purge parent board with child boards.');
     }
   })
-  // move board to deleted db
-  .then(function() {
-    return db.deleted.putAsync(boardKey, purgeBoard);
-  })
-  // remove board from content
-  .then(function() {
-    return db.content.delAsync(boardKey);
-  })
   // delete id from parent board if necessary
   .then(function() {
     if (purgeBoard.parent_id) {
@@ -268,6 +263,14 @@ boards.purge = function(id) {
       return db.legacy.delAsync(legacyKey);
     }
     else { return; }
+  })
+  // move board to deleted db
+  .then(function() {
+    return db.deleted.putAsync(boardKey, purgeBoard);
+  })
+  // remove board from content
+  .then(function() {
+    return db.content.delAsync(boardKey);
   })
   // return this board
   .then(function() { return purgeBoard; });
@@ -325,7 +328,7 @@ boards.incTotalPostCount = function(id) {
   var totalPostCountKey = Board.totalPostCountKeyFromId(id);
 
   return new Promise(function(fulfill, reject) {
-    postCountLock.runwithlock(function () {
+    postCountLock.runwithlock(function() {
       var promise = { fulfill: fulfill, reject: reject };
       increment(totalPostCountKey, postCountLock, promise);
     });
@@ -553,23 +556,148 @@ var removeChildFromBoard = function(childId, parentId) {
   });
 };
 
-// Categories
-
 // Used to handle reordering/removing/renaming of multiple categories at once
 boards.updateCategories = function(categories) {
-  // 1) Delete all categories if they exist
+  catLock.runwithlock(function() {
+    return new Promise(function(fulfill, reject) {
+      var catPrefix = config.boards.categoryPrefix;
+      var sep = config.sep;
+      var entries = [];
 
-  // 2) Re-populate categories using 'categories' array (encode cat pos)
+      var pushEntries = function(entry) {
+        entries.push(entry);
+      };
 
-  // 3) Update Boards categories to be in sync with updated categories
+      // Query boards update category_id
+      var resyncBoards = function(boards, categoryId) {
+        Promise.map(boards, function(boardId) {
+          var newBoard = new Board({ id: boardId, category_id: categoryId });
+          return boards.update(newBoard);
+        });
+      };
 
+      var processCategories = function() {
+        return Promise.map(entries, function(entry) {
+          var catKey = entry.key;
+          var boardIds = entry.value.boards;
+          return db.metadata.delAsync(catKey)
+          .then(function() {
+            return Promise.map(boardIds, function(boardId) {
+              var boardKey = Board.keyFromId(boardId);
+              var modifiedBoard = new Board({ id: boardId, category_id: null });
+              return boards.update(modifiedBoard);
+            });
+          });
+        });
+      }
+
+      var handler = function() {
+        return processCategories()
+        .then(function() {
+          var categoryId = 1;
+          Promise.each(categories, function(category) {
+            var catKey = catPrefix + sep + categoryId;
+            delete category.boards;
+            return db.metadata.putAsync(catKey, category)
+            .then(function() {
+              return resyncBoards(category.board_ids, categoryId++);
+            });
+          })
+          .then(function() {
+            catLock.release();
+            return fulfill(categories);
+          });
+        });
+      };
+
+      var rejectPromise = function(err) {
+        catLock.release();
+        return reject(err);
+      }
+
+      var startKey = catPrefix + sep;
+      var endKey = startKey;
+      startKey += '\xff';
+      endKey += '\x00';
+
+      var queryOptions = {
+        start: startKey,
+        end: endKey
+      };
+      // query thread Index
+      db.indexes.createValueStream(queryOptions)
+      .on('data', pushEntries)
+      .on('error', rejectPromise)
+      .on('close', handler)
+      .on('end', handler);
+    });
+  });
+};
+
+boards.categoryDeleteBoard = function(board) {
+  catLock.runwithlock(function() {
+    return new Promise(function(fulfill, reject) {
+      if (board.category_id === null) {
+        var catErr = new Error('Board must have a category_id inorder to delete it from a category.');
+        catlock.release();
+        return reject(catErr);
+      }
+      else {
+        var catKey = board.categoryKey();
+        var modifiedCategory;
+        return db.metadata.getAsync(catKey)
+        .then(function(category) {
+          var indexOfBoardId = category.board_ids.indexOf(board.id);
+          if (indexOfBoardId > -1) {
+            category.board_ids.splice(indexOfBoardId, 1);
+          }
+          modifiedCategory = category;
+          return db.metadata.putAsync(catKey, category);
+        })
+        .then(function() {
+          catLock.release();
+          return fulfill(modifiedCategory);
+        });
+      }
+    });
+  });
 };
 
 // Used to bring back all boards in their respective categories
 boards.allCategories = function() {
-  // 1) Create readstream on cat~ prefix
+  return new Promise(function(fulfill, reject) {
+    var allCategories = [];
 
-  // 2) Lookup Boards using boards array of ids (include child boards)
+    var getBoardsForCategory = function(category) {
+      category.boards = category.board_ids.slice(0);
+      Promise.map(category.boards, function(boardId) {
+        return boards.find(boardId);
+      })
+      .then(function() {
+        return allCategories.push(category);
+      });
+    };
 
-  // 3) return array of category objects
+    var handler = function() {
+     return fulfill(allCategories);
+    };
+
+    var catPrefix = config.boards.categoryPrefix;
+    var sep = config.sep;
+    var startKey = catPrefix + sep;
+    var endKey = startKey;
+    startKey += '\xff';
+    endKey += '\x00';
+
+    var queryOptions = {
+      start: startKey,
+      end: endKey
+    };
+    // query thread Index
+    db.metadata.createValueStream(queryOptions)
+    .on('data', getBoardsForCategory)
+    .on('error', reject)
+    .on('close', handler)
+    .on('end', handler);
+  });
 };

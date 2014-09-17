@@ -4,6 +4,7 @@ module.exports = {
   sep: '~',
   boards: {
     prefix: 'board',
+    categoryPrefix: 'category',
     indexPrefix: 'boards'
   },
   posts: {

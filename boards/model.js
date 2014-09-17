@@ -6,6 +6,7 @@ var schema = require(path.join(__dirname, 'schema'));
 var boardsDb = require(path.join(__dirname, 'db'));
 var db = require(path.join(__dirname, '..', 'db'));
 var prefix = config.boards.prefix;
+var catPrefix = config.boards.categoryPrefix;
 var sep = config.sep;
 
 // helper functions
@@ -40,7 +41,7 @@ function Board(board) {
   // specific to board
   this.name = board.name;
   if (board.description) { this.description = board.description; }
-  if (board.category) { this.category = board.category; }
+  if (board.category_id) { this.category_id = board.category_id; }
   if (board.smf && board.smf.ID_BOARD) { this.smf  = board.smf; }
   if (board.parent_id) { this.parent_id = board.parent_id; }
   if (board.children_ids) { this.children_ids = board.children_ids; }
@@ -54,6 +55,11 @@ Board.prototype.key = function() {
 Board.prototype.legacyKey = function() {
   var self = this;
   return legacyKeyForBoard(self.smf.ID_BOARD);
+};
+
+Board.prototype.categoryKey = function() {
+  var self = this;
+  return catPrefix + sep + self.category_id;
 };
 
 // children in database stored in relation to board index
@@ -93,7 +99,7 @@ Board.prototype.simple = function() {
   if (self.id) { board.id = self.id; }
   board.name = self.name;
   if (self.description) { board.description = self.description; }
-  if (self.category) { board.category = self.category; }
+  if (self.category_id) { board.category_id = self.category_id; }
   if (self.created_at) { board.created_at = self.created_at; }
   if (self.updated_at) { board.updated_at = self.updated_at; }
   if (self.imported_at) { board.imported_at = self.imported_at; }
