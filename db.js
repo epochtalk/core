@@ -3,7 +3,6 @@ module.exports = db;
 
 var path = require('path');
 var levelup = require('levelup');
-var sublevel = require('level-sublevel');
 var Promise = require('bluebird');
 var mkdirp = require('mkdirp');
 var config = require(path.join(__dirname, 'config'));
