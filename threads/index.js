@@ -56,6 +56,10 @@ threads.purge = function(id) {
   });
 };
 
+threads.incViewCount = function(id) {
+  return threadsDb.incViewCount(id);
+};
+
 threads.threadByOldId = function(oldId) {
   return threadsDb.threadByOldId(oldId); // already simple
 };

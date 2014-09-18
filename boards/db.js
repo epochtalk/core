@@ -23,7 +23,7 @@ boards.import = function(board) {
         .then(function() { return dbBoard; });
       }
     });
-  }
+  };
 
   board.imported_at = Date.now();
   var promise;
