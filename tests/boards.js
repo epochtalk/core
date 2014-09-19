@@ -1,6 +1,7 @@
 var should = require('chai').should();
 var rimraf = require('rimraf');
 var path = require('path');
+var Promise = require('bluebird');
 var probe = require(path.join(__dirname, '..', 'probe'));
 var dbName = 'test-epoch.db';
 var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
@@ -430,6 +431,152 @@ describe('boards', function() {
     });
   });
 
+  describe('#UPDATE_CATEGORIES', function() {
+    var categories = [{
+      name: 'General Discussion',
+      board_ids: []
+    },
+    {
+      name: 'Offtopic Discussion',
+      board_ids: []
+    },
+    {
+      name: 'Movies Discussion',
+      board_ids: []
+    },
+    {
+      name: 'Music Discussion',
+      board_ids: []
+    }];
+    var allBoardIds = [];
+    var lastBoardId;
+    var childBoard = {
+      name: 'Test Child Board',
+      description: 'Test Child Board Description'
+    };
+
+    before(function() {
+
+      var boardsToCreate = [];
+      for (var i = 0; i < 16; i++) {
+        var newBoard = {
+          name: 'New Board ' + (i + 1),
+          description: 'New Board Description ' + (i + 1)
+        };
+
+        boardsToCreate.push(newBoard);
+      }
+      return Promise.each(boardsToCreate, function(board) {
+        return boards.create(board)
+        .then(function(board) {
+          lastBoardId = board.id;
+          return allBoardIds.push(board.id);
+        })
+      })
+      .then(function() {
+        childBoard.parent_id = lastBoardId;
+        return boards.create(childBoard);
+      })
+      .then(function(createdBoard) {
+        childBoard = createdBoard;
+        categories[0].board_ids.push(allBoardIds[0]);
+        categories[0].board_ids.push(allBoardIds[1]);
+        categories[0].board_ids.push(allBoardIds[2]);
+        categories[0].board_ids.push(allBoardIds[3]);
+        categories[1].board_ids.push(allBoardIds[4]);
+        categories[1].board_ids.push(allBoardIds[5]);
+        categories[1].board_ids.push(allBoardIds[6]);
+        categories[1].board_ids.push(allBoardIds[7]);
+        categories[2].board_ids.push(allBoardIds[8]);
+        categories[2].board_ids.push(allBoardIds[9]);
+        categories[2].board_ids.push(allBoardIds[10]);
+        categories[2].board_ids.push(allBoardIds[11]);
+        categories[3].board_ids.push(allBoardIds[12]);
+        categories[3].board_ids.push(allBoardIds[13]);
+        categories[3].board_ids.push(allBoardIds[14]);
+        categories[3].board_ids.push(allBoardIds[15]);
+        return categories;
+      });
+    });
+
+    it('should update the board categories and board\'s category_id', function() {
+      return boards.updateCategories(categories)
+      .then(function(cats) {
+        cats.should.be.equal(categories);
+        cats[0].name.should.be.equal('General Discussion');
+        cats[0].board_ids.length.should.be.equal(4);
+
+        cats[1].name.should.be.equal('Offtopic Discussion');
+        cats[1].board_ids.length.should.be.equal(4);
+
+        cats[2].name.should.be.equal('Movies Discussion');
+        cats[2].board_ids.length.should.be.equal(4);
+
+        cats[3].name.should.be.equal('Music Discussion');
+        cats[3].board_ids.length.should.be.equal(4);
+
+        Promise.each(cats, function(category) {
+          var i = 0;
+          Promise.each(category.board_ids, function(boardId) {
+            return boards.find(boardId)
+            .then(function(board) {
+              cats[board.category_id - 1].board_ids[i++].should.be.equal(boardId);
+            });
+          });
+        });
+      });
+    });
+
+    it('should return of all boards in their respective categories', function() {
+      return boards.allCategories()
+      .then(function(allCats) {
+        allCats.length.should.be.equal(4);
+
+        allCats[0].board_ids[0].should.be.equal(allBoardIds[0]);
+        allCats[0].board_ids[0].should.be.equal(allCats[0].boards[0].id);
+        allCats[0].board_ids[1].should.be.equal(allBoardIds[1]);
+        allCats[0].board_ids[1].should.be.equal(allCats[0].boards[1].id);
+        allCats[0].board_ids[2].should.be.equal(allBoardIds[2]);
+        allCats[0].board_ids[2].should.be.equal(allCats[0].boards[2].id);
+        allCats[0].board_ids[3].should.be.equal(allBoardIds[3]);
+        allCats[0].board_ids[3].should.be.equal(allCats[0].boards[3].id);
+
+        allCats[1].board_ids[0].should.be.equal(allBoardIds[4]);
+        allCats[1].board_ids[0].should.be.equal(allCats[1].boards[0].id);
+        allCats[1].board_ids[1].should.be.equal(allBoardIds[5]);
+        allCats[1].board_ids[1].should.be.equal(allCats[1].boards[1].id);
+        allCats[1].board_ids[2].should.be.equal(allBoardIds[6]);
+        allCats[1].board_ids[2].should.be.equal(allCats[1].boards[2].id);
+        allCats[1].board_ids[3].should.be.equal(allBoardIds[7]);
+        allCats[1].board_ids[3].should.be.equal(allCats[1].boards[3].id);
+
+        allCats[2].board_ids[0].should.be.equal(allBoardIds[8]);
+        allCats[2].board_ids[0].should.be.equal(allCats[2].boards[0].id);
+        allCats[2].board_ids[1].should.be.equal(allBoardIds[9]);
+        allCats[2].board_ids[1].should.be.equal(allCats[2].boards[1].id);
+        allCats[2].board_ids[2].should.be.equal(allBoardIds[10]);
+        allCats[2].board_ids[2].should.be.equal(allCats[2].boards[2].id);
+        allCats[2].board_ids[3].should.be.equal(allBoardIds[11]);
+        allCats[2].board_ids[3].should.be.equal(allCats[2].boards[3].id);
+
+        allCats[3].board_ids[0].should.be.equal(allBoardIds[12]);
+        allCats[3].board_ids[0].should.be.equal(allCats[3].boards[0].id);
+        allCats[3].board_ids[1].should.be.equal(allBoardIds[13]);
+        allCats[3].board_ids[1].should.be.equal(allCats[3].boards[1].id);
+        allCats[3].board_ids[2].should.be.equal(allBoardIds[14]);
+        allCats[3].board_ids[2].should.be.equal(allCats[3].boards[2].id);
+        allCats[3].board_ids[3].should.be.equal(allBoardIds[15]);
+        allCats[3].board_ids[3].should.be.equal(allCats[3].boards[3].id);
+
+        // Ensure allCategories brings back child boards.
+        allCats[3].boards[3].children_ids.length.should.be.equal(1);
+        allCats[3].boards[3].children_ids[0].should.be.equal(childBoard.id);
+        allCats[3].boards[3].children.length.should.be.equal(1);
+        allCats[3].boards[3].children[0].id.should.be.equal(childBoard.id);
+      });
+    });
+  });
+
   describe('#DELETE', function() {
     var testBoard = {
       name: 'Test Board',
@@ -530,16 +677,28 @@ describe('boards', function() {
       name: 'Test Board',
       description: 'Test Board Description'
     };
-
+    var categories;
     before(function() {
-      return boards.create(parentBoard)
+      return boards.allCategories()
+      .then(function(cats) {
+        return Promise.each(cats, function(cat) {
+          delete cat.boards;
+          return cat;
+        })
+        .then(function() {
+          categories = cats;
+          return boards.create(parentBoard);
+        });
+      })
       .then(function(board) {
         parentBoard = board;
+        categories[0].board_ids.push(board.id);
         testBoard.parent_id = board.id;
         return boards.create(testBoard);
       })
       .then(function(board) {
         testBoard = board;
+        return boards.updateCategories(categories);
       });
     });
 
@@ -552,6 +711,7 @@ describe('boards', function() {
         board.children.should.be.an('array');
         board.children.should.have.length(1);
         board.children[0].id.should.equal(testBoard.id);
+        board.category_id.should.equal(1); // category_id should be 1
         return boards.purge(testBoard.id)
       })
       .then(function(board) {
@@ -566,6 +726,7 @@ describe('boards', function() {
         should.not.exist(board.smf);
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
+        should.not.exist(board.category_id);
         return boards.find(board.id);
       })
       .catch(function(err) {
@@ -576,6 +737,18 @@ describe('boards', function() {
       .then(function(board) { // verify purged child was removed.
         should.not.exist(board.children_ids);
         should.not.exist(board.children);
+        return boards.purge(parentBoard.id);
+      })
+      .then(function(deletedParent) {
+        should.not.exist(deletedParent.category_id);
+        return boards.allCategories();
+      })
+      .then(function(cats) { // Ensure Purged boards are removed from their categories
+        cats[0].board_ids.length.should.be.equal(4);
+        cats[0].board_ids[0].should.not.be.equal(parentBoard.id);
+        cats[0].board_ids[1].should.not.be.equal(parentBoard.id);
+        cats[0].board_ids[2].should.not.be.equal(parentBoard.id);
+        cats[0].board_ids[3].should.not.be.equal(parentBoard.id);
       });
     });
   });

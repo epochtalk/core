@@ -264,6 +264,17 @@ boards.purge = function(id) {
     }
     else { return; }
   })
+  // delete Board from category and remove boards category id
+  .then(function() {
+    if (purgeBoard.category_id) {
+      return boards.categoryDeleteBoard(purgeBoard)
+      .then(function() {
+        delete purgeBoard.category_id;
+        return;
+      })
+    }
+    else { return; }
+  })
   // move board to deleted db
   .then(function() {
     return db.deleted.putAsync(boardKey, purgeBoard);
@@ -558,8 +569,8 @@ var removeChildFromBoard = function(childId, parentId) {
 
 // Used to handle reordering/removing/renaming of multiple categories at once
 boards.updateCategories = function(categories) {
-  catLock.runwithlock(function() {
-    return new Promise(function(fulfill, reject) {
+  return new Promise(function(fulfill, reject) {
+    catLock.runwithlock(function() {
       var catPrefix = config.boards.categoryPrefix;
       var sep = config.sep;
       var entries = [];
@@ -569,8 +580,8 @@ boards.updateCategories = function(categories) {
       };
 
       // Query boards update category_id
-      var resyncBoards = function(boards, categoryId) {
-        Promise.map(boards, function(boardId) {
+      var resyncBoards = function(boardIds, categoryId) {
+        return Promise.map(boardIds, function(boardId) {
           var newBoard = new Board({ id: boardId, category_id: categoryId });
           return boards.update(newBoard);
         });
@@ -598,12 +609,13 @@ boards.updateCategories = function(categories) {
           Promise.each(categories, function(category) {
             var catKey = catPrefix + sep + categoryId;
             delete category.boards;
+
             return db.metadata.putAsync(catKey, category)
             .then(function() {
-              return resyncBoards(category.board_ids, categoryId++);
+              return resyncBoards(category.board_ids, categoryId++)
             });
           })
-          .then(function() {
+          .then(function(boardads) {
             catLock.release();
             return fulfill(categories);
           });
@@ -617,8 +629,8 @@ boards.updateCategories = function(categories) {
 
       var startKey = catPrefix + sep;
       var endKey = startKey;
-      startKey += '\xff';
-      endKey += '\x00';
+      startKey += '\x00';
+      endKey += '\xff';
 
       var queryOptions = {
         start: startKey,
@@ -628,18 +640,17 @@ boards.updateCategories = function(categories) {
       db.indexes.createValueStream(queryOptions)
       .on('data', pushEntries)
       .on('error', rejectPromise)
-      .on('close', handler)
       .on('end', handler);
     });
   });
 };
 
 boards.categoryDeleteBoard = function(board) {
-  catLock.runwithlock(function() {
-    return new Promise(function(fulfill, reject) {
-      if (board.category_id === null) {
+  return new Promise(function(fulfill, reject) {
+    catLock.runwithlock(function() {
+      if (!board.category_id || board.category_id === null) {
         var catErr = new Error('Board must have a category_id inorder to delete it from a category.');
-        catlock.release();
+        catLock.release();
         return reject(catErr);
       }
       else {
@@ -667,27 +678,22 @@ boards.categoryDeleteBoard = function(board) {
 boards.allCategories = function() {
   return new Promise(function(fulfill, reject) {
     var allCategories = [];
+    var cats = [];
 
-    var getBoardsForCategory = function(category) {
-      category.boards = category.board_ids.slice(0);
-      Promise.map(category.boards, function(boardId) {
-        return boards.find(boardId);
-      })
-      .then(function() {
-        return allCategories.push(category);
-      });
+    var pushCats = function(category) {
+      cats.push(category);
     };
 
     var handler = function() {
-     return fulfill(allCategories);
+      return fulfill(cats);
     };
 
     var catPrefix = config.boards.categoryPrefix;
     var sep = config.sep;
     var startKey = catPrefix + sep;
     var endKey = startKey;
-    startKey += '\xff';
-    endKey += '\x00';
+    startKey += '\x00';
+    endKey += '\xff';
 
     var queryOptions = {
       start: startKey,
@@ -695,7 +701,7 @@ boards.allCategories = function() {
     };
     // query thread Index
     db.metadata.createValueStream(queryOptions)
-    .on('data', getBoardsForCategory)
+    .on('data', pushCats)
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
