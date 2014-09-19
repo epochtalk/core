@@ -86,44 +86,53 @@ posts.insert = function(post) {
 
     return db.metadata.batchAsync(metadataBatch);
   })
-  .then(function() {
-    return threadsDb.find(post.thread_id);
-  })
+  .then(function() { return threadsDb.find(post.thread_id); })
   .then(function(dbThread) {
     boardId = dbThread.board_id;
     threadTitle = dbThread.title;
     thread = new Thread(dbThread);
     return boardsDb.incPostCount(boardId);
   })
-  .then(function() { // remove old thread index value
+  .then(function() {
+    // get current thread last updated at timestamp
     var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(post.thread_id);
-    return db.metadata.getAsync(threadLastPostCreatedAtKey)
-    .then(function(timestamp) {
-      var boardThreadKey = thread.boardThreadKey(timestamp);
-      return db.indexes.delAsync(boardThreadKey);
-    });
+    return db.metadata.getAsync(threadLastPostCreatedAtKey);
   })
-  .then(function() { // build metadata batch array
-    var threadLastPostUsernameKey = Thread.lastPostUsernameKeyFromId(post.thread_id);
-    var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(post.thread_id);
-    var metadataBatch = [
-      { type: 'put', key: threadLastPostUsernameKey, value: postUsername },
-      { type: 'put', key: threadLastPostCreatedAtKey, value: post.created_at }
-    ];
-    var metadata = {
-      username: postUsername,
-      createdAt: post.created_at,
-      threadTitle: threadTitle,
-      threadId: post.thread_id
+  .then(function(oldTimestamp) {
+    // only remove if post.created_at is newer
+    if (post.created_at >= oldTimestamp) {
+      // build metadata batch array
+      var threadLastPostUsernameKey = Thread.lastPostUsernameKeyFromId(post.thread_id);
+      var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(post.thread_id);
+      var metadataBatch = [
+        { type: 'put', key: threadLastPostUsernameKey, value: postUsername },
+        { type: 'put', key: threadLastPostCreatedAtKey, value: post.created_at }
+      ];
+      var metadata = {
+        username: postUsername,
+        createdAt: post.created_at,
+        threadTitle: threadTitle,
+        threadId: post.thread_id
+      };
+      // build and insert metadata
+      return buildMetadataBatch(boardId, metadata, metadataBatch)
+      .then(function(metadataBatch) {
+        return db.metadata.batchAsync(metadataBatch);
+      })
+      // update board thread key index
+      .then(function() {
+        // old thread index
+        var oldBoardThreadKey = thread.boardThreadKey(oldTimestamp);
+        // add new thread index value
+        var newBoardThreadKey = thread.boardThreadKey(post.created_at);
+        var indexBatch = [
+          { type: 'del', key: oldBoardThreadKey },
+          { type: 'put', key: newBoardThreadKey, value: post.thread_id }
+        ];
+        return db.indexes.batchAsync(indexBatch);
+      });
     }
-    return buildMetadataBatch(boardId, metadata, metadataBatch);
-  })
-  .then(function(metadataBatch) { // insert metadata
-    return db.metadata.batchAsync(metadataBatch);
-  })
-  .then(function() { // add new thread index value
-    var boardThreadKey = thread.boardThreadKey(post.created_at);
-    return db.indexes.putAsync(boardThreadKey, post.thread_id);
+    else { return; }
   })
   .then(function() { // threadPostOrder
     var key = post.threadPostOrderKey(postCount);
@@ -139,7 +148,7 @@ posts.insert = function(post) {
 };
 
 var buildMetadataBatch = function(boardId, metadata, batchArray) {
-  if (!boardId) { return batchArray }
+  if (!boardId) { return batchArray; }
   var boardKey = Board.keyFromId(boardId);
   return db.content.getAsync(boardKey)
   .then(function(board) {
@@ -153,7 +162,7 @@ var buildMetadataBatch = function(boardId, metadata, batchArray) {
     batchArray.push({ type: 'put', key: boardLastThreadIdKey, value: metadata.threadId });
     return buildMetadataBatch(board.parent_id, metadata, batchArray);
   });
-}
+};
 
 posts.find = function(id) {
   var postKey = Post.keyFromId(id);

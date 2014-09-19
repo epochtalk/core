@@ -536,7 +536,7 @@ var addChildToBoard = function(childId, parentId) {
       })
       .then(function() { fulfill(parentBoard); })
       .catch(function(err) { reject(err); })
-      .finally(function() { updateParentLock.release(); })
+      .finally(function() { updateParentLock.release(); });
     });
   });
 };
@@ -562,7 +562,7 @@ var removeChildFromBoard = function(childId, parentId) {
       })
       .then(function() { fulfill(parentBoard); })
       .catch(function(err) { reject(err); })
-      .finally(function() { updateParentLock.release(); })
+      .finally(function() { updateParentLock.release(); });
     });
   });
 };

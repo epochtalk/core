@@ -13,8 +13,7 @@ describe('metadata', function() {
   describe('#boards', function() {
     var plainPost = {
       title: 'post title',
-      body: 'post body',
-      created_at: '1409533100723'
+      body: 'post body'
     };
     var boardId, user, tempPost;
     before(function() {
@@ -46,7 +45,10 @@ describe('metadata', function() {
           })
           .then(function(postArray) {
             return Promise.map(postArray, function(post) {
-              return posts.create(post);
+              return posts.create(post)
+              .then(function(newPost) {
+                plainPost = newPost;
+              });
             });
           });
         });
@@ -129,8 +131,7 @@ describe('metadata', function() {
   describe('#threads', function() {
     var plainPost = {
       title: 'post title',
-      body: 'post body',
-      created_at: '1409533100723'
+      body: 'post body'
     };
     var threadId, firstPostId, user;
     var first = true;
@@ -174,6 +175,9 @@ describe('metadata', function() {
                 firstPostId = post.id;
                 firstPostTitle = post.title;
                 first = false;
+              }
+              else {
+                plainPost = post;
               }
             });
           });

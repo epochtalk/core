@@ -251,7 +251,7 @@ threadsDb.find = function(id) {
     thread.user = {
       username: threadUsername
     };
-    return db.metadata.getAsync(lastPostUsernameKey)
+    return db.metadata.getAsync(lastPostUsernameKey);
   })
   .then(function(lastPostUsername) {
     thread.last_post_username = lastPostUsername;
