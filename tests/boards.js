@@ -471,7 +471,7 @@ describe('boards', function() {
         .then(function(board) {
           lastBoardId = board.id;
           return allBoardIds.push(board.id);
-        })
+        });
       })
       .then(function() {
         childBoard.parent_id = lastBoardId;
@@ -574,6 +574,8 @@ describe('boards', function() {
         allCats[3].boards[3].children.length.should.be.equal(1);
         allCats[3].boards[3].children[0].id.should.be.equal(childBoard.id);
       });
+
+      // TODO: one more test with all cats flipped
     });
   });
 
@@ -638,7 +640,7 @@ describe('boards', function() {
     });
 
     it('should undelete specified board', function() {
-      testBoard.deleted = false;
+      testBoard.deleted = null;
       return boards.update(testBoard)
       .then(function(board) {
         board.id.should.equal(testBoard.id);

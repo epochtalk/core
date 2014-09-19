@@ -1,9 +1,9 @@
 var boards = {};
 module.exports = boards;
 
+var _ = require('lodash');
 var path = require('path');
 var Promise = require('bluebird');
-var _ = require('lodash');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Board = require(path.join(__dirname, 'model'));
@@ -14,7 +14,6 @@ var threadCountLock = new Padlock();
 var updateParentLock = new Padlock();
 var catLock = new Padlock();
 
-/* IMPORT */
 boards.import = function(board) {
   var insertBoard = function() {
     return boards.create(board) // create board first to handle id
@@ -41,7 +40,6 @@ boards.import = function(board) {
   return promise;
 };
 
-/* CREATE */
 boards.create = function(board) {
   // insert into db
   var timestamp = Date.now();
@@ -52,7 +50,6 @@ boards.create = function(board) {
   else if (!board.updated_at) {
     board.updated_at = board.created_at;
   }
-  board.updated_at = timestamp;
   board.id = helper.genId(board.created_at);
   var boardKey = board.key();
   var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(board.id);
@@ -86,8 +83,23 @@ boards.create = function(board) {
   .then(function() { return board; });
 };
 
-/* RETRIEVE */
 boards.find = function(id) {
+  var addProperty = function(key, keyName) {
+    return db.metadata.getAsync(key)
+    .then(function(value) {
+      if (_.isNumber(board[keyName]) && _.isNumber(value)) {
+        board[keyName] += Number(value);
+      }
+      else if (_.isNumber(value)) {
+        board[keyName] = Number(value);
+      }
+      else if (_.isString(value)) {
+        board[keyName] = value;
+      }
+    });
+  };
+
+  var board;
   var boardKey = Board.keyFromId(id);
   var postCountKey = Board.postCountKeyFromId(id);
   var threadCountKey = Board.threadCountKeyFromId(id);
@@ -97,7 +109,7 @@ boards.find = function(id) {
   var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
   var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
   var lastThreadIdKey = Board.lastThreadIdKeyFromId(id);
-  var board;
+
   return db.content.getAsync(boardKey)
   .then(function(dbBoard) {
     board = new Board(dbBoard);
@@ -106,46 +118,22 @@ boards.find = function(id) {
     return board.getChildren();
   })
   .then(function(children) {
-    if (children.length > 0) {
-      board.children = children;
-    }
-    return db.metadata.getAsync(postCountKey);
+    if (children.length > 0) { board.children = children; }
   })
-  .then(function(postCount) {
-    board.post_count += Number(postCount);
-    return db.metadata.getAsync(threadCountKey);
-  })
-  .then(function(threadCount) {
-    board.thread_count += Number(threadCount);
-    return db.metadata.getAsync(totalPostCountKey);
-  })
-  .then(function(totalPostCount) {
-    board.total_post_count = Number(totalPostCount);
-    return db.metadata.getAsync(totalThreadCountKey);
-  })
-  .then(function(totalThreadCount) {
-    board.total_thread_count = Number(totalThreadCount);
-    return db.metadata.getAsync(lastPostUsernameKey);
-  })
-  .then(function(username) {
-    board.last_post_username = username;
-    return db.metadata.getAsync(lastPostCreatedAtKey);
-  })
-  .then(function(created) {
-    board.last_post_created_at = created;
-    return db.metadata.getAsync(lastThreadTitleKey);
-  })
-  .then(function(threadTitle) {
-    board.last_thread_title = threadTitle;
-    return db.metadata.getAsync(lastThreadIdKey);
-  })
-  .then(function(threadId) {
-    board.last_thread_id = threadId;
-    return board;
+  .then(function() {
+    return Promise.join(
+      addProperty(postCountKey, 'post_count'),
+      addProperty(threadCountKey, 'thread_count'),
+      addProperty(totalPostCountKey, 'total_post_count'),
+      addProperty(totalThreadCountKey, 'total_thread_count'),
+      addProperty(lastPostUsernameKey, 'last_post_username'),
+      addProperty(lastPostCreatedAtKey, 'last_post_created_at'),
+      addProperty(lastThreadTitleKey, 'last_thread_title'),
+      addProperty(lastThreadIdKey, 'last_thread_id'),
+      function() { return board; });
   });
 };
 
-/*  UPDATE */
 boards.update = function(board) {
   var boardKey = board.key();
   var updateBoard = null;
@@ -157,22 +145,30 @@ boards.update = function(board) {
 
     // update board values
     if (board.name) { updateBoard.name = board.name; }
+    
     if (board.description) { updateBoard.description = board.description; }
+    else if (board.description === null) { delete updateBoard.description; }
+    
     if (board.category_id) { updateBoard.category_id = board.category_id; }
-    else if (board.category_id === null) { delete updateBoard.category_id }
-    if (board.updateBoard) { updateBoard.parent_id = board.parent_id; }
+    else if (board.category_id === null) { delete updateBoard.category_id; }
+    
+    if (board.parent_id) { updateBoard.parent_id = board.parent_id; }
+    else if (board.parent_id === null) { delete updateBoard.parent_id; }
+    
     if (board.children_ids) { updateBoard.children_ids = board.children_ids; }
+    else if (board.children_ids === null) { delete updateBoard.children_ids; }
+    
     if (board.deleted) { updateBoard.deleted = board.deleted; }
-    else { delete updateBoard.deleted; }
+    else if (board.deleted === null) { delete updateBoard.deleted; }
+    
     updateBoard.updated_at = Date.now();
 
     // insert back into db
-    return db.content.putAsync(boardKey, updateBoard);
-  })
-  .then(function() { return updateBoard; });
+    return db.content.putAsync(boardKey, updateBoard)
+    .then(function() { return updateBoard; });
+  });
 };
 
-/* DELETE */
 boards.delete = function(boardId) {
   var boardKey = Board.keyFromId(boardId);
   var deleteBoard;
@@ -197,16 +193,8 @@ boards.delete = function(boardId) {
 };
 
 boards.purge = function(id) {
-  var boardKey = Board.keyFromId(id);
-  var postCountKey = Board.postCountKeyFromId(id);
-  var threadCountKey = Board.threadCountKeyFromId(id);
-  var totalPostCountKey = Board.totalPostCountKeyFromId(id);
-  var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
-  var lastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
-  var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
-  var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
-  var lastThreadIdKey = Board.lastThreadIdKeyFromId(id);
   var purgeBoard;
+  var boardKey = Board.keyFromId(id);
 
   // see if board already exists
   return db.content.getAsync(boardKey)
@@ -224,37 +212,27 @@ boards.purge = function(id) {
     }
     else { return; }
   })
-  // delete postCount metadata
+  // delete metadata
   .then(function() {
-    return db.metadata.delAsync(postCountKey);
-  })
-  // delete threadCount metadata
-  .then(function() {
-    return db.metadata.delAsync(threadCountKey);
-  })
-  // delete totalPostCount metadata
-  .then(function() {
-    return db.metadata.delAsync(totalPostCountKey);
-  })
-  // delete totalThreadCount metadata
-  .then(function() {
-    return db.metadata.delAsync(totalThreadCountKey);
-  })
-  // delete lastPostUsername metadata
-  .then(function() {
-    return db.metadata.delAsync(lastPostUsernameKey);
-  })
-  // delete lastPostCreatedAt metadata
-  .then(function() {
-    return db.metadata.delAsync(lastPostCreatedAtKey);
-  })
-  // delete lastThreadTitle metadata
-  .then(function() {
-    return db.metadata.delAsync(lastThreadTitleKey);
-  })
-  // delete lastThreadId metadata
-  .then(function() {
-    return db.metadata.delAsync(lastThreadIdKey);
+    var postCountKey = Board.postCountKeyFromId(id);
+    var threadCountKey = Board.threadCountKeyFromId(id);
+    var totalPostCountKey = Board.totalPostCountKeyFromId(id);
+    var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
+    var lastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
+    var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
+    var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
+    var lastThreadIdKey = Board.lastThreadIdKeyFromId(id);
+    var deleteBatch = [
+      { type: 'del', key: postCountKey },
+      { type: 'del', key: threadCountKey },
+      { type: 'del', key: totalPostCountKey },
+      { type: 'del', key: totalThreadCountKey },
+      { type: 'del', key: lastPostUsernameKey },
+      { type: 'del', key: lastPostCreatedAtKey },
+      { type: 'del', key: lastThreadTitleKey },
+      { type: 'del', key: lastThreadIdKey }
+    ];
+    return db.metadata.batchAsync(deleteBatch);
   })
   // delete legacy key index
   .then(function() {
@@ -262,18 +240,15 @@ boards.purge = function(id) {
       var legacyKey = purgeBoard.legacyKey();
       return db.legacy.delAsync(legacyKey);
     }
-    else { return; }
+    return;
   })
   // delete Board from category and remove boards category id
   .then(function() {
     if (purgeBoard.category_id) {
       return boards.categoryDeleteBoard(purgeBoard)
-      .then(function() {
-        delete purgeBoard.category_id;
-        return;
-      })
+      .then(function() { delete purgeBoard.category_id; });
     }
-    else { return; }
+    return;
   })
   // move board to deleted db
   .then(function() {
@@ -303,7 +278,9 @@ boards.boardByOldId = function(oldId) {
 boards.all = function() {
   return new Promise(function(fulfill, reject) {
     var boardIds = [];
-
+    var sorter = function(entry) {
+      boardIds.push(entry.value.id);
+    };
     var handler = function() {
       Promise.map(boardIds, function(boardId) {
         return boards.find(boardId);
@@ -325,9 +302,7 @@ boards.all = function() {
       end: searchKey + '\xff'
     };
     db.content.createReadStream(query)
-    .on('data', function(board) {
-      boardIds.push(board.value.id);
-     })
+    .on('data', sorter)
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
@@ -526,13 +501,13 @@ var addChildToBoard = function(childId, parentId) {
       return db.content.getAsync(parentBoardKey)
       .then(function(dbParentBoard) {
         parentBoard = dbParentBoard;
-        var childIds = parentBoard.children_ids;
-        parentBoard.children_ids = childIds ? childIds : [];
+        parentBoard.children_ids = dbParentBoard.children_ids || [];
         if (!_.contains(parentBoard.children_ids, childId)) {
           parentBoard.children_ids.push(childId);
           return db.content.putAsync(parentBoardKey, parentBoard);
         }
-        else { return; } // parent board already has child board id in children_ids
+        // parent board already has child board id in children_ids
+        return;
       })
       .then(function() { fulfill(parentBoard); })
       .catch(function(err) { reject(err); })
@@ -549,16 +524,15 @@ var removeChildFromBoard = function(childId, parentId) {
       return db.content.getAsync(parentBoardKey)
       .then(function(dbParentBoard) {
         parentBoard = dbParentBoard;
-        if (parentBoard.children_ids && _.contains(parentBoard.children_ids, childId)) {
-          if (parentBoard.children_ids.length === 1) {
+        if (_.contains(parentBoard.children_ids, childId)) {
+          parentBoard.children_ids = _.pull(parentBoard.children_ids, childId);
+          if (parentBoard.children_ids.length === 0) {
             delete parentBoard.children_ids;
-          }
-          else {
-            parentBoard.children_ids = _.pull(parentBoard.children_ids, childId);
           }
           return db.content.putAsync(parentBoardKey, parentBoard);
         }
-        else { return; } // parent board doesn't have child board id in children_ids
+        // parent board doesn't have child board id in children_ids
+        return;
       })
       .then(function() { fulfill(parentBoard); })
       .catch(function(err) { reject(err); })
@@ -567,17 +541,14 @@ var removeChildFromBoard = function(childId, parentId) {
   });
 };
 
+/* POSSIBLE OPTIMIZATION CANDIDATE */
 // Used to handle reordering/removing/renaming of multiple categories at once
 boards.updateCategories = function(categories) {
-  return new Promise(function(fulfill, reject) {
+  return new Promise(function(outerFulfill, outerReject) {
     catLock.runwithlock(function() {
+      var newCategories;
       var catPrefix = config.boards.categoryPrefix;
       var sep = config.sep;
-      var entries = [];
-
-      var pushEntries = function(entry) {
-        entries.push(entry);
-      };
 
       // Query boards update category_id
       var resyncBoards = function(boardIds, categoryId) {
@@ -588,9 +559,9 @@ boards.updateCategories = function(categories) {
       };
 
       var processCategories = function() {
-        return Promise.map(entries, function(entry) {
+        return Promise.map(newCategories, function(entry) {
           var catKey = entry.key;
-          var boardIds = entry.value.boards;
+          var boardIds = entry.value.board_ids;
           return db.metadata.delAsync(catKey)
           .then(function() {
             return Promise.map(boardIds, function(boardId) {
@@ -600,47 +571,49 @@ boards.updateCategories = function(categories) {
             });
           });
         });
-      }
+      };
+      
+      return new Promise(function(fulfill, reject) {
+        var entries = [];
+        var pushEntries = function(entry) { entries.push(entry); };
+        var handler = function() { fulfill(entries); };
 
-      var handler = function() {
-        return processCategories()
-        .then(function() {
-          var categoryId = 1;
-          Promise.each(categories, function(category) {
-            var catKey = catPrefix + sep + categoryId;
-            delete category.boards;
+        var startKey = catPrefix + sep;
+        var endKey = startKey;
+        startKey += '\x00';
+        endKey += '\xff';
 
-            return db.metadata.putAsync(catKey, category)
-            .then(function() {
-              return resyncBoards(category.board_ids, categoryId++)
-            });
-          })
-          .then(function(boardads) {
-            catLock.release();
-            return fulfill(categories);
+        var queryOptions = {
+          start: startKey,
+          end: endKey
+        };
+        // query thread Index
+        db.indexes.createReadStream(queryOptions)
+        .on('data', pushEntries)
+        .on('error', reject)
+        .on('close', handler)
+        .on('end', handler);
+      })
+      .then(function(catArray) {
+        newCategories = catArray;
+        return processCategories();
+      })
+      .then(function() {
+        var categoryId = 1;
+        Promise.each(categories, function(category) {
+          var catKey = catPrefix + sep + categoryId;
+          delete category.boards;
+
+          return db.metadata.putAsync(catKey, category)
+          .then(function() {
+            return resyncBoards(category.board_ids, categoryId++);
           });
+        })
+        .then(function() {
+          catLock.release();
+          return outerFulfill(categories);
         });
-      };
-
-      var rejectPromise = function(err) {
-        catLock.release();
-        return reject(err);
-      }
-
-      var startKey = catPrefix + sep;
-      var endKey = startKey;
-      startKey += '\x00';
-      endKey += '\xff';
-
-      var queryOptions = {
-        start: startKey,
-        end: endKey
-      };
-      // query thread Index
-      db.indexes.createValueStream(queryOptions)
-      .on('data', pushEntries)
-      .on('error', rejectPromise)
-      .on('end', handler);
+      });
     });
   });
 };
@@ -658,12 +631,9 @@ boards.categoryDeleteBoard = function(board) {
         var modifiedCategory;
         return db.metadata.getAsync(catKey)
         .then(function(category) {
-          var indexOfBoardId = category.board_ids.indexOf(board.id);
-          if (indexOfBoardId > -1) {
-            category.board_ids.splice(indexOfBoardId, 1);
-          }
           modifiedCategory = category;
-          return db.metadata.putAsync(catKey, category);
+          _.pull(modifiedCategory.board_ids, board.id);
+          return db.metadata.putAsync(catKey, modifiedCategory);
         })
         .then(function() {
           catLock.release();

@@ -37,14 +37,22 @@ function Board(board) {
   if (board.created_at) { this.created_at = board.created_at; }
   if (board.updated_at) { this.updated_at = board.updated_at; }
   if (board.imported_at) { this.imported_at = board.imported_at; }
-  if (board.deleted) { this.deleted = board.deleted; }
+  if (board.deleted || board.deleted === null) { this.deleted = board.deleted; }
+  if (board.smf && board.smf.ID_BOARD) { this.smf  = board.smf; }
   // specific to board
   this.name = board.name;
-  if (board.description) { this.description = board.description; }
-  if (board.category_id) { this.category_id = board.category_id; }
-  if (board.smf && board.smf.ID_BOARD) { this.smf  = board.smf; }
-  if (board.parent_id) { this.parent_id = board.parent_id; }
-  if (board.children_ids) { this.children_ids = board.children_ids; }
+  if (board.description || board.description === null) {
+    this.description = board.description;
+  }
+  if (board.category_id || board.category_id === null) {
+    this.category_id = board.category_id;
+  }
+  if (board.parent_id || board.parent_id === null) {
+    this.parent_id = board.parent_id;
+  }
+  if (board.children_ids || board.children_ids === null) {
+    this.children_ids = board.children_ids;
+  }
 }
 
 Board.prototype.key = function() {
@@ -99,16 +107,16 @@ Board.prototype.simple = function() {
   if (self.id) { board.id = self.id; }
   board.name = self.name;
   if (self.description) { board.description = self.description; }
-  if (self.category_id) { board.category_id = self.category_id; }
   if (self.created_at) { board.created_at = self.created_at; }
   if (self.updated_at) { board.updated_at = self.updated_at; }
   if (self.imported_at) { board.imported_at = self.imported_at; }
-  if (self.parent_id) { board.parent_id = self.parent_id; }
-  if (self.children_ids) { board.children_ids = self.children_ids; }
   if (self.deleted) { board.deleted = self.deleted; }
   if (self.smf && self.smf.ID_BOARD) { board.smf = self.smf; }
   // this is a generated property
+  if (self.category_id) { board.category_id = self.category_id; }
+  if (self.parent_id) { board.parent_id = self.parent_id; }
   if (self.children) { board.children = self.children; }
+  if (self.children_ids) { board.children_ids = self.children_ids; }
   if (self.post_count) { board.post_count = self.post_count; }
   if (self.thread_count) { board.thread_count = self.thread_count; }
   if (self.total_post_count) { board.total_post_count = self.total_post_count; }
