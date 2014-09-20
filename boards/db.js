@@ -64,7 +64,7 @@ boards.create = function(board) {
   var metadataBatch = [
     // TODO: There should be a better solution than initializing with strings
     { type: 'put', key: boardLastPostUsernameKey , value: 'none' },
-    { type: 'put', key: boardLastPostCreatedAtKey , value: 'none' },
+    { type: 'put', key: boardLastPostCreatedAtKey , value: 0 },
     { type: 'put', key: boardLastThreadTitleKey , value: 'none' },
     { type: 'put', key: boardLastThreadIdKey , value: 'none' },
     { type: 'put', key: totalPostCountKey , value: 0 },

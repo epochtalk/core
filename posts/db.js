@@ -115,7 +115,7 @@ posts.insert = function(post) {
         threadId: post.thread_id
       };
       // build and insert metadata
-      return buildMetadataBatch(boardId, metadata, metadataBatch)
+      return buildMetadataBatch(boardId, metadata, metadataBatch, post.created_at)
       .then(function(metadataBatch) {
         return db.metadata.batchAsync(metadataBatch);
       })
@@ -147,20 +147,21 @@ posts.insert = function(post) {
   .then(function() { return post; });
 };
 
-var buildMetadataBatch = function(boardId, metadata, batchArray) {
+var buildMetadataBatch = function(boardId, metadata, batchArray, postCreatedAt) {
   if (!boardId) { return batchArray; }
-  var boardKey = Board.keyFromId(boardId);
-  return db.content.getAsync(boardKey)
+  return boardsDb.find(boardId)
   .then(function(board) {
-    var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
-    var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
-    var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
-    var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(boardId);
-    batchArray.push({ type: 'put', key: boardLastPostUsernameKey, value: metadata.username });
-    batchArray.push({ type: 'put', key: boardLastPostCreatedAtKey, value: metadata.createdAt });
-    batchArray.push({ type: 'put', key: boardLastThreadTitleKey, value: metadata.threadTitle });
-    batchArray.push({ type: 'put', key: boardLastThreadIdKey, value: metadata.threadId });
-    return buildMetadataBatch(board.parent_id, metadata, batchArray);
+    if (postCreatedAt >= board.last_post_created_at) {
+      var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
+      var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
+      var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
+      var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(boardId);
+      batchArray.push({ type: 'put', key: boardLastPostUsernameKey, value: metadata.username });
+      batchArray.push({ type: 'put', key: boardLastPostCreatedAtKey, value: metadata.createdAt });
+      batchArray.push({ type: 'put', key: boardLastThreadTitleKey, value: metadata.threadTitle });
+      batchArray.push({ type: 'put', key: boardLastThreadIdKey, value: metadata.threadId });
+    }
+    return buildMetadataBatch(board.parent_id, metadata, batchArray, postCreatedAt);
   });
 };
 
