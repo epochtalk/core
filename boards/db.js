@@ -145,22 +145,22 @@ boards.update = function(board) {
 
     // update board values
     if (board.name) { updateBoard.name = board.name; }
-    
+
     if (board.description) { updateBoard.description = board.description; }
     else if (board.description === null) { delete updateBoard.description; }
-    
+
     if (board.category_id) { updateBoard.category_id = board.category_id; }
     else if (board.category_id === null) { delete updateBoard.category_id; }
-    
+
     if (board.parent_id) { updateBoard.parent_id = board.parent_id; }
     else if (board.parent_id === null) { delete updateBoard.parent_id; }
-    
+
     if (board.children_ids) { updateBoard.children_ids = board.children_ids; }
     else if (board.children_ids === null) { delete updateBoard.children_ids; }
-    
+
     if (board.deleted) { updateBoard.deleted = board.deleted; }
     else if (board.deleted === null) { delete updateBoard.deleted; }
-    
+
     updateBoard.updated_at = Date.now();
 
     // insert back into db
@@ -565,14 +565,13 @@ boards.updateCategories = function(categories) {
           return db.metadata.delAsync(catKey)
           .then(function() {
             return Promise.map(boardIds, function(boardId) {
-              var boardKey = Board.keyFromId(boardId);
               var modifiedBoard = new Board({ id: boardId, category_id: null });
               return boards.update(modifiedBoard);
             });
           });
         });
       };
-      
+
       return new Promise(function(fulfill, reject) {
         var entries = [];
         var pushEntries = function(entry) { entries.push(entry); };
@@ -647,7 +646,6 @@ boards.categoryDeleteBoard = function(board) {
 // Used to bring back all boards in their respective categories
 boards.allCategories = function() {
   return new Promise(function(fulfill, reject) {
-    var allCategories = [];
     var cats = [];
 
     var pushCats = function(category) {

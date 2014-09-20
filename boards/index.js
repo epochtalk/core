@@ -85,7 +85,7 @@ boards.allCategories = function() {
   return db.allCategories()
   .then(function(dbCategories) {
     var allCategories = [];
-    return Promise.map(dbCategories, function(category) {
+    return Promise.each(dbCategories, function(category) {
       category.boards = category.board_ids.slice(0);
       return Promise.map(category.boards, function(boardId) {
         return boards.find(boardId);
