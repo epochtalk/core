@@ -1,5 +1,7 @@
+var path = require('path');
+
 module.exports = {
-  dbPath: process.cwd() + 'epoch.db',
+  dbPath: path.join(process.cwd(), 'epoch.db'),
   // sep: '\x00'
   sep: '~',
   boards: {
