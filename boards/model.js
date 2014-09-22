@@ -8,6 +8,7 @@ var db = require(path.join(__dirname, '..', 'db'));
 var prefix = config.boards.prefix;
 var catPrefix = config.boards.categoryPrefix;
 var sep = config.sep;
+var emptyArray = [];
 
 // helper functions
 var keyForBoard = function(id) {
@@ -56,48 +57,45 @@ function Board(board) {
 }
 
 Board.prototype.key = function() {
-  var self = this;
-  return keyForBoard(self.id);
+  return keyForBoard(this.id);
 };
 
 Board.prototype.legacyKey = function() {
-  var self = this;
-  return legacyKeyForBoard(self.smf.ID_BOARD);
+  return legacyKeyForBoard(this.smf.ID_BOARD);
 };
 
 Board.prototype.categoryKey = function() {
-  var self = this;
-  return catPrefix + sep + self.category_id;
+  return catPrefix + sep + this.category_id;
 };
 
 // children in database stored in relation to board index
 Board.prototype.getChildren = function() {
-  var self = this;
-
-  if (!self.children_ids) { return Promise.resolve([]); }
-
-  return Promise.all(self.children_ids.map(function(childId) {
-    return boardsDb.find(childId);
-  }));
+  if (this.children_ids) {
+    return Promise.all(this.children_ids.map(function(childId) {
+      return boardsDb.find(childId);
+    }));
+  }
+  else {
+    return Promise.resolve(emptyArray);
+  }
 };
 
 // parent defined in actual board stored object
 Board.prototype.getParent = function() {
-  var self = this;
-
-  if (!this.parent_id) { return Promise.reject('No Parent Id Found'); }
-
-  return db.content.getAsync(keyForBoard(self.parent_id))
-  .then(function(parentBoardData) {
-    return new Board(parentBoardData);
-  });
+  if (this.parent_id) {
+    return db.content.getAsync(keyForBoard(this.parent_id))
+    .then(function(parentBoardData) {
+      return new Board(parentBoardData);
+    });
+  }
+  else {
+    return Promise.reject('No Parent Id Found');
+  }
 };
 
 Board.prototype.validate = function() {
   var board = this.simple();
-
-  // input validation
-  return schema.validate(board); // blocking
+  return schema.validate(board);
 };
 
 Board.prototype.simple = function() {

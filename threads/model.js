@@ -36,13 +36,11 @@ function Thread(data) {
 }
 
 Thread.prototype.key = function() {
-  var self = this;
-  return keyForThread(self.id);
+  return keyForThread(this.id);
 };
 
 Thread.prototype.legacyKey = function() {
-  var self = this;
-  return legacyKeyForThread(self.smf.ID_TOPIC);
+  return legacyKeyForThread(this.smf.ID_TOPIC);
 };
 
 Thread.prototype.boardThreadKey = function(timestamp) {
