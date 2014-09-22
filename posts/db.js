@@ -3,9 +3,10 @@ module.exports = posts;
 
 var path = require('path');
 var Promise = require('bluebird');
-var bytewise = require('bytewise');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
+var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
+var encodeIntHex = dbHelper.encodeIntHex;
 var Post = require(path.join(__dirname, 'model'));
 var Thread = require(path.join(__dirname, '..', 'threads', 'model'));
 var Board = require(path.join(__dirname, '..', 'boards', 'model'));
@@ -364,7 +365,7 @@ posts.byThread = function(threadId, opts) {
 
     // query start value
     var pageStart = limit * page - (limit - 1);
-    pageStart = encode(pageStart, 'hex');
+    pageStart = encodeIntHex(pageStart);
     startKey += pageStart;
 
     var queryOptions = {
@@ -423,7 +424,7 @@ function reorderPostOrder(threadId, startIndex) {
 
       // handle index
       var postOrderKey = Post.indexPrefix + sep + threadId + sep;
-      postOrderKey += encode(newIndex, 'hex');
+      postOrderKey += encodeIntHex(newIndex);
       db.indexes.putAsync(postOrderKey, value);
     };
     var handler = function() {
@@ -432,7 +433,7 @@ function reorderPostOrder(threadId, startIndex) {
 
       // delete last index position
       var key = Post.indexPrefix + sep + threadId + sep;
-      key += encode(lastIndex, 'hex');
+      key += encodeIntHex(lastIndex);
       db.indexes.delAsync(key);
       return fulfill();
     };
@@ -443,7 +444,7 @@ function reorderPostOrder(threadId, startIndex) {
     var sep = config.sep;
     var startKey = postOrderPrefix + sep + threadId + sep;
     var endKey = startKey + '\xff';
-    startKey += encode(startIndex + 1, 'hex');
+    startKey += encodeIntHex(startIndex + 1);
     var queryOptions = {
       start: startKey,
       end: endKey
@@ -455,9 +456,5 @@ function reorderPostOrder(threadId, startIndex) {
     .on('close', handler)
     .on('end', handler);
   });
-}
-
-function encode(value, encoding) {
-  return bytewise.encode(value).toString(encoding || 'binary');
 }
 

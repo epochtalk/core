@@ -5,7 +5,7 @@ var path = require('path');
 var levelup = require('levelup');
 var Promise = require('bluebird');
 var mkdirp = require('mkdirp');
-var config = require(path.join(__dirname, 'config'));
+var config = require(path.join(__dirname, '..', 'config'));
 var Sublevel = require('level-sublevel');
 
 mkdirp.sync(config.dbPath);

@@ -1,7 +1,8 @@
 module.exports = Post;
-var bytewise = require('bytewise');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
+var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
+var encodeIntHex = dbHelper.encodeIntHex;
 var validate = require(path.join(__dirname, 'validate'));
 var indexPrefix = config.posts.indexPrefix;
 var prefix = config.posts.prefix;
@@ -43,8 +44,7 @@ function Post(data) {
 }
 
 Post.prototype.key = function() {
-  var self = this;
-  return keyForPost(self.id);
+  return keyForPost(this.id);
 };
 
 Post.prototype.threadPostKey = function() {
@@ -58,15 +58,14 @@ Post.prototype.threadPostKey = function() {
 Post.prototype.threadPostOrderKey = function(count) {
   var key;
   if (this.thread_id && count) {
-    var postOrder = encode(count, 'hex');
+    var postOrder = encodeIntHex(count);
     key = config.posts.indexPrefix + sep + this.thread_id + sep + postOrder;
   }
   return key;
 };
 
 Post.prototype.legacyKey = function() {
-  var self = this;
-  return legacyKeyForPost(self.smf.ID_MSG);
+  return legacyKeyForPost(this.smf.ID_MSG);
 };
 
 Post.prototype.threadKey = function() {
@@ -134,6 +133,4 @@ Post.prototype.postOrderKey = function() {
 Post.prefix = prefix;
 Post.indexPrefix = indexPrefix;
 
-function encode(value, encoding) {
-  return bytewise.encode(value).toString(encoding || 'binary');
-}
+

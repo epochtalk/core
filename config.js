@@ -1,5 +1,5 @@
 module.exports = {
-  dbPath: 'epoch.db',
+  dbPath: process.cwd() + 'epoch.db',
   // sep: '\x00'
   sep: '~',
   boards: {
