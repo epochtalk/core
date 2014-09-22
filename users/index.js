@@ -93,3 +93,10 @@ users.all = function() {
   });
 };
 
+users.getUserViews = function(userId) {
+  return usersDb.getUserViews(userId);
+};
+
+users.putUserViews = function(userId, userViewsArray) {
+  return usersDb.putUserViews(userId, userViewsArray);
+};

@@ -3,10 +3,13 @@ module.exports = users;
 
 var path = require('path');
 var bcrypt = require('bcrypt');
+var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var User = require(path.join(__dirname, 'model'));
+var Padlock = require('padlock').Padlock;
+var userViewsLock = new Padlock();
 
 users.import = function(user) {
   user.imported_at = Date.now();
@@ -191,5 +194,42 @@ users.purge = function(id) {
   })
   .then(function() {
     return purgeUser;
+  });
+};
+
+users.getUserViews = function(userId) {
+  // build userView key
+  var userViewsKey = User.userViewsKey(userId);
+  return db.metadata.getAsync(userViewsKey);
+};
+
+users.putUserViews = function(userId, userViewsArray) {
+  return new Promise(function(fulfill, reject) {
+    userViewsLock.runwithlock(function() {
+      var userViewsKey = User.userViewsKey(userId);
+      db.metadata.getAsync(userViewsKey)
+      .catch(function(err) { // userViews don't exists yet
+        return {};
+      })
+      .then(function(userViews) {
+        // TODO: handle both array form and single object form
+        // add each userView
+        userViewsArray.forEach(function(view) {
+          userViews[view.threadId] = view.timestamp;
+        });
+        return userViews;
+      })
+      .then(function(userViews) {
+        return db.metadata.putAsync(userViewsKey, userViews);
+      })
+      .then(function() {
+        fulfill();
+        userViewsLock.release();
+      })
+      .catch(function(err) {
+        reject(err);
+        userViewsLock.release();
+      });
+    });
   });
 };

@@ -100,6 +100,10 @@ User.emailKeyFromInput = function(email) {
   return emailKeyForUser(email);
 };
 
+User.userViewsKey = function(userId) {
+  return 'user_views' + sep + userId;
+};
+
 // Helper Functions
 
 var keyForUser = function(id) {
