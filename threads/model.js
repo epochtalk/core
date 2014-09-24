@@ -30,6 +30,7 @@ function Thread(data) {
   if (data.id) { this.id = data.id; }
   if (data.created_at) { this.created_at = data.created_at; }
   if (data.imported_at) { this.imported_at = data.imported_at; }
+  if (data.view_count) { this.view_count = data.view_count; }
   if (data.deleted) { this.deleted = data.deleted; }
   if (data.smf && data.smf.ID_TOPIC) { this.smf  = data.smf; }
   this.board_id = data.board_id;

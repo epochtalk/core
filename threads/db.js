@@ -43,9 +43,14 @@ threadsDb.insert = function(thread) {
   var metadataBatch = [
     // TODO: There should be a better solution than initializing with strings
     { type: 'put', key: lastPostUsernameKey, value: 'none' },
-    { type: 'put', key: lastPostCreatedAtKey, value: thread.created_at },
-    { type: 'put', key: viewCountKey , value: 0 }
+    { type: 'put', key: lastPostCreatedAtKey, value: thread.created_at }
   ];
+  if (thread.view_count) {
+    metadataBatch.push({ type: 'put', key: viewCountKey , value: thread.view_count });
+  }
+  else {
+    metadataBatch.push({ type: 'put', key: viewCountKey , value: 0 });
+  }
   return db.metadata.batchAsync(metadataBatch)
   .then(function() { return db.content.putAsync(threadKey, thread); })
   .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
