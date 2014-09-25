@@ -2,6 +2,8 @@ module.exports = Thread;
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var schema = require(path.join(__dirname, 'schema'));
+var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
+var encodeIntHex = dbHelper.encodeIntHex;
 var indexPrefix = config.threads.indexPrefix;
 var prefix = config.threads.prefix;
 var sep = config.sep;
@@ -120,5 +122,19 @@ Thread.viewCountKeyFromId = function(id) {
   return keyForThread(id) + config.sep + 'view_count';
 };
 
+Thread.threadOrderKey = function(threadId) {
+  return keyForThread(threadId) + config.sep + 'thread_order';
+};
+
+Thread.boardThreadOrderKey = function(boardId, order) {
+  var key;
+  if (boardId && order) {
+    var threadOrder = encodeIntHex(order);
+    key = indexPrefix + sep + boardId + sep + 'order' + sep + threadOrder;
+  }
+  return key;
+};
+
 Thread.prefix = prefix;
+Thread.indexPrefix = indexPrefix;
 

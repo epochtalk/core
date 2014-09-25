@@ -3,6 +3,8 @@ module.exports = threadsDb;
 
 var path = require('path');
 var Promise = require('bluebird');
+var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
+var encodeIntHex = dbHelper.encodeIntHex;
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var Thread = require(path.join(__dirname, 'model'));
@@ -11,6 +13,7 @@ var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
 var Padlock = require('padlock').Padlock;
 var postCountLock = new Padlock();
 var viewCountLock = new Padlock();
+var threadOrderLock = new Padlock();
 
 threadsDb.import = function(thread) {
   thread.imported_at = Date.now();
@@ -35,25 +38,23 @@ threadsDb.insert = function(thread) {
     thread.created_at = timestamp;
   }
   thread.id = helper.genId(thread.created_at);
-  var boardThreadKey = thread.boardThreadKey(thread.created_at);
+  // var boardThreadKey = thread.boardThreadKey(thread.created_at);
   var threadKey = thread.key();
   var lastPostUsernameKey = Thread.lastPostUsernameKeyFromId(thread.id);
   var lastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(thread.id);
-  var viewCountKey = Thread.viewCountKeyFromId(thread.id);
+  var threadOrderKey = Thread.threadOrderKey(thread.id);
   var metadataBatch = [
     // TODO: There should be a better solution than initializing with strings
     { type: 'put', key: lastPostUsernameKey, value: 'none' },
-    { type: 'put', key: lastPostCreatedAtKey, value: thread.created_at }
+    { type: 'put', key: lastPostCreatedAtKey, value: thread.created_at },
+    { type: 'put', key: threadOrderKey, value: 0 }
   ];
-  if (thread.view_count) {
-    metadataBatch.push({ type: 'put', key: viewCountKey , value: thread.view_count });
-  }
-  else {
-    metadataBatch.push({ type: 'put', key: viewCountKey , value: 0 });
-  }
+  if (!thread.view_count) { thread.view_count = 0; }
+  var viewCountKey = Thread.viewCountKeyFromId(thread.id);
+  metadataBatch.push({ type: 'put', key: viewCountKey , value: thread.view_count });
   return db.metadata.batchAsync(metadataBatch)
   .then(function() { return db.content.putAsync(threadKey, thread); })
-  .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
+  // .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
   .then(function() { return threadsDb.incPostCount(thread.id); })
   .then(function() { return boardsDb.incThreadCount(thread.board_id); })
   .then(function() { return thread; });
@@ -204,6 +205,9 @@ threadsDb.purge = function(id) {
   .then(function() { // remove username Key
     return db.metadata.delAsync(usernameKey);
   })
+  .then(function() {
+    return syncThreadOrder(deletedThread);
+  })
   // TODO: This cannot be derived if we deleted it.
   // .then(function() { // remove view count Key
   //   return db.metadata.delAsync(viewCountKey);
@@ -282,14 +286,12 @@ threadsDb.threadByOldId = function(oldId) {
 };
 
 threadsDb.byBoard = function(boardId, opts) {
+  console.log('here');
   return new Promise(function(fulfill, reject) {
     var entries = [];
-    var counted = 0;
     var sorter = function(value) {
-      if (counted >= pushStart) {
-        entries.push(value);
-      }
-      else { counted++; }
+      console.log(value);
+      entries.push(value.value);
     };
     var handler = function() {
       Promise.map(entries, function(entry) {
@@ -307,26 +309,90 @@ threadsDb.byBoard = function(boardId, opts) {
     // query keys
     var threadOrderPrefix = config.threads.indexPrefix;
     var sep = config.sep;
-    var startKey = threadOrderPrefix + sep + boardId + sep;
+    var startKey = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
     var endKey = startKey;
-    startKey += '\xff';
-    endKey += '\x00';
+    startKey += '\x00';
+    endKey += '\xff';
 
     // query counting
-    var pushStart = limit * page - limit;
-    var stopLimit = limit * page;
+    var threadStart = limit * page - (limit - 1);
+    threadStart = encodeIntHex(threadStart);
+    startKey += threadStart;
 
     var queryOptions = {
-      limit: stopLimit,
-      reverse: true,
+      limit: limit,
       start: startKey,
       end: endKey
     };
     // query thread Index
-    db.indexes.createValueStream(queryOptions)
+    db.indexes.createReadStream(queryOptions)
     .on('data', sorter)
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
   });
 };
+
+function syncThreadOrder(thread) {
+  threadOrderLock.runwithlock(function() {
+    // get current threadOrder
+    var threadOrderKey = Thread.threadOrderKey(thread.id);
+    return db.metadata.getAsync(threadOrderKey)
+    // del current threadOrder and boardThreadOrder
+    .then(function(threadOrder) {
+      return db.metadata.delAsync(threadOrderKey)
+      .then(function() { return threadOrder; });
+    })
+    // del current board
+    .then(function(threadOrder) {
+      var key = Thread.boardThreadOrderKey(thread.board_id, threadOrder);
+      return db.indexes.delAsync(key)
+      .then(function() { return threadOrder; });
+    })
+    // handle thread ordering in board
+    .then(function(threadOrder) {
+      return reorderThreadOrder(threadOrder, thread.board_id, thread.id)
+      .then(function() { threadOrderLock.release(); });
+    });
+  });
+}
+
+function reorderThreadOrder(startIndex, boardId, threadId) {
+  var threadOrderPrefix = Thread.indexPrefix;
+  var sep = config.sep;
+  startIndex = Number(startIndex);
+
+  return new Promise(function(fulfill, reject) {
+    var entries = [];
+    var sorter = function(entry) { entries.push(entry); };
+    var handler = function() { return fulfill(entries); };
+
+    // query key
+    var startKey = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
+    var endKey = startKey + '\xff';
+    startKey += encodeIntHex(startIndex);
+    var queryOptions = {
+      start: startKey,
+      end: endKey
+    };
+    // query for all posts fir this threadId
+    db.indexes.createReadStream(queryOptions)
+    .on('data', sorter)
+    .on('error', reject)
+    .on('close', handler)
+    .on('end', handler);
+  })
+  .then(function(entries) {
+    var counter = startIndex;
+    return Promise.each(entries, function(entry) {
+      var threadOrderKey = Thread.threadOrderKey(entry.value);
+      var key = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
+      key += encodeIntHex(counter);
+      var value = entry.value;
+
+      return db.metadata.putAsync(threadOrderKey, counter)
+      .then(function() { counter = counter + 1; })
+      .then(function() { return db.indexes.putAsync(key, value); });
+    });
+  });
+}

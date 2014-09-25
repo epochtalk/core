@@ -15,6 +15,8 @@ var helper = require(path.join(__dirname, '..', 'helper'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
 var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
 var usersDb = require(path.join(__dirname, '..', 'users', 'db'));
+var Padlock = require('padlock').Padlock;
+var threadOrderLock = new Padlock();
 
 posts.import = function(post) {
   var insertPost = function() {
@@ -84,7 +86,6 @@ posts.insert = function(post) {
     // post order metadata
     var postOrderKey = post.postOrderKey();
     metadataBatch.push({ type: 'put', key: postOrderKey, value: postCount });
-
     return db.metadata.batchAsync(metadataBatch);
   })
   .then(function() { return threadsDb.find(post.thread_id); })
@@ -123,14 +124,16 @@ posts.insert = function(post) {
       // update board thread key index
       .then(function() {
         // old thread index
-        var oldBoardThreadKey = thread.boardThreadKey(oldTimestamp);
+        // var oldBoardThreadKey = thread.boardThreadKey(oldTimestamp);
         // add new thread index value
-        var newBoardThreadKey = thread.boardThreadKey(post.created_at);
-        var indexBatch = [
-          { type: 'del', key: oldBoardThreadKey },
-          { type: 'put', key: newBoardThreadKey, value: post.thread_id }
-        ];
-        return db.indexes.batchAsync(indexBatch);
+        // var newBoardThreadKey = thread.boardThreadKey(post.created_at);
+        // var indexBatch = [
+          // { type: 'del', key: oldBoardThreadKey },
+          // { type: 'put', key: newBoardThreadKey, value: post.thread_id }
+        // ];
+        // return db.indexes.batchAsync(indexBatch)
+        // .then(function() { syncThreadOrder(thread); });
+        syncThreadOrder(thread);
       });
     }
     else { return; }
@@ -458,3 +461,75 @@ function reorderPostOrder(threadId, startIndex) {
   });
 }
 
+function syncThreadOrder(thread) {
+  threadOrderLock.runwithlock(function() {
+    // get current threadOrder
+    var threadOrderKey = Thread.threadOrderKey(thread.id);
+    return db.metadata.getAsync(threadOrderKey)
+    // del current threadOrder and boardThreadOrder
+    .then(function(threadOrder) {
+      return db.metadata.delAsync(threadOrderKey)
+      .then(function() { return threadOrder; });
+    })
+    // del current board
+    .then(function(threadOrder) {
+      var key = Thread.boardThreadOrderKey(thread.board_id, threadOrder);
+      return db.indexes.delAsync(key);
+    })
+    // handle thread ordering in board
+    .then(function(threadOrder) {
+      return reorderThreadOrder(thread.board_id, thread.id)
+      .then(function() { threadOrderLock.release(); });
+    });
+  });
+}
+
+function reorderThreadOrder(boardId, threadId) {
+  var threadOrderPrefix = Thread.indexPrefix;
+  var sep = config.sep;
+
+  return new Promise(function(fulfill, reject) {
+    var entries = [];
+    var sorter = function(entry) { entries.push(entry); };
+    var handler = function() { return fulfill(entries); };
+
+    // query key
+    var startKey = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
+    var endKey = startKey + '\xff';
+    startKey += encodeIntHex(1);
+    var queryOptions = {
+      start: startKey,
+      end: endKey
+    };
+    // query for all posts fir this threadId
+    db.indexes.createReadStream(queryOptions)
+    .on('data', sorter)
+    .on('error', reject)
+    .on('close', handler)
+    .on('end', handler);
+  })
+  .then(function(entries) {
+    var counter = 1;
+    var newValue = threadId;
+    return Promise.each(entries, function(entry) {
+      var threadOrderKey = Thread.threadOrderKey(newValue);
+      var key = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
+      key += encodeIntHex(counter);
+      var value = entry.value;
+
+      return db.metadata.putAsync(threadOrderKey, counter)
+      .then(function() { counter = counter + 1; })
+      .then(function() { return db.indexes.putAsync(key, newValue); })
+      .then(function() { newValue = value; });
+    })
+    .then(function() {
+      // add one last entry (should be tail)
+      var threadOrderKey = Thread.threadOrderKey(newValue);
+      var key = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
+      key += encodeIntHex(counter);
+
+      return db.metadata.putAsync(threadOrderKey, counter)
+      .then(function() { return db.indexes.putAsync(key, newValue); });
+    });
+  });
+}
