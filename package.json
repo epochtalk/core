@@ -23,6 +23,7 @@
     "bytewise": "^0.7.1",
     "joi": "^4.6.1",
     "level-lock": "^1.0.1",
+    "level-mapped-index": "^0.5.3",
     "level-sublevel": "^6.3.11",
     "level-version": "^0.4.0",
     "leveldown": "^0.10.0",
@@ -44,4 +45,3 @@
     "mocha": "^1.21.0"
   }
 }
-
