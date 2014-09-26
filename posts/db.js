@@ -4,6 +4,7 @@ module.exports = posts;
 var path = require('path');
 var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
+var vault = require(path.join(__dirname, '..', 'vault'));
 var db = require(path.join(__dirname, '..', 'db'));
 var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
 var encodeIntHex = dbHelper.encodeIntHex;
@@ -15,8 +16,6 @@ var helper = require(path.join(__dirname, '..', 'helper'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
 var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
 var usersDb = require(path.join(__dirname, '..', 'users', 'db'));
-var Padlock = require('padlock').Padlock;
-var threadOrderLock = new Padlock();
 
 posts.import = function(post) {
   var insertPost = function() {
@@ -124,16 +123,15 @@ posts.insert = function(post) {
       // update board thread key index
       .then(function() {
         // old thread index
-        // var oldBoardThreadKey = thread.boardThreadKey(oldTimestamp);
+        var oldBoardThreadKey = thread.boardThreadKey(oldTimestamp);
         // add new thread index value
-        // var newBoardThreadKey = thread.boardThreadKey(post.created_at);
-        // var indexBatch = [
-          // { type: 'del', key: oldBoardThreadKey },
-          // { type: 'put', key: newBoardThreadKey, value: post.thread_id }
-        // ];
-        // return db.indexes.batchAsync(indexBatch)
-        // .then(function() { syncThreadOrder(thread); });
-        syncThreadOrder(thread);
+        var newBoardThreadKey = thread.boardThreadKey(post.created_at);
+        var indexBatch = [
+          { type: 'del', key: oldBoardThreadKey },
+          { type: 'put', key: newBoardThreadKey, value: post.thread_id }
+        ];
+        return db.indexes.batchAsync(indexBatch)
+        .then(function() { syncThreadOrder(thread); });
       });
     }
     else { return; }
@@ -462,47 +460,52 @@ function reorderPostOrder(threadId, startIndex) {
 }
 
 function syncThreadOrder(thread) {
-  threadOrderLock.runwithlock(function() {
-    // get current threadOrder
+  var lock = vault.getLock(thread.board_id);
+  lock.runwithlock(function() {
     var threadOrderKey = Thread.threadOrderKey(thread.id);
     return db.metadata.getAsync(threadOrderKey)
-    // del current threadOrder and boardThreadOrder
     .then(function(threadOrder) {
-      return db.metadata.delAsync(threadOrderKey)
-      .then(function() { return threadOrder; });
+      var params = {
+        boardId: thread.board_id,
+        threadId: thread.id,
+        endIndex: threadOrder
+      };
+      return reorderThreadOrder(params);
     })
-    // del current board
-    .then(function(threadOrder) {
-      var key = Thread.boardThreadOrderKey(thread.board_id, threadOrder);
-      return db.indexes.delAsync(key);
-    })
-    // handle thread ordering in board
-    .then(function(threadOrder) {
-      return reorderThreadOrder(thread.board_id, thread.id)
-      .then(function() { threadOrderLock.release(); });
-    });
+    .then(function() { lock.release(); });
   });
 }
 
-function reorderThreadOrder(boardId, threadId) {
+function reorderThreadOrder(params) {
+  var threadId = params.threadId;
+  var boardId = params.boardId;
+  var endIndex = Number(params.endIndex);
   var threadOrderPrefix = Thread.indexPrefix;
   var sep = config.sep;
 
+  // short circuit if endIndex is 1, nothing to do here
+  if (endIndex === 1) { return Promise.resolve(); }
+
   return new Promise(function(fulfill, reject) {
-    var entries = [];
+    var entries = [ threadId ];
     var sorter = function(entry) { entries.push(entry); };
-    var handler = function() { return fulfill(entries); };
+    var handler = function() {
+      if (endIndex) { entries.pop(); }
+      return fulfill(entries);
+    };
 
     // query key
     var startKey = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
-    var endKey = startKey + '\xff';
+    var endKey = startKey;
     startKey += encodeIntHex(1);
+    if (endIndex) { endKey += encodeIntHex(endIndex) + '\xff'; }
+    else { endKey += '\xff'; }
     var queryOptions = {
       start: startKey,
       end: endKey
     };
-    // query for all posts fir this threadId
-    db.indexes.createReadStream(queryOptions)
+
+    db.indexes.createValueStream(queryOptions)
     .on('data', sorter)
     .on('error', reject)
     .on('close', handler)
@@ -510,26 +513,14 @@ function reorderThreadOrder(boardId, threadId) {
   })
   .then(function(entries) {
     var counter = 1;
-    var newValue = threadId;
     return Promise.each(entries, function(entry) {
-      var threadOrderKey = Thread.threadOrderKey(newValue);
+      var threadOrderKey = Thread.threadOrderKey(entry);
       var key = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
       key += encodeIntHex(counter);
-      var value = entry.value;
 
       return db.metadata.putAsync(threadOrderKey, counter)
       .then(function() { counter = counter + 1; })
-      .then(function() { return db.indexes.putAsync(key, newValue); })
-      .then(function() { newValue = value; });
-    })
-    .then(function() {
-      // add one last entry (should be tail)
-      var threadOrderKey = Thread.threadOrderKey(newValue);
-      var key = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
-      key += encodeIntHex(counter);
-
-      return db.metadata.putAsync(threadOrderKey, counter)
-      .then(function() { return db.indexes.putAsync(key, newValue); });
+      .then(function() { return db.indexes.putAsync(key, entry); });
     });
   });
 }

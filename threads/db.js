@@ -14,6 +14,7 @@ var Padlock = require('padlock').Padlock;
 var postCountLock = new Padlock();
 var viewCountLock = new Padlock();
 var threadOrderLock = new Padlock();
+var vault = require(path.join(__dirname, '..', 'vault'));
 
 threadsDb.import = function(thread) {
   thread.imported_at = Date.now();
@@ -38,7 +39,7 @@ threadsDb.insert = function(thread) {
     thread.created_at = timestamp;
   }
   thread.id = helper.genId(thread.created_at);
-  // var boardThreadKey = thread.boardThreadKey(thread.created_at);
+  var boardThreadKey = thread.boardThreadKey(thread.created_at);
   var threadKey = thread.key();
   var lastPostUsernameKey = Thread.lastPostUsernameKeyFromId(thread.id);
   var lastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(thread.id);
@@ -54,7 +55,7 @@ threadsDb.insert = function(thread) {
   metadataBatch.push({ type: 'put', key: viewCountKey , value: thread.view_count });
   return db.metadata.batchAsync(metadataBatch)
   .then(function() { return db.content.putAsync(threadKey, thread); })
-  // .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
+  .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
   .then(function() { return threadsDb.incPostCount(thread.id); })
   .then(function() { return boardsDb.incThreadCount(thread.board_id); })
   .then(function() { return thread; });
@@ -286,13 +287,9 @@ threadsDb.threadByOldId = function(oldId) {
 };
 
 threadsDb.byBoard = function(boardId, opts) {
-  console.log('here');
   return new Promise(function(fulfill, reject) {
     var entries = [];
-    var sorter = function(value) {
-      console.log(value);
-      entries.push(value.value);
-    };
+    var sorter = function(value) { entries.push(value.value); };
     var handler = function() {
       Promise.map(entries, function(entry) {
         return threadsDb.find(entry);
@@ -334,7 +331,8 @@ threadsDb.byBoard = function(boardId, opts) {
 };
 
 function syncThreadOrder(thread) {
-  threadOrderLock.runwithlock(function() {
+  var lock = vault.getLock(thread.board_id);
+  lock.runwithlock(function() {
     // get current threadOrder
     var threadOrderKey = Thread.threadOrderKey(thread.id);
     return db.metadata.getAsync(threadOrderKey)
@@ -352,7 +350,7 @@ function syncThreadOrder(thread) {
     // handle thread ordering in board
     .then(function(threadOrder) {
       return reorderThreadOrder(threadOrder, thread.board_id, thread.id)
-      .then(function() { threadOrderLock.release(); });
+      .then(function() { lock.release(); });
     });
   });
 }
