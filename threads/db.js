@@ -314,15 +314,12 @@ threadsDb.byBoard = function(boardId, opts) {
     var threadStart = limit * page - (limit - 1);
     threadStart = encodeIntHex(threadStart);
     startKey += threadStart;
-    startKey += '\x00';
 
     var queryOptions = {
       limit: limit,
       start: startKey,
       end: endKey
     };
-
-    console.log(queryOptions);
 
     // query thread Index
     db.indexes.createReadStream(queryOptions)
