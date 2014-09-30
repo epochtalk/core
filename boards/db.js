@@ -587,7 +587,7 @@ boards.updateCategories = function(categories) {
           end: endKey
         };
         // query thread Index
-        db.indexes.createReadStream(queryOptions)
+        db.metadata.createReadStream(queryOptions)
         .on('data', pushEntries)
         .on('error', reject)
         .on('close', handler)
