@@ -98,6 +98,11 @@ Board.prototype.validate = function() {
   return schema.validate(board);
 };
 
+Board.prototype.validateUpdate = function() {
+  var board = this.simple();
+  return schema.validateUpdate(board);
+};
+
 Board.prototype.simple = function() {
   var board = {};
   var self = this;

@@ -23,6 +23,24 @@ var boardSchema = joi.object().keys({
   }
 });
 
+var updateBoardSchema = joi.object().keys({
+  id: joi.string(),
+  name: joi.string(),
+  category: joi.number(),
+  description: joi.string(),
+  created_at: joi.number(),
+  updated_at: joi.number(),
+  imported_at: joi.number(),
+  parent_id: joi.string(),
+  children_ids: joi.array(joi.string()),
+  children: joi.array(joi.object()),
+  deleted: joi.boolean(),
+});
+
 schema.validate = function(board) {
   return validate(board, boardSchema);
+};
+
+schema.validateUpdate = function(board) {
+  return validate(board, updateBoardSchema);
 };

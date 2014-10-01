@@ -40,7 +40,7 @@ boards.find = function(id) {
 boards.update = function(json) {
   var updateBoard = new Board(json);
 
-  return updateBoard.validate()
+  return updateBoard.validateUpdate()
   .then(function() {
     return db.update(updateBoard);
   })
