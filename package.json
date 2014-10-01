@@ -23,7 +23,6 @@
     "bytewise": "^0.7.1",
     "joi": "^4.6.1",
     "level-lock": "^1.0.1",
-    "level-sublevel": "^6.3.8",
     "level-version": "^0.4.0",
     "leveldown": "^0.10.2",
     "levelup": "=0.18.5",
@@ -35,7 +34,8 @@
     "replpad": "^0.11.9",
     "rimraf": "^2.2.8",
     "speakeasy": "^1.0.3",
-    "sublevel": "^2.4.0"
+    "sublevel": "^2.4.0",
+    "treedb": "git://github.com/epochtalk/treedb"
   },
   "devDependencies": {
     "benchmark": "^1.0.0",
