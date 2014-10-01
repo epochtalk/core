@@ -342,10 +342,11 @@ posts.byThread = function(threadId, opts) {
           return usersDb.find(dbPost.user_id);
         })
         .then(function(user) {
-          delete user.passhash;
-          delete user.id;
           delete post.user_id;
-          post.user = user;
+          post.user = {
+            id: user.id,
+            username: user.username
+          };
           return post;
         });
       })
