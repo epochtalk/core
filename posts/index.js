@@ -17,6 +17,7 @@ posts.import = function(data) {
 
 posts.create = function(data) {
   var newPost = new Post(data);
+  
   return newPost.validateCreate()
   .then(function() {
     return postsDb.insert(newPost);

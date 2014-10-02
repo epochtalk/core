@@ -37,6 +37,7 @@ function Post(data) {
   if (data.deleted) { this.deleted = data.deleted; }
   if (data.smf && data.smf.ID_MSG) { this.smf  = data.smf; }
   if (data.version) { this.version = data.version; }
+  if (data.encodedBody) { this.encodedBody = data.encodedBody; }
   this.thread_id = data.thread_id;
   this.body = data.body;
   this.title = data.title;
@@ -101,6 +102,7 @@ Post.prototype.simple = function() {
   if (self.id) { post.id = self.id; }
   if (self.title) { post.title = self.title; }
   if (self.body) { post.body = self.body; }
+  if (self.encodedBody) { post.encodedBody = self.encodedBody; }
   if (self.user_id) { post.user_id = self.user_id; }
   if (self.thread_id) { post.thread_id = self.thread_id; }
   if (self.created_at) { post.created_at = self.created_at; }

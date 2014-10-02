@@ -169,7 +169,6 @@ var buildMetadataBatch = function(boardId, metadata, batchArray, postCreatedAt) 
 
 posts.find = function(id) {
   var postKey = Post.keyFromId(id);
-  var postUsernameKey = Post.usernameKeyFromId(id);
   return db.content.getAsync(postKey)
   .then(function(post) { return post; });
 };
@@ -198,6 +197,7 @@ posts.update = function(post) {
     // update post values
     if (post.title) { updatePost.title = post.title; }
     if (post.body) { updatePost.body = post.body; }
+    if (post.encodedBody) { updatePost.encodedBody = post.encodedBody; }
     if (post.deleted) { updatePost.deleted = post.deleted; }
     else { delete updatePost.deleted; }
     updatePost.updated_at = timestamp;
