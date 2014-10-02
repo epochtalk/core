@@ -132,6 +132,12 @@ Post.prototype.postOrderKey = function() {
   return postKey;
 };
 
+Post.postOrderKeyFromId = function(id) {
+  var postOrderKey;
+  if (id) { postOrderKey = prefix + sep + id + sep + 'post_order'; }
+  return postOrderKey;
+}
+
 Post.prefix = prefix;
 Post.indexPrefix = indexPrefix;
 

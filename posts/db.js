@@ -332,28 +332,7 @@ posts.byThread = function(threadId, opts) {
   return new Promise(function(fulfill, reject) {
     var postIds = [];
     var sorter = function(value) { postIds.push(value); };
-    var handler = function() {
-      // get post for each postId
-      Promise.map(postIds, function(postId) {
-        var post;
-        return posts.find(postId)
-        .then(function(dbPost) {
-          post = dbPost;
-          return usersDb.find(dbPost.user_id);
-        })
-        .then(function(user) {
-          delete post.user_id;
-          post.user = {
-            id: user.id,
-            username: user.username
-          };
-          return post;
-        });
-      })
-      .then(function(allPosts) {
-        return fulfill(allPosts);
-      });
-    };
+    var handler = function() { fulfill(postIds); };
 
     // query vars
     var limit = opts.limit ? Number(opts.limit) : 10;
@@ -381,6 +360,25 @@ posts.byThread = function(threadId, opts) {
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
+  })
+  .then(function(postIds) {
+    // get post for each postId
+    return Promise.map(postIds, function(postId) {
+      var post;
+      return posts.find(postId)
+      .then(function(dbPost) {
+        post = dbPost;
+        return usersDb.find(dbPost.user_id);
+      })
+      .then(function(user) {
+        delete post.user_id;
+        post.user = {
+          id: user.id,
+          username: user.username
+        };
+        return post;
+      });
+    });
   });
 };
 
@@ -408,43 +406,19 @@ posts.versions = function(id) {
 };
 
 function reorderPostOrder(threadId, startIndex) {
+  var postOrderPrefix = Post.indexPrefix;
+  var sep = config.sep;
+  var postOrderStarter = postOrderPrefix + sep + threadId + sep;
+  var lastIndex;
+  startIndex = Number(startIndex);
+
   return new Promise(function(fulfill, reject) {
-    var lastIndex = '';
-    var mover = function(entry) {
-      var key = entry.key;
-      var value = entry.value;
-
-      // find index from key
-      var indexStart = Post.indexPrefix + sep + threadId + sep;
-      var currentIndex = key.replace(indexStart, '');
-      lastIndex = Number(currentIndex);
-      var newIndex = lastIndex - 1;
-
-      // handle metadata
-      var metadataKey = Post.prefix + sep + value + sep + 'post_order';
-      db.metadata.putAsync(metdataKey, newIndex);
-
-      // handle index
-      var postOrderKey = Post.indexPrefix + sep + threadId + sep;
-      postOrderKey += encodeIntHex(newIndex);
-      db.indexes.putAsync(postOrderKey, value);
-    };
-    var handler = function() {
-      if (lastIndex === '') { lastIndex = startIndex; }
-      lastIndex = Number(lastIndex);
-
-      // delete last index position
-      var key = Post.indexPrefix + sep + threadId + sep;
-      key += encodeIntHex(lastIndex);
-      db.indexes.delAsync(key);
-      return fulfill();
-    };
+    var entries = [];
+    var sorter = function(entry) { entries.push(entry); };
+    var handler = function() { fulfill(entries); };
 
     // query key
-    startIndex = Number(startIndex);
-    var postOrderPrefix = Post.indexPrefix;
-    var sep = config.sep;
-    var startKey = postOrderPrefix + sep + threadId + sep;
+    var startKey = postOrderStarter;
     var endKey = startKey + '\xff';
     startKey += encodeIntHex(startIndex + 1);
     var queryOptions = {
@@ -453,10 +427,39 @@ function reorderPostOrder(threadId, startIndex) {
     };
     // query for all posts fir this threadId
     db.indexes.createReadStream(queryOptions)
-    .on('data', mover)
+    .on('data', sorter)
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
+  })
+  .then(function(entries) {
+    // move each post up one index position
+    return Promise.each(entries, function(entry) {
+      var key = entry.key;
+      var value = entry.value;
+
+      // find index from key
+      var currentIndex = key.replace(postOrderStarter, '');
+      lastIndex = Number(currentIndex);
+      var newIndex = lastIndex - 1;
+
+      // handle metadata
+      var metadataKey = Post.postOrderKeyFromId(value);
+      db.metadata.putAsync(metadataKey, newIndex);
+
+      // handle index
+      var postOrderKey = postOrderStarter + encodeIntHex(newIndex);
+      db.indexes.putAsync(postOrderKey, value);
+    });
+  })
+  .then(function() {
+    // remove last value
+    if (!lastIndex) { lastIndex = startIndex; }
+    lastIndex = Number(lastIndex);
+
+    // delete last index position
+    var key = postOrderStarter + encodeIntHex(lastIndex);
+    db.indexes.delAsync(key);
   });
 }
 
