@@ -290,14 +290,7 @@ threadsDb.byBoard = function(boardId, opts) {
   return new Promise(function(fulfill, reject) {
     var entries = [];
     var sorter = function(value) { entries.push(value.value); };
-    var handler = function() {
-      Promise.map(entries, function(entry) {
-        return threadsDb.find(entry);
-      })
-      .then(function(allThreads) {
-        return fulfill(allThreads);
-      });
-    };
+    var handler = function() { return fulfill(entries); };
 
     // query vars
     var limit = opts.limit ? Number(opts.limit) : 10;
@@ -327,6 +320,11 @@ threadsDb.byBoard = function(boardId, opts) {
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
+  })
+  .then(function(allThreads) {
+    return Promise.map(allThreads, function(entry) {
+      return threadsDb.find(entry);
+    });
   });
 };
 

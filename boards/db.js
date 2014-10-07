@@ -278,34 +278,33 @@ boards.boardByOldId = function(oldId) {
 boards.all = function() {
   return new Promise(function(fulfill, reject) {
     var boardIds = [];
-    var sorter = function(entry) {
-      boardIds.push(entry.value.id);
-    };
-    var handler = function() {
-      Promise.map(boardIds, function(boardId) {
-        return boards.find(boardId);
-      })
-      .then(function(allBoards) {
-        var boards = [];
-        allBoards.forEach(function(board) {
-          if (!board.parent_id) {
-            boards.push(board.simple());
-          }
-        });
-        return fulfill(boards);
-      });
-    };
+    var sorter = function(entry) { boardIds.push(entry.id); };
+    var handler = function() { return fulfill(boardIds); };
 
     var searchKey = Board.prefix + config.sep;
     var query = {
       start: searchKey,
       end: searchKey + '\xff'
     };
-    db.content.createReadStream(query)
+    db.content.createValueStream(query)
     .on('data', sorter)
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
+  })
+  .then(function(allBoards) {
+    return Promise.map(allBoards, function(boardId) {
+      return boards.find(boardId);
+    })
+    .then(function(allBoards) {
+      var boards = [];
+      allBoards.forEach(function(board) {
+        if (!board.parent_id) {
+          boards.push(board.simple());
+        }
+      });
+      return boards;
+    });
   });
 };
 
@@ -546,7 +545,6 @@ var removeChildFromBoard = function(childId, parentId) {
 boards.updateCategories = function(categories) {
   return new Promise(function(outerFulfill, outerReject) {
     catLock.runwithlock(function() {
-      var newCategories;
       var catPrefix = config.boards.categoryPrefix;
       var sep = config.sep;
 
@@ -558,7 +556,7 @@ boards.updateCategories = function(categories) {
         });
       };
 
-      var processCategories = function() {
+      var processCategories = function(newCategories) {
         return Promise.map(newCategories, function(entry) {
           var catKey = entry.key;
           var boardIds = entry.value.board_ids;
@@ -594,8 +592,7 @@ boards.updateCategories = function(categories) {
         .on('end', handler);
       })
       .then(function(catArray) {
-        newCategories = catArray;
-        return processCategories();
+        return processCategories(catArray);
       })
       .then(function() {
         var categoryId = 1;
