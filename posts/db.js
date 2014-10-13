@@ -359,8 +359,8 @@ posts.byThread = function(threadId, opts) {
 
     var queryOptions = {
       limit: limit,
-      start: startKey,
-      end: endKey
+      gte: startKey,
+      lte: endKey
     };
     // query for all posts fir this threadId
     db.indexes.createValueStream(queryOptions)
@@ -402,8 +402,8 @@ posts.versions = function(id) {
 
     var searchKey = config.posts.version + config.sep + id + config.sep;
     var query = {
-      start: searchKey,
-      end: searchKey + '\xff'
+      gte: searchKey,
+      lte: searchKey + '\xff'
     };
     db.content.createValueStream(query)
     .on('data', sortVersions)
@@ -430,8 +430,8 @@ function reorderPostOrder(threadId, startIndex) {
     var endKey = startKey + '\xff';
     startKey += encodeIntHex(startIndex + 1);
     var queryOptions = {
-      start: startKey,
-      end: endKey
+      gte: startKey,
+      lte: endKey
     };
     // query for all posts fir this threadId
     db.indexes.createReadStream(queryOptions)
@@ -513,8 +513,8 @@ function reorderThreadOrder(params) {
     if (endIndex) { endKey += encodeIntHex(endIndex) + '\xff'; }
     else { endKey += '\xff'; }
     var queryOptions = {
-      start: startKey,
-      end: endKey
+      gte: startKey,
+      lte: endKey
     };
 
     db.indexes.createValueStream(queryOptions)

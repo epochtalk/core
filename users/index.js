@@ -83,8 +83,8 @@ users.all = function() {
     var handler = function() {
       return fulfill(entries);
     };
-    
-    var query = { start: modelPrefix, end: modelPrefix + '\xff'};
+
+    var query = { gte: modelPrefix, lte: modelPrefix + '\xff'};
     db.content.createReadStream(query)
     .on('data', sorter)
     .on('error', reject)

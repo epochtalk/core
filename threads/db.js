@@ -310,8 +310,8 @@ threadsDb.byBoard = function(boardId, opts) {
 
     var queryOptions = {
       limit: limit,
-      start: startKey,
-      end: endKey
+      gte: startKey,
+      lte: endKey
     };
 
     // query thread Index
@@ -368,8 +368,8 @@ function reorderThreadOrder(startIndex, boardId, threadId) {
     var endKey = startKey + '\xff';
     startKey += encodeIntHex(startIndex);
     var queryOptions = {
-      start: startKey,
-      end: endKey
+      gte: startKey,
+      lte: endKey
     };
     // query for all posts fir this threadId
     db.indexes.createReadStream(queryOptions)

@@ -283,8 +283,8 @@ boards.all = function() {
 
     var searchKey = Board.prefix + config.sep;
     var query = {
-      start: searchKey,
-      end: searchKey + '\xff'
+      gte: searchKey,
+      lte: searchKey + '\xff'
     };
     db.content.createValueStream(query)
     .on('data', sorter)
@@ -581,8 +581,8 @@ boards.updateCategories = function(categories) {
         endKey += '\xff';
 
         var queryOptions = {
-          start: startKey,
-          end: endKey
+          gte: startKey,
+          lte: endKey
         };
         // query thread Index
         db.metadata.createReadStream(queryOptions)
@@ -661,8 +661,8 @@ boards.allCategories = function() {
     endKey += '\xff';
 
     var queryOptions = {
-      start: startKey,
-      end: endKey
+      gte: startKey,
+      lte: endKey
     };
     // query thread Index
     db.metadata.createValueStream(queryOptions)

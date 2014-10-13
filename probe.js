@@ -16,8 +16,8 @@ probe.all = function(dbName) {
     var handler = function() { fulfill(entries); };
 
     var query = {
-      start: '\x00',
-      end: '\xff'
+      gte: '\x00',
+      lte: '\xff'
     };
     db[dbName].createReadStream(query)
     .on('data', sorter)
@@ -38,7 +38,7 @@ probe.clean = function() {
   var DELETED = 'deleted';
   var LEGACY = 'legacy';
   var MESSAGES = 'messages';
-  
+
   return probe.all(CONTENT)
   .then(function(content) {
     return Promise.map(content, function(data) {
