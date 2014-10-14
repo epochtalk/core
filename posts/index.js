@@ -1,11 +1,14 @@
 var posts = {};
 module.exports = posts;
 var path = require('path');
+var pre = require(path.join(__dirname, 'pre'));
 var postsDb = require(path.join(__dirname, 'db'));
 var Post = require(path.join(__dirname, 'model'));
 
 posts.import = function(data) {
+  data = pre.parseBody(data);
   var importPost = new Post(data);
+
   return importPost.validateImport()
   .then(function() {
     return postsDb.import(importPost);
@@ -16,6 +19,7 @@ posts.import = function(data) {
 };
 
 posts.create = function(data) {
+  data = pre.parseBody(data);
   var newPost = new Post(data);
   
   return newPost.validateCreate()
@@ -32,6 +36,7 @@ posts.find = function(id) {
 };
 
 posts.update = function(data) {
+  data = pre.parseBody(data);
   var updatePost = new Post(data);
 
   return updatePost.validateCreate()

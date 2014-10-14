@@ -61,6 +61,42 @@ describe('Post', function() {
     });
   });
 
+  describe('#ParseBody', function() {
+    var plainPost = { title: 'post title', body: '[b]hello world.[/b]' };
+    var user, thread;
+    var newUser = {
+      username: 'test_user',
+      email: 'test_user@example.com',
+      password: 'epochtalk',
+      confirmation: 'epochtalk'
+    };
+    before(function() {
+      return users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        return boards.create({ name: 'Board', description: 'Board Desc' });
+      })
+      .then(function(board) {
+        return threads.create({ board_id: board.id });
+      })
+      .then(function(dbThread) {
+        thread = dbThread;
+        plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
+        return plainPost;
+      })
+      .then(posts.create)
+      .then(function(post) {
+        plainPost = post;
+        return post;
+      });
+    });
+
+    it('should populate the encodedBody property', function() {
+      plainPost.encodedBody.should.be.a('string');
+    });
+  });
+  
   describe('#key', function() {
     var plainPost = { title: 'post title', body: 'hello world.' };
     var user, thread;
@@ -287,7 +323,7 @@ describe('Post', function() {
     });
   });
 
-describe('#validate', function() {
+  describe('#validate', function() {
 
     it('should validate the minimum post model', function() {
       var minPost = {

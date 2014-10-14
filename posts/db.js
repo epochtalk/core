@@ -3,7 +3,6 @@ module.exports = posts;
 
 var path = require('path');
 var Promise = require('bluebird');
-var bbcodeParser = require('bbcode-parser');
 var config = require(path.join(__dirname, '..', 'config'));
 var vault = require(path.join(__dirname, '..', 'vault'));
 var db = require(path.join(__dirname, '..', 'db'));
@@ -20,14 +19,6 @@ var usersDb = require(path.join(__dirname, '..', 'users', 'db'));
 
 posts.import = function(post) {
   var insertPost = function() {
-    // parse bbcode in body
-    if (post.body.indexOf('[') > 0) {
-      var encoded = post.body;
-      post.encodedBody = encoded;
-      post.body = bbcodeParser.process({text: encoded}).html;
-    }
-    else { post.encodedBody = post.body; }
-
     // insert post
     return posts.insert(post)
     .then(function(dbPost) {
