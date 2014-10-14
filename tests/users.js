@@ -98,8 +98,6 @@ describe('users', function() {
     var testUser = {
       username: 'testuser',
       email: 'testuser@randomdomain1234.org',
-      password: 'asdf1234',
-      confirmation: 'asdf1234',
       smf: {
         ID_MEMBER: '123'
       }
@@ -115,10 +113,6 @@ describe('users', function() {
         user.imported_at.should.be.a('number');
         user.username.should.equal(testUser.username);
         user.email.should.equal(testUser.email);
-        should.not.exist(user.password);
-        should.not.exist(user.confirmation);
-        user.passhash.should.be.ok;
-        user.passhash.should.be.a('string');
         should.not.exist(user.deleted);
         user.smf.ID_MEMBER.should.equal(testUser.smf.ID_MEMBER);
       });
@@ -129,8 +123,6 @@ describe('users', function() {
     var testUser = {
       username: 'testuser',
       email: 'testuser@randomdomain1234.org',
-      password: 'asdf1234',
-      confirmation: 'asdf1234',
       smf: {
         ID_MEMBER: '123'
       }
@@ -152,9 +144,6 @@ describe('users', function() {
         user.imported_at.should.equal(testUser.imported_at);
         user.username.should.equal(testUser.username);
         user.email.should.equal(testUser.email);
-        should.not.exist(user.password);
-        should.not.exist(user.confirmation);
-        user.passhash.should.equal(testUser.passhash);
         should.not.exist(user.deleted);
         user.smf.ID_MEMBER.should.equal(testUser.smf.ID_MEMBER);
       });
@@ -166,8 +155,6 @@ describe('users', function() {
     var testUser = {
       username: 'testuser',
       email: 'testuser@randomdomain1234.org',
-      password: 'asdf1234',
-      confirmation: 'asdf1234',
       smf: {
         ID_MEMBER: '123'
       }
@@ -189,9 +176,6 @@ describe('users', function() {
         user.imported_at.should.equal(testUser.imported_at);
         user.username.should.equal(testUser.username);
         user.email.should.equal(testUser.email);
-        should.not.exist(user.password);
-        should.not.exist(user.confirmation);
-        user.passhash.should.equal(testUser.passhash);
         should.not.exist(user.deleted);
         user.smf.ID_MEMBER.should.equal(testUser.smf.ID_MEMBER);
         return user.smf.ID_MEMBER;
