@@ -91,8 +91,6 @@ describe('User', function() {
     var newUser = {
       username: 'test_user',
       email: 'test_user@example.com',
-      password: 'epochtalk',
-      confirmation: 'epochtalk',
       smf: {
         ID_MEMBER: 12345
       }
@@ -412,14 +410,12 @@ describe('User', function() {
       var minUser = {
         username: 'test_user',
         email: 'test_user@example.com',
-        password: 'epochtalk',
-        confirmation: 'epochtalk',
         smf: {
           ID_MEMBER: '12345'
         }
       };
       var user = new User(minUser);
-      var validUser = user.validateImport().value();
+      var validUser = user.validateImport();
       validUser.should.exist;
     });
 
@@ -492,55 +488,6 @@ describe('User', function() {
       .catch(function(err) {
         err.should.exist;
         err.message.should.equal('email must be a string');
-      });
-    });
-
-    it('should validate the password is a string', function() {
-      var minUser = {
-        username: 'test_user',
-        email: 'test_user@example.com',
-        password: 123456,
-        confirmation: 123456
-      };
-      var user = new User(minUser);
-      return user.validateImport()
-      .then(function(data) {
-        should.not.exist(data);
-      })
-      .catch(function(err) {
-        err.should.exist;
-        err.message.should.equal('password must be a string');
-      });
-    });
-
-    it('should validate that password confirmation is required', function() {
-      var testUser = { username: 'test_user', email: 'test_user@example.com', password: 'abc123' };
-      var user = new User(testUser);
-      return user.validateImport()
-      .then(function(data) {
-        should.not.exist(data);
-      })
-      .catch(function(err) {
-        err.should.exist;
-        err.message.should.equal('password missing required peer confirmation');
-      });
-    });
-
-    it('should validate the password matches confirmation', function() {
-      var minUser = {
-        username: 'test_user',
-        email: 'test_user@example.com',
-        password: '123456',
-        confirmation: '1234567'
-      };
-      var user = new User(minUser);
-      return user.validateImport()
-      .then(function(data) {
-        should.not.exist(data);
-      })
-      .catch(function(err) {
-        err.should.exist;
-        err.message.should.equal('confirmation must be one of ref:password');
       });
     });
   });
