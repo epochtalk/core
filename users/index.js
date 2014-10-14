@@ -9,15 +9,12 @@ var modelPrefix = config.users.prefix;
 var sep = config.sep;
 var usersDb = require(path.join(__dirname, 'db'));
 var User = require(path.join(__dirname, 'model'));
+var validate = require(path.join(__dirname, 'validate'));
 
 users.import = function(data) {
-  var importUser = new User(data);
-  return importUser.validateImport()
+  return validate.import(data)
   .then(function() {
-    return usersDb.import(importUser);
-  })
-  .then(function(user) {
-    return user.simple();
+    return usersDb.import(data);
   });
 };
 

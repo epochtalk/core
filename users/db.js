@@ -16,7 +16,7 @@ users.import = function(user) {
   return users.insert(user)
   .then(function(dbUser) {
     if (dbUser.smf) {
-      return db.legacy.putAsync(dbUser.legacyKey(), dbUser.id)
+      return db.legacy.putAsync(User.legacyKeyFromId(dbUser.smf.ID_MEMBER), dbUser.id)
       .then(function() {
         return dbUser;
       });
@@ -42,13 +42,13 @@ users.insert = function(user) {
   delete user.password;
   delete user.confirmation;
 
-  return db.content.putAsync(user.key(), user)
+  return db.content.putAsync(User.keyFromId(user.id), user)
   .then(function() { // insert username index
-    var usernameKey = user.usernameKey();
+    var usernameKey = User.usernameKeyFromInput(user.username);
     return db.indexes.putAsync(usernameKey, user.id);
   })
   .then(function() { // inset email index
-    var emailKey = user.emailKey();
+    var emailKey = User.emailKeyFromInput(user.email);
     return db.indexes.putAsync(emailKey, user.id);
   })
   .then(function() {
