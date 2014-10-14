@@ -20,8 +20,6 @@ validator.create = function(user) {
 var importSchema = joi.object().keys({
   username: joi.string().required(),
   email: joi.string(),
-  password: joi.string().regex(/[a-zA-Z0-9]{3,30}/),
-  confirmation: joi.ref('password'),
   created_at: joi.number(),
   smf: {
     ID_MEMBER: joi.number().required()
