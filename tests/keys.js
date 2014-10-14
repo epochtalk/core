@@ -3118,8 +3118,6 @@ describe('users', function() {
     var user = {
       username: 'test_user',
       email: 'test_user@example.com',
-      password: 'epochtalk',
-      confirmation: 'epochtalk',
       smf: {
         ID_MEMBER: 123
       }
@@ -3248,8 +3246,6 @@ describe('users', function() {
     var user = {
       username: 'test_user',
       email: 'test_user@example.com',
-      password: 'epochtalk',
-      confirmation: 'epochtalk',
       smf: {
         ID_MEMBER: 123
       }
@@ -3577,8 +3573,6 @@ describe('users', function() {
     var user = {
       username: 'test_user',
       email: 'test_user@example.com',
-      password: 'epochtalk',
-      confirmation: 'epochtalk',
       smf: {
         ID_MEMBER: 123
       }
