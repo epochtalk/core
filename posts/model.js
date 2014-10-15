@@ -65,6 +65,15 @@ Post.prototype.threadPostOrderKey = function(count) {
   return key;
 };
 
+Post.threadPostOrderKeyFromInput = function(thread_id, count) {
+  var key;
+  if (thread_id && count) {
+    var postOrder = encodeIntHex(count);
+    key = config.posts.indexPrefix + sep + thread_id + sep + postOrder;
+  }
+  return key;
+};
+
 Post.prototype.legacyKey = function() {
   return legacyKeyForPost(this.smf.ID_MSG);
 };
@@ -81,6 +90,15 @@ Post.prototype.versionKey = function() {
   var key;
   if (this.id) {
     key = config.posts.version + sep + this.id + sep + this.version;
+  }
+
+  return key;
+};
+
+Post.versionKeyFromInput = function(id, version) {
+  var key;
+  if (id) {
+    key = config.posts.version + sep + id + sep + version;
   }
 
   return key;
