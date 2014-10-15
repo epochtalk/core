@@ -54,6 +54,14 @@ Thread.prototype.boardThreadKey = function(timestamp) {
   return boardThreadKey;
 };
 
+Thread.boardThreadKeyFromInput = function(id, board_id, timestamp) {
+  var boardThreadKey;
+  if (id && board_id) {
+    boardThreadKey = indexPrefix + sep + board_id + sep + timestamp + sep + id;
+  }
+  return boardThreadKey;
+};
+
 Thread.prototype.boardKey = function() {
   var key;
   if (this.id) {
