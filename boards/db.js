@@ -19,7 +19,7 @@ boards.import = function(board) {
     return boards.create(board) // create board first to handle id
     .then(function(dbBoard) {
       if (dbBoard.smf) {
-        return db.legacy.putAsync(board.legacyKey(), dbBoard.id)
+        return db.legacy.putAsync(Board.legacyKeyFromId(board.smf.ID_BOARD), dbBoard.id)
         .then(function() { return dbBoard; });
       }
     });
@@ -51,7 +51,7 @@ boards.create = function(board) {
     board.updated_at = board.created_at;
   }
   board.id = helper.genId(board.created_at);
-  var boardKey = board.key();
+  var boardKey = Board.keyFromId(board.id);
   var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(board.id);
   var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(board.id);
   var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(board.id);
@@ -115,7 +115,7 @@ boards.find = function(id) {
     board = new Board(dbBoard);
     board.post_count = 0;
     board.thread_count = 0;
-    return board.getChildren();
+    return Board.getChildrenFromInput(board.children_ids);
   })
   .then(function(children) {
     if (children.length > 0) { board.children = children; }

@@ -5,16 +5,12 @@ var Promise = require('bluebird');
 var path = require('path');
 var db = require(path.join(__dirname, 'db'));
 var Board = require(path.join(__dirname, 'model'));
+var schema = require(path.join(__dirname, 'schema'));
 
-boards.import = function(json) {
-  var importBoard = new Board(json);
-
-  return importBoard.validate()
+boards.import = function(data) {
+  return schema.validate(data)
   .then(function() {
-    return db.import(importBoard);
-  })
-  .then(function(board) {
-    return board.simple();
+    return db.import(data);
   });
 };
 
