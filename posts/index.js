@@ -4,17 +4,13 @@ var path = require('path');
 var pre = require(path.join(__dirname, 'pre'));
 var postsDb = require(path.join(__dirname, 'db'));
 var Post = require(path.join(__dirname, 'model'));
+var validate = require(path.join(__dirname, 'validate'));
 
 posts.import = function(data) {
   data = pre.parseBody(data);
-  var importPost = new Post(data);
-
-  return importPost.validateImport()
+  return validate.import(data)
   .then(function() {
-    return postsDb.import(importPost);
-  })
-  .then(function(post) {
-    return post.simple();
+    return postsDb.import(data);
   });
 };
 

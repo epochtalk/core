@@ -23,7 +23,7 @@ posts.import = function(post) {
     return posts.insert(post)
     .then(function(dbPost) {
       if (dbPost.smf) {
-        return db.legacy.putAsync(dbPost.legacyKey(), dbPost.id)
+        return db.legacy.putAsync(Post.legacyKeyFromId(dbPost.smf.ID_MSG), dbPost.id)
         .then(function() { return dbPost; });
       }
     });
@@ -82,7 +82,7 @@ posts.insert = function(post) {
     }
 
     // post order metadata
-    var postOrderKey = post.postOrderKey();
+    var postOrderKey = Post.postOrderKeyFromId(post.id);
     metadataBatch.push({ type: 'put', key: postOrderKey, value: postCount });
     return db.metadata.batchAsync(metadataBatch);
   })
@@ -136,15 +136,15 @@ posts.insert = function(post) {
     else { return; }
   })
   .then(function() { // threadPostOrder
-    var key = post.threadPostOrderKey(postCount);
+    var key = Post.threadPostOrderKeyFromInput(post.thread_id, postCount);
     return db.indexes.putAsync(key, post.id);
   })
   .then(function() {
     post.version = timestamp; // add version
-    var versionKey = post.versionKey();
+    var versionKey = Post.versionKeyFromInput(post.id, post.version);
     return db.content.putAsync(versionKey, post);
   })
-  .then(function() { return db.content.putAsync(post.key(), post); })
+  .then(function() { return db.content.putAsync(Post.keyFromId(post.id), post); })
   .then(function() { return post; });
 };
 
