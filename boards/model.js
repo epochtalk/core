@@ -80,6 +80,17 @@ Board.prototype.getChildren = function() {
   }
 };
 
+Board.getChildrenFromInput = function(children_ids) {
+  if (children_ids) {
+    return Promise.all(children_ids.map(function(childId) {
+      return boardsDb.find(childId);
+    }));
+  }
+  else {
+    return Promise.resolve(emptyArray);
+  }
+};
+
 // parent defined in actual board stored object
 Board.prototype.getParent = function() {
   if (this.parent_id) {
