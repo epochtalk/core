@@ -1,7 +1,7 @@
 var should = require('chai').should();
 var rimraf = require('rimraf');
 var path = require('path');
-var dbName = 'test-epoch.db';
+var dbName = '.testDB';
 var core = require(path.join(__dirname, '..'))(dbName);
 var users = core.users;
 var probe = require(path.join(__dirname, '..', 'probe'));

@@ -1,7 +1,7 @@
 var path = require('path');
 var Benchmark = require('benchmark');
 var suite = new Benchmark.Suite;
-var core = require(path.join(__dirname, '..')('benchmark-epoch.db');
+var core = require(path.join(__dirname, '..')('.benchmarkDB'));
 var boards = core.boards;
 var threads = core.threads;
 var posts = core.posts;

@@ -1,9 +1,9 @@
 var path = require('path');
 var rimraf = require('rimraf');
 var should = require('chai').should();
-var probe = require(path.join(__dirname, '..', 'probe'));
-var dbName = 'test-epoch.db';
+var dbName = '.testDB';
 var core = require(path.join(__dirname, '..'))(dbName);
+var probe = require(path.join(__dirname, '..', 'probe'));
 
 var newBoard = {
   name: 'new board',

@@ -2,18 +2,17 @@ var should = require('chai').should();
 var rimraf = require('rimraf');
 var path = require('path');
 var Promise = require('bluebird');
-var probe = require(path.join(__dirname, '..', 'probe'));
-var dbName = 'test-epoch.db';
-var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
+var dbName = '.testDB';
 var core = require(path.join(__dirname, '..'))(dbName);
+var probe = require(path.join(__dirname, '..', 'probe'));
+var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var boards = core.boards;
 
 describe('boards', function() {
 
   describe('#ALL', function() {
     before(function(done) {
-      seed.initDb(path.join(__dirname, '..', dbName));
-      seed.createBoards(25, done);
+      seed(25, 0, 0, done);
     });
 
     it('should return matching board data', function() {

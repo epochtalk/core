@@ -1,119 +1,68 @@
-var async = require('async');
+var dbName = '.testDB';
+var _ = require('lodash');
+var Promise = require('bluebird');
 var path = require('path');
-var users = null;
-var boards = null;
-var posts = null;
-var threads = null;
+var core = require(path.join(__dirname, '..'))(dbName);
+var users = core.users;
+var boards = core.boards;
+var posts = core.posts;
+var threads = core.threads;
+var user = {};
 
-var createBoards = function (numBoards, finishedCb) {
-  async.times(numBoards, function(n, next) {
-    boards.create({
-      name: 'Board ' + n,
-      description: 'Hello World! This is board ' + n + ' in a popular forum.'
-    })
-    .then(function(board) {
-      next(null);
-    })
-    .catch(function(err) {
-      next(err);
-    });
-  },
-  function(err) {
-    finishedCb(err);
-  });
-};
-
-var createPost = function(threadId, j, cb) {
-  var post = {
-    title: 'Post ' + j,
-    body: 'Hello World! This is post ' + j,
-    thread_id: threadId
-  };
-  posts.create(post)
-  .then(function(post) {
-    return cb(null, post);
+var createUser = function() {
+  return users.create({
+    username: 'testuser',
+    email: 'testuser@gmail.com',
+    password: 'password',
+    confirmation: 'password'
   })
-  .catch(function(err) {
-    return cb(err, undefined);
+  .then(function(newUser) { user = newUser; });
+};
+
+var createBoard = function (index) {
+  return boards.create({
+    name: 'Board ' + index,
+    description: 'Hello World! This is board ' + index + ' in a popular forum.'
   });
 };
 
-var createThreadsAndPosts = function (numThreads, numPosts, finishedCb) {
+var createThread = function(boardId, index) {
+  return threads.create({
+    title: 'Thread ' + index,
+    body: 'Hello World! This is thread ' + index,
+    board_id: boardId
+  });
+};
 
-  var createThread = function(board, cb) {
-    async.times(numThreads, function(n, nextThread) {
-      var newThread = {
-        title: 'Thread ' + n,
-        body: 'Hello World! This is thread ' + n,
-        board_id: board.id
-      };
-      threads.create(newThread)
-      .then(function(post) {
-        async.times(numPosts, function(j, nextPost) {
-          createPost(post.thread_id, j, function(err) {
-            nextPost(err);
+var createPost = function(threadId, index) {
+  return posts.create({
+    title: 'Post ' + index,
+    body: 'Hello World! This is post ' + index,
+    thread_id: threadId,
+    user_id: user.id
+  });
+};
+
+module.exports = function(numBoards, numThreads, numPosts, cb) {
+  var boardIndexes = _.range(numBoards);
+  var threadIndexes = _.range(numThreads);
+  var postIndexes = _.range(numPosts);
+
+  return createUser().then(function() {
+    return Promise.each(boardIndexes, function(boardIndex) {
+      return createBoard(boardIndex)
+      .then(function(board) {
+        return Promise.each(threadIndexes, function(threadIndex) {
+          return createThread(board.id, threadIndex)
+          .then(function(thread) {
+            return Promise.each(postIndexes, function(postIndex) {
+              return createPost(thread.id, postIndex);
+            });
           });
-        },
-        function(err) {
-          nextThread(err);
         });
-      })
-      .catch(function(err) {
-        console.log(err);
-        nextThread(err);
       });
-    },
-    function(err) {
-      cb(err);
-    });
-  };
-
-  boards.all()
-  .then(function(allBoards) {
-    async.times(allBoards.length, function(n, nextBoard) {
-      createThread(allBoards[n], function(err) {
-        nextBoard(err);
-      });
-    },
-    function(err) {
-      finishedCb(err);
-    });
-  })
-  .catch(function(err) {
-    console.log(err);
+    })
+    .then(function() { return cb(); })
+    .catch(function(err) { return cb(err); });
   });
-};
-
-var init = function(numBoards, numThreads, numPosts, finishedCb) {
-  createBoards(numBoards, function (err) {
-    if (!err) {
-      createThreadsAndPosts(numThreads, numPosts, finishedCb);
-    }
-    else {
-      finishedCb(err);
-    }
-  });
-};
-
-var initDb = function(dbPath) {
-  var core;
-
-  if (dbPath) {
-    core = require(path.join(__dirname, '..'))(dbPath);
-  }
-  else {
-    core = require(path.join(__dirname, '..'))();
-  }
-
-  users = core.users;
-  boards = core.boards;
-  posts = core.posts;
-  threads = core.threads;
-};
-
-module.exports = {
-  init: init,
-  initDb: initDb,
-  createBoards: createBoards,
-  createThreadsAndPosts: createThreadsAndPosts
 };

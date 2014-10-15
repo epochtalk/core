@@ -1,9 +1,9 @@
 var should = require('chai').should();
 var rimraf = require('rimraf');
 var path = require('path');
-var probe = require(path.join(__dirname, '..', 'probe'));
-var dbName = 'test-epoch.db';
+var dbName = '.testDB';
 var core = require(path.join(__dirname, '..'))(dbName);
+var probe = require(path.join(__dirname, '..', 'probe'));
 var threads = core.threads;
 var posts = core.posts;
 var boards = core.boards;

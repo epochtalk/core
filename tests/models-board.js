@@ -1,12 +1,12 @@
 var rimraf = require('rimraf');
 var should = require('chai').should();
 var path = require('path');
-var probe = require(path.join(__dirname, '..', 'probe'));
-var dbName = 'test-epoch.db';
+var dbName = '.testDB';
 var core = require(path.join(__dirname, '..'))(dbName);
-var boards = core.boards;
+var probe = require(path.join(__dirname, '..', 'probe'));
 var Board = require(path.join(__dirname, '..', 'boards', 'model'));
 var config = require(path.join(__dirname, '..', 'config'));
+var boards = core.boards;
 
 describe('Board', function() {
 
