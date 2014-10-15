@@ -41,6 +41,9 @@ boards.import = function(board) {
 };
 
 boards.create = function(board) {
+  if (!board.type || board.type !== 'board') {
+    return Promise.reject('Type is not board.');
+  }
   // insert into db
   var timestamp = Date.now();
   if (!board.created_at) {
@@ -50,87 +53,62 @@ boards.create = function(board) {
   else if (!board.updated_at) {
     board.updated_at = board.created_at;
   }
-  board.id = helper.genId(board.created_at);
-  var boardKey = board.key();
-  var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(board.id);
-  var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(board.id);
-  var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(board.id);
-  var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(board.id);
-  var totalPostCountKey = Board.totalPostCountKeyFromId(board.id);
-  var totalThreadCountKey = Board.totalThreadCountKeyFromId(board.id);
-  var postCountKey = Board.postCountKeyFromId(board.id);
-  var threadCountKey = Board.threadCountKeyFromId(board.id);
+  // board.id = helper.genId(board.created_at);
 
-  var metadataBatch = [
-    // TODO: There should be a better solution than initializing with strings
-    { type: 'put', key: boardLastPostUsernameKey , value: 'none' },
-    { type: 'put', key: boardLastPostCreatedAtKey , value: 0 },
-    { type: 'put', key: boardLastThreadTitleKey , value: 'none' },
-    { type: 'put', key: boardLastThreadIdKey , value: 'none' },
-    { type: 'put', key: totalPostCountKey , value: 0 },
-    { type: 'put', key: totalThreadCountKey , value: 0 },
-    { type: 'put', key: postCountKey , value: 0 },
-    { type: 'put', key: threadCountKey , value: 0 }
-  ];
-  return db.metadata.batchAsync(metadataBatch)
-  .then(function() {
-    if (board.parent_id) {
-      return addChildToBoard(board.id, board.parent_id);
-    }
-    else { return; }
-  })
-  .then(function() { return db.content.putAsync(boardKey, board); })
-  .then(function() { return board; });
+  // last username
+  // last created at
+  // last thread title
+  // last thread id
+  // total post count (in all child boards and threads combined)
+  // total thread count
+  // current board post count
+  // current board thread count
+
+  return new Promise(function(fulfill, reject) {
+    db.tree.store(board, ['board', board.parent_id], function(err, ch) {
+      var board = ch.value;
+      board.id = ch.key[1];
+      if (err) reject(err);
+      else fulfill(board);
+    });
+  });
 };
 
 boards.find = function(id) {
-  var addProperty = function(key, keyName) {
-    return db.metadata.getAsync(key)
-    .then(function(value) {
-      if (_.isNumber(board[keyName]) && _.isNumber(value)) {
-        board[keyName] += Number(value);
+  // .then(function() {
+  //   return Promise.join(
+  //     addProperty(postCountKey, 'post_count'),
+  //     addProperty(threadCountKey, 'thread_count'),
+  //     addProperty(totalPostCountKey, 'total_post_count'),
+  //     addProperty(totalThreadCountKey, 'total_thread_count'),
+  //     addProperty(lastPostUsernameKey, 'last_post_username'),
+  //     addProperty(lastPostCreatedAtKey, 'last_post_created_at'),
+  //     addProperty(lastThreadTitleKey, 'last_thread_title'),
+  //     addProperty(lastThreadIdKey, 'last_thread_id'),
+  //     function() { return board; });
+  // });
+  var key = ['board', id];
+  return new Promise(function(fulfill, reject) {
+    db.tree.get(key, function(err, board) {
+      if (err) {
+        reject(err);
       }
-      else if (_.isNumber(value)) {
-        board[keyName] = Number(value);
-      }
-      else if (_.isString(value)) {
-        board[keyName] = value;
+      else {
+        board.id = id;
+        board.children_ids = [];
+        board.children = [];
+        db.tree.children(key)
+        .on('data', function(ch) {
+          var child = ch.value;
+          child.id = ch.key[1];
+          board.children_ids.push(child.id);
+          board.children.push(child);
+        })
+        .on('end', function() {
+          fulfill(board);
+        });
       }
     });
-  };
-
-  var board;
-  var boardKey = Board.keyFromId(id);
-  var postCountKey = Board.postCountKeyFromId(id);
-  var threadCountKey = Board.threadCountKeyFromId(id);
-  var totalPostCountKey = Board.totalPostCountKeyFromId(id);
-  var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
-  var lastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
-  var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
-  var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
-  var lastThreadIdKey = Board.lastThreadIdKeyFromId(id);
-
-  return db.content.getAsync(boardKey)
-  .then(function(dbBoard) {
-    board = new Board(dbBoard);
-    board.post_count = 0;
-    board.thread_count = 0;
-    return board.getChildren();
-  })
-  .then(function(children) {
-    if (children.length > 0) { board.children = children; }
-  })
-  .then(function() {
-    return Promise.join(
-      addProperty(postCountKey, 'post_count'),
-      addProperty(threadCountKey, 'thread_count'),
-      addProperty(totalPostCountKey, 'total_post_count'),
-      addProperty(totalThreadCountKey, 'total_thread_count'),
-      addProperty(lastPostUsernameKey, 'last_post_username'),
-      addProperty(lastPostCreatedAtKey, 'last_post_created_at'),
-      addProperty(lastThreadTitleKey, 'last_thread_title'),
-      addProperty(lastThreadIdKey, 'last_thread_id'),
-      function() { return board; });
   });
 };
 
@@ -277,33 +255,15 @@ boards.boardByOldId = function(oldId) {
 */
 boards.all = function() {
   return new Promise(function(fulfill, reject) {
-    var boardIds = [];
-    var sorter = function(entry) { boardIds.push(entry.id); };
-    var handler = function() { return fulfill(boardIds); };
-
-    var searchKey = Board.prefix + config.sep;
-    var query = {
-      gte: searchKey,
-      lte: searchKey + '\xff'
-    };
-    db.content.createValueStream(query)
-    .on('data', sorter)
-    .on('error', reject)
-    .on('close', handler)
-    .on('end', handler);
-  })
-  .then(function(allBoards) {
-    return Promise.map(allBoards, function(boardId) {
-      return boards.find(boardId);
+    var boards = [];
+    db.tree.nodes('board')
+    .on('data', function(ch) {
+      var board = ch.value;
+      board.id = ch.key[1];
+      boards.push(board);
     })
-    .then(function(allBoards) {
-      var boards = [];
-      allBoards.forEach(function(board) {
-        if (!board.parent_id) {
-          boards.push(board.simple());
-        }
-      });
-      return boards;
+    .on('end', function() {
+      fulfill(boards);
     });
   });
 };

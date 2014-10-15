@@ -14,6 +14,9 @@ var jsonEncoding = {valueEncoding: 'json'};
 var utfEncoding = {valueEncoding: 'utf8'};
 
 var tree = require('treedb')(levelup(path.join(dbPath)));
+tree.addSecondaryIndex('thread', 'board', 'updated_at');
+tree.addSecondaryIndex('post', 'thread', 'created_at');
+
 var db = tree.db.sublevel('content');
 var messages = db.sublevel('messages');
 var deleted = db.sublevel('deleted');

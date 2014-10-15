@@ -19,22 +19,16 @@ boards.import = function(json) {
 };
 
 boards.create = function(json) {
-  var newBoard = new Board(json);
-
-  return newBoard.validate()
-  .then(function() {
-    return db.create(newBoard);
-  })
-  .then(function(board) {
-    return board.simple();
-  });
+  return db.create(json);
+  // var newBoard = new Board(json); 
+  // return newBoard.validate()
+  // .then(function() {
+  //   return db.create(newBoard);
+  // });
 };
 
 boards.find = function(id) {
-  return db.find(id)
-  .then(function(board) {
-    return board.simple();
-  });
+  return db.find(id);
 };
 
 boards.update = function(json) {
