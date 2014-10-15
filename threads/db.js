@@ -21,7 +21,7 @@ threadsDb.import = function(thread) {
   return threadsDb.insert(thread)
   .then(function(dbThread) {
     if (dbThread.smf) {
-      return db.legacy.putAsync(thread.legacyKey(), dbThread.id)
+      return db.legacy.putAsync(Thread.legacyKeyFromId(thread.smf.ID_TOPIC), dbThread.id)
       .then(function() { return dbThread; });
     }
   });
@@ -39,8 +39,8 @@ threadsDb.insert = function(thread) {
     thread.created_at = timestamp;
   }
   thread.id = helper.genId(thread.created_at);
-  var boardThreadKey = thread.boardThreadKey(thread.created_at);
-  var threadKey = thread.key();
+  var boardThreadKey = Thread.boardThreadKeyFromInput(thread.id, thread.board_id, thread.created_at);
+  var threadKey = Thread.keyFromId(thread.id);
   var lastPostUsernameKey = Thread.lastPostUsernameKeyFromId(thread.id);
   var lastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(thread.id);
   var threadOrderKey = Thread.threadOrderKey(thread.id);

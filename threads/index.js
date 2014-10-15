@@ -3,15 +3,12 @@ module.exports = threads;
 var path = require('path');
 var threadsDb = require(path.join(__dirname, 'db'));
 var Thread = require(path.join(__dirname, 'model'));
+var schema = require(path.join(__dirname, 'schema'));
 
 threads.import = function(data) {
-  var importThread = new Thread(data);
-  return importThread.validate()
+  return schema.validate(data)
   .then(function() {
-    return threadsDb.import(importThread);
-  })
-  .then(function(thread) {
-    return thread.simple();
+    return threadsDb.import(data);
   });
 };
 
