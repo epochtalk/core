@@ -3,7 +3,7 @@ var rimraf = require('rimraf');
 var should = require('chai').should();
 var dbName = '.testDB';
 var core = require(path.join(__dirname, '..'))(dbName);
-var probe = require(path.join(__dirname, '..', 'probe'));
+var probe = require(path.join(__dirname, '..', 'probe'))(core.engine);
 
 var newBoard = {
   name: 'new board',

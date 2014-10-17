@@ -1,8 +1,7 @@
-var dbName = '.testDB';
 var _ = require('lodash');
 var Promise = require('bluebird');
 var path = require('path');
-var core = require(path.join(__dirname, '..'))(dbName);
+var core = require(path.join(__dirname, '..'))('.testDB');
 var users = core.users;
 var boards = core.boards;
 var posts = core.posts;

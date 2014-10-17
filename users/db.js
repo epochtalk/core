@@ -1,15 +1,16 @@
 var users = {};
-module.exports = users;
+var db;
 
 var path = require('path');
 var bcrypt = require('bcrypt');
 var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
-var db = require(path.join(__dirname, '..', 'db'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var User = require(path.join(__dirname, 'model'));
 var Padlock = require('padlock').Padlock;
 var userViewsLock = new Padlock();
+var modelPrefix = config.users.prefix;
+var sep = config.sep;
 
 users.import = function(user) {
   user.imported_at = Date.now();
@@ -197,6 +198,25 @@ users.purge = function(id) {
   });
 };
 
+users.all = function() {
+  return new Promise(function(fulfill, reject) {
+    var entries = [];
+    var sorter = function(entry) {
+      entries.push(entry.value);
+    };
+    var handler = function() {
+      return fulfill(entries);
+    };
+
+    var query = { gte: modelPrefix, lte: modelPrefix + '\xff'};
+    db.content.createReadStream(query)
+    .on('data', sorter)
+    .on('error', reject)
+    .on('close', handler)
+    .on('end', handler);
+  });
+};
+
 users.getUserViews = function(userId) {
   // build userView key
   var userViewsKey = User.userViewsKey(userId);
@@ -232,4 +252,11 @@ users.putUserViews = function(userId, userViewsArray) {
       });
     });
   });
+};
+
+module.exports = function(dbParam) {
+  if (db) { return users; }
+  if (!dbParam) { throw new Error('No DB Found.'); }
+  db = dbParam;
+  return users;
 };

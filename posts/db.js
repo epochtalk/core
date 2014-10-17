@@ -1,11 +1,13 @@
 var posts = {};
-module.exports = posts;
+var db;
+var boardsDb;
+var threadsDb;
+var usersDb;
 
 var path = require('path');
 var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var vault = require(path.join(__dirname, '..', 'vault'));
-var db = require(path.join(__dirname, '..', 'db'));
 var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
 var encodeIntHex = dbHelper.encodeIntHex;
 var Post = require(path.join(__dirname, 'model'));
@@ -13,9 +15,10 @@ var Thread = require(path.join(__dirname, '..', 'threads', 'model'));
 var Board = require(path.join(__dirname, '..', 'boards', 'model'));
 var User = require(path.join(__dirname, '..', 'users', 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
-var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
-var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
-var usersDb = require(path.join(__dirname, '..', 'users', 'db'));
+var boardsDbHandler = require(path.join(__dirname, '..', 'boards', 'db'));
+var threadsDbHandler = require(path.join(__dirname, '..', 'threads', 'db'));
+var usersDbHandler = require(path.join(__dirname, '..', 'users', 'db'));
+
 
 posts.import = function(post) {
   var insertPost = function() {
@@ -527,3 +530,13 @@ function reorderThreadOrder(params) {
     });
   });
 }
+
+module.exports = function(dbParam) {
+  if (db) { return posts; }
+  if (!dbParam) { throw new Error('No DB Found.'); }
+  db = dbParam;
+  boardsDb = boardsDbHandler(dbParam);
+  threadsDb = threadsDbHandler(dbParam);
+  usersDb = usersDbHandler(dbParam);
+  return posts;
+};

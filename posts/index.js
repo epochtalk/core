@@ -1,8 +1,9 @@
 var posts = {};
-module.exports = posts;
+var postsDb;
+
 var path = require('path');
 var pre = require(path.join(__dirname, 'pre'));
-var postsDb = require(path.join(__dirname, 'db'));
+var postsDbHandler = require(path.join(__dirname, 'db'));
 var Post = require(path.join(__dirname, 'model'));
 
 posts.import = function(data) {
@@ -72,4 +73,9 @@ posts.byThread = function(threadId, opts) {
 
 posts.versions = function(id) {
   return postsDb.versions(id); // all already simple
+};
+
+module.exports = function(dbParam) {
+  postsDb = postsDbHandler(dbParam);
+  return posts;
 };

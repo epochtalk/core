@@ -4,7 +4,7 @@ var path = require('path');
 var Promise = require('bluebird');
 var dbName = '.testDB';
 var core = require(path.join(__dirname, '..'))(dbName);
-var probe = require(path.join(__dirname, '..', 'probe'));
+var probe = require(path.join(__dirname, '..', 'probe'))(core.engine);
 var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var boards = core.boards;
 

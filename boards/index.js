@@ -1,9 +1,9 @@
 var boards = {};
-module.exports = boards;
+var boardsDb;
 
-var Promise = require('bluebird');
 var path = require('path');
-var db = require(path.join(__dirname, 'db'));
+var Promise = require('bluebird');
+var boardsDbHandler = require(path.join(__dirname, 'db'));
 var Board = require(path.join(__dirname, 'model'));
 
 boards.import = function(json) {
@@ -11,7 +11,7 @@ boards.import = function(json) {
 
   return importBoard.validate()
   .then(function() {
-    return db.import(importBoard);
+    return boardsDb.import(importBoard);
   })
   .then(function(board) {
     return board.simple();
@@ -23,7 +23,7 @@ boards.create = function(json) {
 
   return newBoard.validate()
   .then(function() {
-    return db.create(newBoard);
+    return boardsDb.create(newBoard);
   })
   .then(function(board) {
     return board.simple();
@@ -31,7 +31,7 @@ boards.create = function(json) {
 };
 
 boards.find = function(id) {
-  return db.find(id)
+  return boardsDb.find(id)
   .then(function(board) {
     return board.simple();
   });
@@ -42,7 +42,7 @@ boards.update = function(json) {
 
   return updateBoard.validateUpdate()
   .then(function() {
-    return db.update(updateBoard);
+    return boardsDb.update(updateBoard);
   })
   .then(function(board) {
     return board.simple();
@@ -50,39 +50,39 @@ boards.update = function(json) {
 };
 
 boards.delete = function(id) {
-  return db.delete(id)
+  return boardsDb.delete(id)
   .then(function(board) {
     return board.simple();
   });
 };
 
 boards.purge = function(id) {
-  return db.purge(id)
+  return boardsDb.purge(id)
   .then(function(board) {
     return board.simple();
   });
 };
 
 boards.boardByOldId = function(oldId) {
-  return db.boardByOldId(oldId)
+  return boardsDb.boardByOldId(oldId)
   .then(function(board) {
     return board.simple();
   });
 };
 
 boards.all = function() {
-  return db.all(); // all already simple
+  return boardsDb.all(); // all already simple
 };
 
 boards.updateCategories = function(categories) {
-  return db.updateCategories(categories)
+  return boardsDb.updateCategories(categories)
   .then(function(dbCategories) {
     return dbCategories;
   });
 };
 
 boards.allCategories = function() {
-  return db.allCategories()
+  return boardsDb.allCategories()
   .then(function(dbCategories) {
     var allCategories = [];
     return Promise.each(dbCategories, function(category) {
@@ -99,4 +99,9 @@ boards.allCategories = function() {
      return allCategories;
     });
   });
+};
+
+module.exports = function(dbParam) {
+  boardsDb = boardsDbHandler(dbParam);
+  return boards;
 };

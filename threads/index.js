@@ -1,7 +1,8 @@
 var threads = {};
-module.exports = threads;
+var threadsDb;
+
 var path = require('path');
-var threadsDb = require(path.join(__dirname, 'db'));
+var threadsDbHandler = require(path.join(__dirname, 'db'));
 var Thread = require(path.join(__dirname, 'model'));
 
 threads.import = function(data) {
@@ -67,3 +68,9 @@ threads.threadByOldId = function(oldId) {
 threads.byBoard = function(boardId, opts) {
   return threadsDb.byBoard(boardId, opts); // all already simple
 };
+
+module.exports = function(dbParam) {
+  threadsDb = threadsDbHandler(dbParam);
+  return threads;
+};
+

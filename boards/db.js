@@ -1,12 +1,11 @@
 var boards = {};
-module.exports = boards;
+var db;
 
 var _ = require('lodash');
 var path = require('path');
 var Promise = require('bluebird');
-var config = require(path.join(__dirname, '..', 'config'));
-var db = require(path.join(__dirname, '..', 'db'));
 var Board = require(path.join(__dirname, 'model'));
+var config = require(path.join(__dirname, '..', 'config'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var Padlock = require('padlock').Padlock;
 var postCountLock = new Padlock();
@@ -113,12 +112,17 @@ boards.find = function(id) {
   return db.content.getAsync(boardKey)
   .then(function(dbBoard) {
     board = new Board(dbBoard);
-    board.post_count = 0;
-    board.thread_count = 0;
-    return board.getChildren();
   })
-  .then(function(children) {
-    if (children.length > 0) { board.children = children; }
+  .then(function() {
+    if (board.children_ids && board.children_ids.length > 0) {
+      board.children = [];
+      return Promise.all(board.children_ids.map(function(childId) {
+        return boards.find(childId)
+        .then(function(childBoard) {
+          board.children.push(childBoard);
+        });
+      }));
+    }
   })
   .then(function() {
     return Promise.join(
@@ -671,4 +675,11 @@ boards.allCategories = function() {
     .on('close', handler)
     .on('end', handler);
   });
+};
+
+module.exports = function(dbParam) {
+  if (db) { return boards; }
+  if (!dbParam) { throw new Error('No DB Found.'); }
+  db = dbParam;
+  return boards;
 };

@@ -9,7 +9,7 @@ var boards = core.boards;
 var threads = core.threads;
 var posts = core.posts;
 var users = core.users;
-var probe = require(path.join(__dirname, '..', 'probe'));
+var probe = require(path.join(__dirname, '..', 'probe'))(core.engine);
 
 var CONTENT = 'content';
 var INDEXES = 'indexes';

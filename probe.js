@@ -1,9 +1,7 @@
+var db;
 var probe = {};
-module.exports = probe;
-
 var Promise = require('bluebird');
 var path = require('path');
-var db = require(path.join(__dirname, 'db'));
 
 probe.get = function(dbName, key) {
   return db[dbName].getAsync(key);
@@ -85,4 +83,11 @@ probe.clean = function() {
       });
     });
   });
-}
+};
+
+module.exports = function(dbParam) {
+  if (!dbParam) { throw new Error('No DB Found!'); }
+
+  db = dbParam;
+  return probe;
+};

@@ -4,7 +4,7 @@ var path = require('path');
 var dbName = '.testDB';
 var core = require(path.join(__dirname, '..'))(dbName);
 var users = core.users;
-var probe = require(path.join(__dirname, '..', 'probe'));
+var probe = require(path.join(__dirname, '..', 'probe'))(core.engine);
 
 describe('users', function() {
 

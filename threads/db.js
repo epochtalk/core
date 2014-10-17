@@ -1,15 +1,15 @@
 var threadsDb = {};
-module.exports = threadsDb;
+var db;
+var boardsDb;
 
 var path = require('path');
 var Promise = require('bluebird');
+var boardsDbHandler = require(path.join(__dirname, '..', 'boards', 'db'));
 var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
 var encodeIntHex = dbHelper.encodeIntHex;
 var config = require(path.join(__dirname, '..', 'config'));
-var db = require(path.join(__dirname, '..', 'db'));
 var Thread = require(path.join(__dirname, 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
-var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
 var Padlock = require('padlock').Padlock;
 var postCountLock = new Padlock();
 var viewCountLock = new Padlock();
@@ -392,3 +392,11 @@ function reorderThreadOrder(startIndex, boardId, threadId) {
     });
   });
 }
+
+module.exports = function(dbParam) {
+  if (db) { return threadsDb; }
+  if (!dbParam) { throw new Error('No DB Found.'); }
+  db = dbParam;
+  boardsDb = boardsDbHandler(dbParam);
+  return threadsDb;
+};
