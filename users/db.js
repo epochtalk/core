@@ -197,6 +197,26 @@ users.purge = function(id) {
   });
 };
 
+users.all = function() {
+  return new Promise(function(fulfill, reject) {
+    var entries = [];
+    var sorter = function(entry) {
+      entries.push(entry.value);
+    };
+    var handler = function() {
+      return fulfill(entries);
+    };
+
+    var modelPrefix = config.users.prefix;
+    var query = { gte: modelPrefix, lte: modelPrefix + '\xff'};
+    db.content.createReadStream(query)
+    .on('data', sorter)
+    .on('error', reject)
+    .on('close', handler)
+    .on('end', handler);
+  });
+}
+
 users.getUserViews = function(userId) {
   // build userView key
   var userViewsKey = User.userViewsKey(userId);

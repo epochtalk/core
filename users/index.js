@@ -3,10 +3,6 @@ module.exports = users;
 
 var path = require('path');
 var Promise = require('bluebird');
-var db = require(path.join(__dirname, '..', 'db'));
-var config = require(path.join(__dirname, '..', 'config'));
-var modelPrefix = config.users.prefix;
-var sep = config.sep;
 var usersDb = require(path.join(__dirname, 'db'));
 var User = require(path.join(__dirname, 'model'));
 var validate = require(path.join(__dirname, 'validate'));
@@ -72,22 +68,7 @@ users.purge = function(id) {
 };
 
 users.all = function() {
-  return new Promise(function(fulfill, reject) {
-    var entries = [];
-    var sorter = function(entry) {
-      entries.push(entry.value);
-    };
-    var handler = function() {
-      return fulfill(entries);
-    };
-
-    var query = { gte: modelPrefix, lte: modelPrefix + '\xff'};
-    db.content.createReadStream(query)
-    .on('data', sorter)
-    .on('error', reject)
-    .on('close', handler)
-    .on('end', handler);
-  });
+  return usersDb.all();
 };
 
 users.getUserViews = function(userId) {
