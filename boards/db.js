@@ -113,12 +113,17 @@ boards.find = function(id) {
   return db.content.getAsync(boardKey)
   .then(function(dbBoard) {
     board = new Board(dbBoard);
-    board.post_count = 0;
-    board.thread_count = 0;
-    return Board.getChildrenFromInput(board.children_ids);
   })
-  .then(function(children) {
-    if (children.length > 0) { board.children = children; }
+  .then(function() {
+    if (board.children_ids && board.children_ids.length > 0) {
+      board.children = [];
+      return Promise.all(board.children_ids.map(function(childId) {
+        return boards.find(childId)
+        .then(function(childBoard) {
+          board.children.push(childBoard);
+        });
+      }));
+    }
   })
   .then(function() {
     return Promise.join(

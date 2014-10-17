@@ -3,8 +3,6 @@ var Promise = require('bluebird');
 var path = require('path');
 var config = require(path.join(__dirname, '..', 'config'));
 var schema = require(path.join(__dirname, 'schema'));
-var boardsDb = require(path.join(__dirname, 'db'));
-var db = require(path.join(__dirname, '..', 'db'));
 var prefix = config.boards.prefix;
 var catPrefix = config.boards.categoryPrefix;
 var sep = config.sep;
@@ -66,42 +64,6 @@ Board.prototype.legacyKey = function() {
 
 Board.prototype.categoryKey = function() {
   return catPrefix + sep + this.category_id;
-};
-
-// children in database stored in relation to board index
-Board.prototype.getChildren = function() {
-  if (this.children_ids) {
-    return Promise.all(this.children_ids.map(function(childId) {
-      return boardsDb.find(childId);
-    }));
-  }
-  else {
-    return Promise.resolve(emptyArray);
-  }
-};
-
-Board.getChildrenFromInput = function(children_ids) {
-  if (children_ids) {
-    return Promise.all(children_ids.map(function(childId) {
-      return boardsDb.find(childId);
-    }));
-  }
-  else {
-    return Promise.resolve(emptyArray);
-  }
-};
-
-// parent defined in actual board stored object
-Board.prototype.getParent = function() {
-  if (this.parent_id) {
-    return db.content.getAsync(keyForBoard(this.parent_id))
-    .then(function(parentBoardData) {
-      return new Board(parentBoardData);
-    });
-  }
-  else {
-    return Promise.reject('No Parent Id Found');
-  }
 };
 
 Board.prototype.validate = function() {
