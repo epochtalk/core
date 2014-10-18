@@ -639,8 +639,7 @@ describe('boards', function() {
     });
 
     it('should undelete specified board', function() {
-      testBoard.deleted = null;
-      return boards.update(testBoard)
+      return boards.undelete(testBoard.id)
       .then(function(board) {
         board.id.should.equal(testBoard.id);
         board.created_at.should.equal(testBoard.created_at);

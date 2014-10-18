@@ -4,7 +4,6 @@ module.exports = boards;
 var Promise = require('bluebird');
 var path = require('path');
 var db = require(path.join(__dirname, 'db'));
-var Board = require(path.join(__dirname, 'model'));
 var schema = require(path.join(__dirname, 'schema'));
 
 boards.import = function(data) {
@@ -15,55 +14,37 @@ boards.import = function(data) {
 };
 
 boards.create = function(json) {
-  var newBoard = new Board(json);
-
-  return newBoard.validate()
+  return schema.validate(json)
   .then(function() {
-    return db.create(newBoard);
-  })
-  .then(function(board) {
-    return board.simple();
+    return db.create(json);
   });
 };
 
 boards.find = function(id) {
-  return db.find(id)
-  .then(function(board) {
-    return board.simple();
-  });
+  return db.find(id);
 };
 
 boards.update = function(json) {
-  var updateBoard = new Board(json);
-
-  return updateBoard.validateUpdate()
+  return schema.validateUpdate(json)
   .then(function() {
-    return db.update(updateBoard);
-  })
-  .then(function(board) {
-    return board.simple();
+    return db.update(json);
   });
 };
 
 boards.delete = function(id) {
-  return db.delete(id)
-  .then(function(board) {
-    return board.simple();
-  });
+  return db.delete(id);
+};
+
+boards.undelete = function(id) {
+  return db.undelete(id);
 };
 
 boards.purge = function(id) {
-  return db.purge(id)
-  .then(function(board) {
-    return board.simple();
-  });
+  return db.purge(id);
 };
 
 boards.boardByOldId = function(oldId) {
-  return db.boardByOldId(oldId)
-  .then(function(board) {
-    return board.simple();
-  });
+  return db.boardByOldId(oldId);
 };
 
 boards.all = function() {

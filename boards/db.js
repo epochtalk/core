@@ -6,7 +6,7 @@ var path = require('path');
 var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
-var Board = require(path.join(__dirname, 'model'));
+var Board = require(path.join(__dirname, 'keys'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var Padlock = require('padlock').Padlock;
 var postCountLock = new Padlock();
@@ -19,7 +19,7 @@ boards.import = function(board) {
     return boards.create(board) // create board first to handle id
     .then(function(dbBoard) {
       if (dbBoard.smf) {
-        return db.legacy.putAsync(Board.legacyKeyFromId(board.smf.ID_BOARD), dbBoard.id)
+        return db.legacy.putAsync(Board.legacyKey(board.smf.ID_BOARD), dbBoard.id)
         .then(function() { return dbBoard; });
       }
     });
@@ -28,7 +28,7 @@ boards.import = function(board) {
   board.imported_at = Date.now();
   var promise;
   if (board.smf.ID_PARENT) {
-    promise = db.legacy.getAsync(Board.legacyKeyFromId(board.smf.ID_PARENT))
+    promise = db.legacy.getAsync(Board.legacyKey(board.smf.ID_PARENT))
     .then(function(parentBoardId) {
       board.parent_id = parentBoardId;
     })
@@ -51,15 +51,15 @@ boards.create = function(board) {
     board.updated_at = board.created_at;
   }
   board.id = helper.genId(board.created_at);
-  var boardKey = Board.keyFromId(board.id);
-  var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(board.id);
-  var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(board.id);
-  var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(board.id);
-  var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(board.id);
-  var totalPostCountKey = Board.totalPostCountKeyFromId(board.id);
-  var totalThreadCountKey = Board.totalThreadCountKeyFromId(board.id);
-  var postCountKey = Board.postCountKeyFromId(board.id);
-  var threadCountKey = Board.threadCountKeyFromId(board.id);
+  var boardKey = Board.key(board.id);
+  var boardLastPostUsernameKey = Board.lastPostUsernameKey(board.id);
+  var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKey(board.id);
+  var boardLastThreadTitleKey = Board.lastThreadTitleKey(board.id);
+  var boardLastThreadIdKey = Board.lastThreadIdKey(board.id);
+  var totalPostCountKey = Board.totalPostCountKey(board.id);
+  var totalThreadCountKey = Board.totalThreadCountKey(board.id);
+  var postCountKey = Board.postCountKey(board.id);
+  var threadCountKey = Board.threadCountKey(board.id);
 
   var metadataBatch = [
     // TODO: There should be a better solution than initializing with strings
@@ -100,21 +100,21 @@ boards.find = function(id) {
   };
 
   var board;
-  var boardKey = Board.keyFromId(id);
-  var postCountKey = Board.postCountKeyFromId(id);
-  var threadCountKey = Board.threadCountKeyFromId(id);
-  var totalPostCountKey = Board.totalPostCountKeyFromId(id);
-  var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
-  var lastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
-  var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
-  var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
-  var lastThreadIdKey = Board.lastThreadIdKeyFromId(id);
+  var boardKey = Board.key(id);
+  var postCountKey = Board.postCountKey(id);
+  var threadCountKey = Board.threadCountKey(id);
+  var totalPostCountKey = Board.totalPostCountKey(id);
+  var totalThreadCountKey = Board.totalThreadCountKey(id);
+  var lastPostUsernameKey = Board.lastPostUsernameKey(id);
+  var lastPostCreatedAtKey = Board.lastPostCreatedAtKey(id);
+  var lastThreadTitleKey = Board.lastThreadTitleKey(id);
+  var lastThreadIdKey = Board.lastThreadIdKey(id);
 
   return db.content.getAsync(boardKey)
-  .then(function(dbBoard) {
-    board = new Board(dbBoard);
-  })
-  .then(function() {
+  .then(function(boardDb) {
+    board = boardDb;
+    board.post_count = 0;
+    board.thread_count = 0;
     if (board.children_ids && board.children_ids.length > 0) {
       board.children = [];
       return Promise.all(board.children_ids.map(function(childId) {
@@ -140,31 +140,40 @@ boards.find = function(id) {
 };
 
 boards.update = function(board) {
-  var boardKey = board.key();
+  var boardKey = Board.key(board.id);
   var updateBoard = null;
 
   // get old board from db
   return db.content.getAsync(boardKey)
   .then(function(oldBoard) {
-    updateBoard = new Board(oldBoard);
+    updateBoard = oldBoard;
 
     // update board values
     if (board.name) { updateBoard.name = board.name; }
 
     if (board.description) { updateBoard.description = board.description; }
     else if (board.description === null) { delete updateBoard.description; }
+    else if (board.description && board.description === "") {
+      delete updateBoard.description;
+    }
 
     if (board.category_id) { updateBoard.category_id = board.category_id; }
     else if (board.category_id === null) { delete updateBoard.category_id; }
+    else if (board.category_id && board.category_id === "") {
+      delete updateBoard.category_id;
+    }
 
     if (board.parent_id) { updateBoard.parent_id = board.parent_id; }
     else if (board.parent_id === null) { delete updateBoard.parent_id; }
+    else if (board.parent_id && board.parent_id === "") {
+      delete updateBoard.parent_id;
+    }
 
     if (board.children_ids) { updateBoard.children_ids = board.children_ids; }
     else if (board.children_ids === null) { delete updateBoard.children_ids; }
-
-    if (board.deleted) { updateBoard.deleted = board.deleted; }
-    else if (board.deleted === null) { delete updateBoard.deleted; }
+    else if (board.children_ids && board.children_ids.length === 0) {
+      delete updateBoard.children_ids;
+    }
 
     updateBoard.updated_at = Date.now();
 
@@ -175,13 +184,13 @@ boards.update = function(board) {
 };
 
 boards.delete = function(boardId) {
-  var boardKey = Board.keyFromId(boardId);
+  var boardKey = Board.key(boardId);
   var deleteBoard;
 
   // see if board already exists
   return db.content.getAsync(boardKey)
   .then(function(boardData) {
-    deleteBoard = new Board(boardData);
+    deleteBoard = boardData;
     if (deleteBoard.children_ids && deleteBoard.children_ids.length > 0) {
       throw new Error('Cannot delete parent board with child boards.');
     }
@@ -197,15 +206,34 @@ boards.delete = function(boardId) {
   .then(function() { return deleteBoard; });
 };
 
+boards.undelete = function(boardId) {
+  var boardKey = Board.key(boardId);
+  var deleteBoard;
+
+  // see if board already exists
+  return db.content.getAsync(boardKey)
+  .then(function(boardData) {
+    deleteBoard = boardData;
+
+    // add deleted: true flag to board
+    delete deleteBoard.deleted;
+    deleteBoard.updated_at = Date.now();
+
+    // insert back into db
+    return db.content.putAsync(boardKey, deleteBoard);
+  })
+  .then(function() { return deleteBoard; });
+};
+
 boards.purge = function(id) {
   var purgeBoard;
-  var boardKey = Board.keyFromId(id);
+  var boardKey = Board.key(id);
 
   // see if board already exists
   return db.content.getAsync(boardKey)
   // set board to function scope
   .then(function(boardData) {
-    purgeBoard = new Board(boardData);
+    purgeBoard = boardData;
     if (purgeBoard.children_ids && purgeBoard.children_ids.length > 0) {
       throw new Error('Cannot purge parent board with child boards.');
     }
@@ -219,14 +247,14 @@ boards.purge = function(id) {
   })
   // delete metadata
   .then(function() {
-    var postCountKey = Board.postCountKeyFromId(id);
-    var threadCountKey = Board.threadCountKeyFromId(id);
-    var totalPostCountKey = Board.totalPostCountKeyFromId(id);
-    var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
-    var lastPostUsernameKey = Board.lastPostUsernameKeyFromId(id);
-    var lastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(id);
-    var lastThreadTitleKey = Board.lastThreadTitleKeyFromId(id);
-    var lastThreadIdKey = Board.lastThreadIdKeyFromId(id);
+    var postCountKey = Board.postCountKey(id);
+    var threadCountKey = Board.threadCountKey(id);
+    var totalPostCountKey = Board.totalPostCountKey(id);
+    var totalThreadCountKey = Board.totalThreadCountKey(id);
+    var lastPostUsernameKey = Board.lastPostUsernameKey(id);
+    var lastPostCreatedAtKey = Board.lastPostCreatedAtKey(id);
+    var lastThreadTitleKey = Board.lastThreadTitleKey(id);
+    var lastThreadIdKey = Board.lastThreadIdKey(id);
     var deleteBatch = [
       { type: 'del', key: postCountKey },
       { type: 'del', key: threadCountKey },
@@ -242,7 +270,7 @@ boards.purge = function(id) {
   // delete legacy key index
   .then(function() {
     if (purgeBoard.smf) {
-      var legacyKey = purgeBoard.legacyKey();
+      var legacyKey = Board.legacyKey(purgeBoard.smf.ID_BOARD);
       return db.legacy.delAsync(legacyKey);
     }
     return;
@@ -269,7 +297,7 @@ boards.purge = function(id) {
 
 /*  QUERY: board using old id */
 boards.boardByOldId = function(oldId) {
-  var legacyBoardKey = Board.legacyKeyFromId(oldId);
+  var legacyBoardKey = Board.legacyKey(oldId);
 
   return db.legacy.getAsync(legacyBoardKey)
   .then(function(boardId) {
@@ -305,7 +333,7 @@ boards.all = function() {
       var boards = [];
       allBoards.forEach(function(board) {
         if (!board.parent_id) {
-          boards.push(board.simple());
+          boards.push(board);
         }
       });
       return boards;
@@ -315,7 +343,7 @@ boards.all = function() {
 
 boards.incTotalPostCount = function(id) {
   var count;
-  var totalPostCountKey = Board.totalPostCountKeyFromId(id);
+  var totalPostCountKey = Board.totalPostCountKey(id);
 
   return new Promise(function(fulfill, reject) {
     postCountLock.runwithlock(function() {
@@ -337,7 +365,7 @@ boards.incTotalPostCount = function(id) {
 
 boards.decTotalPostCount = function(id) {
   var count;
-  var totalPostCountKey = Board.totalPostCountKeyFromId(id);
+  var totalPostCountKey = Board.totalPostCountKey(id);
 
   return new Promise(function(fulfill, reject) {
     postCountLock.runwithlock(function () {
@@ -359,7 +387,7 @@ boards.decTotalPostCount = function(id) {
 
 boards.incTotalThreadCount = function(id) {
   var count;
-  var totalThreadCountKey = Board.totalThreadCountKeyFromId(id);
+  var totalThreadCountKey = Board.totalThreadCountKey(id);
 
   return new Promise(function(fulfill, reject) {
     threadCountLock.runwithlock(function () {
@@ -381,7 +409,7 @@ boards.incTotalThreadCount = function(id) {
 
 boards.decTotalThreadCount = function(id) {
   var count;
-  var totalThreadCountKey = Board.postCountKeyFromId(id);
+  var totalThreadCountKey = Board.postCountKey(id);
 
   return new Promise(function(fulfill, reject) {
     threadCountLock.runwithlock(function () {
@@ -402,7 +430,7 @@ boards.decTotalThreadCount = function(id) {
 };
 
 boards.incPostCount = function(id) {
-  var postCountKey = Board.postCountKeyFromId(id);
+  var postCountKey = Board.postCountKey(id);
 
   return new Promise(function(fulfill, reject) {
     postCountLock.runwithlock(function () {
@@ -417,7 +445,7 @@ boards.incPostCount = function(id) {
 };
 
 boards.decPostCount = function(id) {
-  var postCountKey = Board.postCountKeyFromId(id);
+  var postCountKey = Board.postCountKey(id);
 
   return new Promise(function(fulfill, reject) {
     postCountLock.runwithlock(function () {
@@ -432,7 +460,7 @@ boards.decPostCount = function(id) {
 };
 
 boards.incThreadCount = function(id) {
-  var threadCountKey = Board.threadCountKeyFromId(id);
+  var threadCountKey = Board.threadCountKey(id);
 
   return new Promise(function(fulfill, reject) {
     threadCountLock.runwithlock(function () {
@@ -447,7 +475,7 @@ boards.incThreadCount = function(id) {
 };
 
 boards.decThreadCount = function(id) {
-  var threadCountKey = Board.threadCountKeyFromId(id);
+  var threadCountKey = Board.threadCountKey(id);
 
   return new Promise(function(fulfill, reject) {
     threadCountLock.runwithlock(function () {
@@ -501,7 +529,7 @@ var addChildToBoard = function(childId, parentId) {
   var parentBoard;
   return new Promise(function(fulfill, reject) {
     updateParentLock.runwithlock(function () {
-      var parentBoardKey = Board.keyFromId(parentId);
+      var parentBoardKey = Board.key(parentId);
       return db.content.getAsync(parentBoardKey)
       .then(function(dbParentBoard) {
         parentBoard = dbParentBoard;
@@ -524,7 +552,7 @@ var removeChildFromBoard = function(childId, parentId) {
   var parentBoard;
   return new Promise(function(fulfill, reject) {
     updateParentLock.runwithlock(function () {
-      var parentBoardKey = Board.keyFromId(parentId);
+      var parentBoardKey = Board.key(parentId);
       return db.content.getAsync(parentBoardKey)
       .then(function(dbParentBoard) {
         parentBoard = dbParentBoard;
@@ -556,7 +584,7 @@ boards.updateCategories = function(categories) {
       // Query boards update category_id
       var resyncBoards = function(boardIds, categoryId) {
         return Promise.map(boardIds, function(boardId) {
-          var newBoard = new Board({ id: boardId, category_id: categoryId });
+          var newBoard = { id: boardId, category_id: categoryId };
           return boards.update(newBoard);
         });
       };
@@ -568,7 +596,7 @@ boards.updateCategories = function(categories) {
           return db.metadata.delAsync(catKey)
           .then(function() {
             return Promise.map(boardIds, function(boardId) {
-              var modifiedBoard = new Board({ id: boardId, category_id: null });
+              var modifiedBoard = { id: boardId, category_id: null };
               return boards.update(modifiedBoard);
             });
           });
@@ -628,7 +656,7 @@ boards.categoryDeleteBoard = function(board) {
         return reject(catErr);
       }
       else {
-        var catKey = board.categoryKey();
+        var catKey = Board.categoryKey(board.category_id);
         var modifiedCategory;
         return db.metadata.getAsync(catKey)
         .then(function(category) {

@@ -371,7 +371,7 @@ describe('boards', function() {
       .then(function(board) { testBoard = board; })
       .then(function() {
         testBoard.name = 'updated';
-        testBoard.decription = 'updated';
+        testBoard.description = 'updated';
       })
       .then(function() {
         return boards.update(testBoard);

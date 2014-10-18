@@ -10,7 +10,7 @@ var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
 var encodeIntHex = dbHelper.encodeIntHex;
 var Post = require(path.join(__dirname, 'model'));
 var Thread = require(path.join(__dirname, '..', 'threads', 'model'));
-var Board = require(path.join(__dirname, '..', 'boards', 'model'));
+var Board = require(path.join(__dirname, '..', 'boards', 'keys'));
 var User = require(path.join(__dirname, '..', 'users', 'model'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var threadsDb = require(path.join(__dirname, '..', 'threads', 'db'));
@@ -153,10 +153,10 @@ var buildMetadataBatch = function(boardId, metadata, batchArray, postCreatedAt) 
   return boardsDb.find(boardId)
   .then(function(board) {
     if (postCreatedAt >= board.last_post_created_at) {
-      var boardLastPostUsernameKey = Board.lastPostUsernameKeyFromId(boardId);
-      var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKeyFromId(boardId);
-      var boardLastThreadTitleKey = Board.lastThreadTitleKeyFromId(boardId);
-      var boardLastThreadIdKey = Board.lastThreadIdKeyFromId(boardId);
+      var boardLastPostUsernameKey = Board.lastPostUsernameKey(boardId);
+      var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKey(boardId);
+      var boardLastThreadTitleKey = Board.lastThreadTitleKey(boardId);
+      var boardLastThreadIdKey = Board.lastThreadIdKey(boardId);
       batchArray.push({ type: 'put', key: boardLastPostUsernameKey, value: metadata.username });
       batchArray.push({ type: 'put', key: boardLastPostCreatedAtKey, value: metadata.createdAt });
       batchArray.push({ type: 'put', key: boardLastThreadTitleKey, value: metadata.threadTitle });
