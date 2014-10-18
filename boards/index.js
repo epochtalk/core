@@ -6,45 +6,44 @@ var path = require('path');
 var db = require(path.join(__dirname, 'db'));
 var schema = require(path.join(__dirname, 'schema'));
 
-boards.import = function(data) {
-  return schema.validate(data)
-  .then(function() {
-    return db.import(data);
-  });
+boards.import = function(json) {
+  return schema.validateImport(json)
+  .then(db.import);
 };
 
 boards.create = function(json) {
-  return schema.validate(json)
-  .then(function() {
-    return db.create(json);
-  });
+  return schema.validateCreate(json)
+  .then(db.create);
 };
 
 boards.find = function(id) {
-  return db.find(id);
+  return schema.validateId(id)
+  .then(db.find);
 };
 
 boards.update = function(json) {
   return schema.validateUpdate(json)
-  .then(function() {
-    return db.update(json);
-  });
+  .then(db.update);
 };
 
 boards.delete = function(id) {
-  return db.delete(id);
+  return schema.validateId(id)
+  .then(db.delete);
 };
 
 boards.undelete = function(id) {
-  return db.undelete(id);
+  return schema.validateId(id)
+  .then(db.undelete);
 };
 
 boards.purge = function(id) {
-  return db.purge(id);
+  return schema.validateId(id)
+  .then(db.purge);
 };
 
 boards.boardByOldId = function(oldId) {
-  return db.boardByOldId(oldId);
+  return schema.validateNumId(oldId)
+  .then(db.boardByOldId);
 };
 
 boards.all = function() {

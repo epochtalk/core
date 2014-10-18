@@ -14,7 +14,7 @@ var sep = config.sep;
   updated_at
   imported_at
   deleted
-  smf: ID_BOARD
+  smf: ID_BOARD, ID_PARENT
   name
   description
   category_id

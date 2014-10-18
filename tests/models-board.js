@@ -4,7 +4,6 @@ var path = require('path');
 var dbName = '.testDB';
 var probe = require(path.join(__dirname, '..', 'probe'));
 var Board = require(path.join(__dirname, '..', 'boards', 'keys'));
-var schema = require(path.join(__dirname, '..', 'boards', 'schema'));
 var config = require(path.join(__dirname, '..', 'config'));
 
 describe('Board', function() {
@@ -81,73 +80,6 @@ describe('Board', function() {
       var key = Board.legacyKey(board.smf.ID_BOARD);
       var check = boardPrefix + sep + board.smf.ID_BOARD;
       key.should.be.equal(check);
-    });
-  });
-
-  describe('#validate', function() {
-
-    it('should validate the minimum board model', function() {
-      var minBoard = { name: 'name' };
-      var validBoard = schema.validate(minBoard).value();
-      validBoard.should.exist;
-    });
-
-    it('should validate that name is required', function() {
-      var nameBoard = { description: 'hello' };
-      return schema.validate(nameBoard)
-      .then(function(data) { should.not.exist(data); })
-      .catch(function(err) { err.should.exist; });
-    });
-
-    it('should validate dates are numbers', function() {
-      var dateBoard = {
-        name: 'name',
-        created_at: 12312312,
-        updated_at: 13124121,
-        imported_at: 12314124
-      };
-      var validBoard = schema.validate(dateBoard).value();
-      validBoard.should.exi
-    });
-
-    it('should validate ids are string', function() {
-      var idBoard = {
-        name: 'name',
-        id: '121314',
-        parent_id: '1203234'
-      };
-      var validBoard = schema.validate(idBoard).value();
-      validBoard.should.exist;
-    });
-
-    it('should validate children and chlidren_ids are arrays', function() {
-      var childBoard = {
-        name: 'name',
-        children: [{ name: 'child' }],
-        children_ids: ['asdasdf']
-      };
-      var validBoard = schema.validate(childBoard).value();
-      validBoard.should.exist;
-    });
-
-    it('should validate deleted is a boolean', function() {
-      var deleteBoard = {
-        name: 'name',
-        deleted: true
-      };
-      var validBoard = schema.validate(deleteBoard).value();
-      validBoard.should.exist;
-    });
-
-    it('should validate smf id is a number', function() {
-      var smfBoard = {
-        name: 'name',
-        smf: {
-          ID_BOARD: 1235
-        }
-      };
-      var validBoard = schema.validate(smfBoard).value();
-      validBoard.should.exist;
     });
   });
 
