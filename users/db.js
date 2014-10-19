@@ -7,7 +7,7 @@ var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var helper = require(path.join(__dirname, '..', 'helper'));
-var User = require(path.join(__dirname, 'model'));
+var User = require(path.join(__dirname, 'keys'));
 var Padlock = require('padlock').Padlock;
 var userViewsLock = new Padlock();
 
@@ -16,7 +16,7 @@ users.import = function(user) {
   return users.insert(user)
   .then(function(dbUser) {
     if (dbUser.smf) {
-      return db.legacy.putAsync(User.legacyKeyFromId(dbUser.smf.ID_MEMBER), dbUser.id)
+      return db.legacy.putAsync(User.legacyKey(dbUser.smf.ID_MEMBER), dbUser.id)
       .then(function() {
         return dbUser;
       });
@@ -42,13 +42,13 @@ users.insert = function(user) {
   delete user.password;
   delete user.confirmation;
 
-  return db.content.putAsync(User.keyFromId(user.id), user)
+  return db.content.putAsync(User.key(user.id), user)
   .then(function() { // insert username index
-    var usernameKey = User.usernameKeyFromInput(user.username);
+    var usernameKey = User.usernameKey(user.username);
     return db.indexes.putAsync(usernameKey, user.id);
   })
   .then(function() { // inset email index
-    var emailKey = User.emailKeyFromInput(user.email);
+    var emailKey = User.emailKey(user.email);
     return db.indexes.putAsync(emailKey, user.id);
   })
   .then(function() {
@@ -57,33 +57,33 @@ users.insert = function(user) {
 };
 
 users.find = function(id) {
-  var userKey = User.keyFromId(id);
+  var userKey = User.key(id);
   return db.content.getAsync(userKey);
 };
 
 users.findByLegacyId = function(legacyId) {
-  var legacyUserKey = User.legacyKeyFromId(legacyId);
+  var legacyUserKey = User.legacyKey(legacyId);
 
   return db.legacy.getAsync(legacyUserKey)
   .then(users.find);
 };
 
 users.findByUsername = function(username) {
-  var usernameKey = User.usernameKeyFromInput(username);
+  var usernameKey = User.usernameKey(username);
 
   return db.indexes.getAsync(usernameKey)
   .then(users.find);
 };
 
 users.findByEmail = function(email) {
-  var emailKey = User.emailKeyFromInput(email);
+  var emailKey = User.emailKey(email);
 
   return db.indexes.getAsync(emailKey)
   .then(users.find);
 };
 
 users.update = function(user) {
-  var userKey = user.key();
+  var userKey = User.key(user.id);
   var updateUser;
 
   return db.content.getAsync(userKey)
@@ -93,11 +93,11 @@ users.update = function(user) {
 
     if (oldUsername !== newUsername) {
       // remove old username index
-      var oldUsernameKey = User.usernameKeyFromInput(oldUsername);
+      var oldUsernameKey = User.usernameKey(oldUsername);
       return db.indexes.delAsync(oldUsernameKey)
       // insert new username index
       .then(function() {
-        var newUsernameKey = user.usernameKey();
+        var newUsernameKey = User.usernameKey(newUsername);
         return db.indexes.putAsync(newUsernameKey, user.id);
       })
       .then(function() { return userData; });
@@ -110,11 +110,11 @@ users.update = function(user) {
 
     if (oldEmail !== newEmail) {
       // remove old email index
-      var oldEmailKey = User.emailKeyFromInput(oldEmail);
+      var oldEmailKey = User.emailKey(oldEmail);
       return db.indexes.delAsync(oldEmailKey)
       // insert new email index
       .then(function() {
-        var newEmailKey = user.emailKey();
+        var newEmailKey = User.emailKey(newEmail);
         return db.indexes.putAsync(newEmailKey, user.id);
       })
       .then(function() { return userData; });
@@ -122,7 +122,7 @@ users.update = function(user) {
     else { return userData; }
   })
   .then(function(userData) { // update user data
-    updateUser = new User(userData);
+    updateUser = userData;
 
     if (user.username) { updateUser.username = user.username; }
     if (user.email) { updateUser.email = user.email; }
@@ -130,8 +130,6 @@ users.update = function(user) {
     if (user.password) {
       updateUser.passhash = bcrypt.hashSync(user.password, 12);
     }
-    if (user.deleted) { updateUser.deleted = user.deleted; }
-    else { delete updateUser.deleted; }
     updateUser.updated_at = Date.now();
 
     delete updateUser.password;
@@ -146,12 +144,12 @@ users.update = function(user) {
 };
 
 users.delete = function(id) {
-  var userKey = User.keyFromId(id);
+  var userKey = User.key(id);
   var deletedUser;
 
   return db.content.getAsync(userKey)
   .then(function(userData) {
-    deletedUser = new User(userData);
+    deletedUser = userData;
 
     // add deleted: true flag to board
     deletedUser.deleted = true;
@@ -165,29 +163,49 @@ users.delete = function(id) {
   });
 };
 
+users.undelete = function(id) {
+  var userKey = User.key(id);
+  var deletedUser;
+
+  return db.content.getAsync(userKey)
+  .then(function(userData) {
+    deletedUser = userData;
+
+    // remove deleted flag
+    delete deletedUser.deleted;
+    deletedUser.updated_at = Date.now();
+
+    // insert back into db
+    return db.content.putAsync(userKey, deletedUser);
+  })
+  .then(function() {
+    return deletedUser;
+  });
+};
+
 users.purge = function(id) {
-  var userKey = User.keyFromId(id);
+  var userKey = User.key(id);
   var purgeUser;
 
   return db.content.getAsync(userKey)
   .then(function(userData) {
-    purgeUser = new User(userData);
+    purgeUser = userData;
     return db.deleted.putAsync(userKey, userData);
   })
   .then(function() {
     return db.content.delAsync(userKey);
   })
   .then(function() { // delete usernameKey
-    var usernameKey = purgeUser.usernameKey();
+    var usernameKey = User.usernameKey(purgeUser.username);
     return db.indexes.delAsync(usernameKey);
   })
   .then(function() { // delete emailKey
-    var emailKey = purgeUser.emailKey();
+    var emailKey = User.emailKey(purgeUser.email);
     return db.indexes.delAsync(emailKey);
   })
   .then(function() { // delete legacykey
     if (purgeUser.smf) {
-      var legacyKey = purgeUser.legacyKey();
+      var legacyKey = User.legacyKey(purgeUser.smf.ID_MEMBER);
       return db.legacy.delAsync(legacyKey);
     }
     else { return; }
@@ -215,7 +233,7 @@ users.all = function() {
     .on('close', handler)
     .on('end', handler);
   });
-}
+};
 
 users.getUserViews = function(userId) {
   // build userView key

@@ -99,7 +99,7 @@ describe('users', function() {
       username: 'testuser',
       email: 'testuser@randomdomain1234.org',
       smf: {
-        ID_MEMBER: '123'
+        ID_MEMBER: 123
       }
     };
 
@@ -417,8 +417,7 @@ describe('users', function() {
     });
 
     it('should undelete specified user', function() {
-      testUser.deleted = false;
-      return users.update(testUser)
+      return users.undelete(testUser.id)
       .then(function(user) {
         user.id.should.equal(testUser.id);
         user.created_at.should.equal(testUser.created_at);
