@@ -1,5 +1,5 @@
-var schema = {};
-module.exports = schema;
+var validator = {};
+module.exports = validator;
 
 var joi = require('joi');
 var Promise = require('bluebird');
@@ -41,22 +41,22 @@ var boardIdSchema = joi.string().min(1);
 
 var boardNumIdSchema = joi.number().min(1);
 
-schema.validateImport = function(board) {
+validator.import = function(board) {
   return validate(board, boardImportSchema, { stripUnknown: true });
 };
 
-schema.validateCreate = function(board) {
+validator.create = function(board) {
   return validate(board, boardCreateSchema, { stripUnknown: true });
 };
 
-schema.validateUpdate = function(board) {
+validator.update = function(board) {
   return validate(board, updateBoardSchema, { stripUnknown: true });
 };
 
-schema.validateId = function(id) {
+validator.id = function(id) {
   return validate(id, boardIdSchema);
 };
 
-schema.validateNumId = function(numId) {
+validator.numId = function(numId) {
   return validate(numId, boardNumIdSchema);
 };

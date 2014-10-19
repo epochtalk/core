@@ -4,45 +4,45 @@ module.exports = boards;
 var Promise = require('bluebird');
 var path = require('path');
 var db = require(path.join(__dirname, 'db'));
-var schema = require(path.join(__dirname, 'schema'));
+var validate = require(path.join(__dirname, 'validate'));
 
 boards.import = function(json) {
-  return schema.validateImport(json)
+  return validate.import(json)
   .then(db.import);
 };
 
 boards.create = function(json) {
-  return schema.validateCreate(json)
+  return validate.create(json)
   .then(db.create);
 };
 
 boards.find = function(id) {
-  return schema.validateId(id)
+  return validate.id(id)
   .then(db.find);
 };
 
 boards.update = function(json) {
-  return schema.validateUpdate(json)
+  return validate.update(json)
   .then(db.update);
 };
 
 boards.delete = function(id) {
-  return schema.validateId(id)
+  return validate.id(id)
   .then(db.delete);
 };
 
 boards.undelete = function(id) {
-  return schema.validateId(id)
+  return validate.id(id)
   .then(db.undelete);
 };
 
 boards.purge = function(id) {
-  return schema.validateId(id)
+  return validate.id(id)
   .then(db.purge);
 };
 
 boards.boardByOldId = function(oldId) {
-  return schema.validateNumId(oldId)
+  return validate.numId(oldId)
   .then(db.boardByOldId);
 };
 
