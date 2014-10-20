@@ -9,7 +9,7 @@ var db = require(path.join(__dirname, '..', 'db'));
 var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
 var encodeIntHex = dbHelper.encodeIntHex;
 var Post = require(path.join(__dirname, 'model'));
-var Thread = require(path.join(__dirname, '..', 'threads', 'model'));
+var Thread = require(path.join(__dirname, '..', 'threads', 'keys'));
 var Board = require(path.join(__dirname, '..', 'boards', 'keys'));
 var User = require(path.join(__dirname, '..', 'users', 'keys'));
 var helper = require(path.join(__dirname, '..', 'helper'));
@@ -71,9 +71,9 @@ posts.insert = function(post) {
 
     if (postCount === 1) { // First Post
       var threadId = post.thread_id;
-      var threadFirstPostIdKey = Thread.firstPostIdKeyFromId(threadId);
-      var threadTitleKey = Thread.titleKeyFromId(threadId);
-      var threadUsernameKey = Thread.usernameKeyFromId(threadId);
+      var threadFirstPostIdKey = Thread.firstPostIdKey(threadId);
+      var threadTitleKey = Thread.titleKey(threadId);
+      var threadUsernameKey = Thread.usernameKey(threadId);
       metadataBatch = [
         { type: 'put', key: threadFirstPostIdKey, value: post.id },
         { type: 'put', key: threadTitleKey, value: post.title },
@@ -90,20 +90,20 @@ posts.insert = function(post) {
   .then(function(dbThread) {
     boardId = dbThread.board_id;
     threadTitle = dbThread.title;
-    thread = new Thread(dbThread);
+    thread = dbThread;
     return boardsDb.incPostCount(boardId);
   })
   .then(function() {
     // get current thread last updated at timestamp
-    var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(post.thread_id);
+    var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKey(post.thread_id);
     return db.metadata.getAsync(threadLastPostCreatedAtKey);
   })
   .then(function(oldTimestamp) {
     // only remove if post.created_at is newer
     if (post.created_at >= oldTimestamp) {
       // build metadata batch array
-      var threadLastPostUsernameKey = Thread.lastPostUsernameKeyFromId(post.thread_id);
-      var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKeyFromId(post.thread_id);
+      var threadLastPostUsernameKey = Thread.lastPostUsernameKey(post.thread_id);
+      var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKey(post.thread_id);
       var metadataBatch = [
         { type: 'put', key: threadLastPostUsernameKey, value: postUsername },
         { type: 'put', key: threadLastPostCreatedAtKey, value: post.created_at }
@@ -122,9 +122,9 @@ posts.insert = function(post) {
       // update board thread key index
       .then(function() {
         // old thread index
-        var oldBoardThreadKey = thread.boardThreadKey(oldTimestamp);
+        var oldBoardThreadKey = Thread.boardThreadKey(thread.id, thread.board_id, oldTimestamp);
         // add new thread index value
-        var newBoardThreadKey = thread.boardThreadKey(post.created_at);
+        var newBoardThreadKey = Thread.boardThreadKey(thread.id, thread.board_id, post.created_at);
         var indexBatch = [
           { type: 'del', key: oldBoardThreadKey },
           { type: 'put', key: newBoardThreadKey, value: post.thread_id }
@@ -175,7 +175,7 @@ posts.find = function(id) {
 posts.update = function(post) {
   var postKey = post.key();
   var updatePost = null;
-  var threadFirstPostIdKey = Thread.firstPostIdKeyFromId(post.thread_id);
+  var threadFirstPostIdKey = Thread.firstPostIdKey(post.thread_id);
 
   // check if first post in thread
   return db.metadata.getAsync(threadFirstPostIdKey)
@@ -293,7 +293,7 @@ posts.purge = function(id) {
   })
   // temporary solution to handling ThreadFirstPostIdKey (first post)
   .then(function() { // manage ThreadFirstPostIdKey
-    var threadFirstPostIdKey = Thread.firstPostIdKeyFromId((deletedPost.thread_id));
+    var threadFirstPostIdKey = Thread.firstPostIdKey((deletedPost.thread_id));
     return db.metadata.getAsync(threadFirstPostIdKey)
     .then(function(postId) {
       if (postId === deletedPost.id) {

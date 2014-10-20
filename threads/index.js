@@ -1,66 +1,50 @@
 var threads = {};
 module.exports = threads;
+
 var path = require('path');
 var threadsDb = require(path.join(__dirname, 'db'));
-var Thread = require(path.join(__dirname, 'model'));
-var schema = require(path.join(__dirname, 'schema'));
+var validate = require(path.join(__dirname, 'validate'));
 
-threads.import = function(data) {
-  return schema.validate(data)
-  .then(function() {
-    return threadsDb.import(data);
-  });
+threads.import = function(json) {
+  return validate.import(json)
+  .then(threadsDb.import);
 };
 
-threads.create = function(data) {
-  var newThread = new Thread(data);
-  return newThread.validate()
-  .then(function() {
-    return threadsDb.insert(newThread);
-  })
-  .then(function(thread) {
-    return thread.simple();
-  });
+threads.create = function(json) {
+  return validate.create(json)
+  .then(threadsDb.insert);
 };
 
 threads.find = function(id) {
-  return threadsDb.find(id); // already simple
-};
-
-threads.update = function(data) {
-  var updateThread = new Thread(data);
-
-  return updateThread.validate()
-  .then(function() {
-    return threadsDb.update(updateThread);
-  })
-  .then(function(thread) {
-    return thread.simple();
-  });
+  return validate.id(id)
+  .then(threadsDb.find);
 };
 
 threads.delete = function(id) {
-  return threadsDb.delete(id)
-  .then(function(thread) {
-    return thread.simple();
-  });
+  return validate.id(id)
+  .then(threadsDb.delete);
+};
+
+threads.undelete = function(id) {
+  return validate.id(id)
+  .then(threadsDb.undelete);
 };
 
 threads.purge = function(id) {
-  return threadsDb.purge(id)
-  .then(function(thread) {
-    return thread.simple();
-  });
+  return validate.id(id)
+  .then(threadsDb.purge);
 };
 
 threads.incViewCount = function(id) {
-  return threadsDb.incViewCount(id);
+  return validate.id(id)
+  .then(threadsDb.incViewCount);
 };
 
 threads.threadByOldId = function(oldId) {
-  return threadsDb.threadByOldId(oldId); // already simple
+  return validate.numId(oldId)
+  .then(threadsDb.threadByOldId);
 };
 
 threads.byBoard = function(boardId, opts) {
-  return threadsDb.byBoard(boardId, opts); // all already simple
+  return threadsDb.byBoard(boardId, opts);
 };

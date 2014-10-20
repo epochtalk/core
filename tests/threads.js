@@ -458,8 +458,7 @@ describe('threads', function() {
     });
 
     it('should undelete specified thread', function() {
-      plainThread.deleted = false;
-      return threads.update(plainThread)
+      return threads.undelete(plainThread.id)
       .then(function(thread) {
         thread.id.should.equal(plainThread.id);
         thread.created_at.should.be.equal(plainThread.created_at);
