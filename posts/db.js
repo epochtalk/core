@@ -8,7 +8,7 @@ var vault = require(path.join(__dirname, '..', 'vault'));
 var db = require(path.join(__dirname, '..', 'db'));
 var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
 var encodeIntHex = dbHelper.encodeIntHex;
-var Post = require(path.join(__dirname, 'model'));
+var Post = require(path.join(__dirname, 'keys'));
 var Thread = require(path.join(__dirname, '..', 'threads', 'keys'));
 var Board = require(path.join(__dirname, '..', 'boards', 'keys'));
 var User = require(path.join(__dirname, '..', 'users', 'keys'));
@@ -23,7 +23,7 @@ posts.import = function(post) {
     return posts.insert(post)
     .then(function(dbPost) {
       if (dbPost.smf) {
-        return db.legacy.putAsync(Post.legacyKeyFromId(dbPost.smf.ID_MSG), dbPost.id)
+        return db.legacy.putAsync(Post.legacyKey(dbPost.smf.ID_MSG), dbPost.id)
         .then(function() { return dbPost; });
       }
     });
@@ -32,7 +32,7 @@ posts.import = function(post) {
   post.imported_at = Date.now();
   var promise;
   if (post.smf.ID_MEMBER) {
-    promise = db.legacy.getAsync(User.legacyKeyFromId(post.smf.ID_MEMBER))
+    promise = db.legacy.getAsync(User.legacyKey(post.smf.ID_MEMBER))
     .then(function(userId) { post.user_id = userId; })
     .then(insertPost);
   }
@@ -43,10 +43,6 @@ posts.import = function(post) {
 };
 
 posts.insert = function(post) {
-  if (!post.thread_id) {
-    return Promise.reject('The thread_id isn\'t present for given Post.');
-  }
-
   var timestamp = Date.now();
   // If post created at isn't defined
   if (!post.created_at) {
@@ -82,7 +78,7 @@ posts.insert = function(post) {
     }
 
     // post order metadata
-    var postOrderKey = Post.postOrderKeyFromId(post.id);
+    var postOrderKey = Post.postOrderKey(post.id);
     metadataBatch.push({ type: 'put', key: postOrderKey, value: postCount });
     return db.metadata.batchAsync(metadataBatch);
   })
@@ -136,15 +132,15 @@ posts.insert = function(post) {
     else { return; }
   })
   .then(function() { // threadPostOrder
-    var key = Post.threadPostOrderKeyFromInput(post.thread_id, postCount);
+    var key = Post.threadPostOrderKey(post.thread_id, postCount);
     return db.indexes.putAsync(key, post.id);
   })
   .then(function() {
     post.version = timestamp; // add version
-    var versionKey = Post.versionKeyFromInput(post.id, post.version);
+    var versionKey = Post.versionKey(post.id, post.version);
     return db.content.putAsync(versionKey, post);
   })
-  .then(function() { return db.content.putAsync(Post.keyFromId(post.id), post); })
+  .then(function() { return db.content.putAsync(Post.key(post.id), post); })
   .then(function() { return post; });
 };
 
@@ -167,13 +163,12 @@ var buildMetadataBatch = function(boardId, metadata, batchArray, postCreatedAt) 
 };
 
 posts.find = function(id) {
-  var postKey = Post.keyFromId(id);
-  return db.content.getAsync(postKey)
-  .then(function(post) { return post; });
+  var postKey = Post.key(id);
+  return db.content.getAsync(postKey);
 };
 
 posts.update = function(post) {
-  var postKey = post.key();
+  var postKey = Post.key(post.id);
   var updatePost = null;
   var threadFirstPostIdKey = Thread.firstPostIdKey(post.thread_id);
 
@@ -182,23 +177,21 @@ posts.update = function(post) {
   .then(function(firstPostId) {
     if (firstPostId === post.id) {
       return db.metadata.putAsync(threadFirstPostIdKey, post.title)
-      .then(function() { return postKey; });
+      .then(function() { return; });
     }
-    return postKey;
+    else { return; }
   })
-  .then(function(key) {
-    return db.content.getAsync(key); // get old post
+  .then(function() {
+    return db.content.getAsync(postKey); // get old post
   })
   .then(function(oldPost) {
-    updatePost = new Post(oldPost);
+    updatePost = oldPost;
     var timestamp = Date.now();
 
     // update post values
     if (post.title) { updatePost.title = post.title; }
     if (post.body) { updatePost.body = post.body; }
     if (post.encodedBody) { updatePost.encodedBody = post.encodedBody; }
-    if (post.deleted) { updatePost.deleted = post.deleted; }
-    else { delete updatePost.deleted; }
     updatePost.updated_at = timestamp;
     updatePost.version = timestamp;
 
@@ -207,20 +200,21 @@ posts.update = function(post) {
   })
   .then(function() {
     // version already updated above
-    var versionKey = updatePost.versionKey();
+    var versionKey = Post.versionKey(updatePost.id, updatePost.version);
     return db.content.putAsync(versionKey, updatePost);
   })
-  .then(function() { return updatePost; });
+  .then(function() { return updatePost; })
+  .catch(function(err) { console.log(err); });
 };
 
 posts.delete = function(postId) {
-  var postKey = Post.keyFromId(postId);
+  var postKey = Post.key(postId);
   var deletedPost = null;
 
   // see if post already exists
   return db.content.getAsync(postKey)
   .then(function(postData) {
-    deletedPost = new Post(postData);
+    deletedPost = postData;
     var timestamp = Date.now();
 
     // add deleted: true flag to board
@@ -233,7 +227,33 @@ posts.delete = function(postId) {
   })
   .then(function() {
     // version already updated above
-    var versionKey = deletedPost.versionKey();
+    var versionKey = Post.versionKey(deletedPost.id, deletedPost.version);
+    return db.content.putAsync(versionKey, deletedPost);
+  })
+  .then(function() { return deletedPost; });
+};
+
+posts.undelete = function(postId) {
+  var postKey = Post.key(postId);
+  var deletedPost = null;
+
+  // see if post already exists
+  return db.content.getAsync(postKey)
+  .then(function(postData) {
+    deletedPost = postData;
+    var timestamp = Date.now();
+
+    // add deleted: true flag to board
+    delete deletedPost.deleted;
+    deletedPost.updated_at = timestamp;
+    deletedPost.version = timestamp;
+
+    // insert back into db
+    return db.content.putAsync(postKey, deletedPost);
+  })
+  .then(function() {
+    // version already updated above
+    var versionKey = Post.versionKey(deletedPost.id, deletedPost.version);
     return db.content.putAsync(versionKey, deletedPost);
   })
   .then(function() { return deletedPost; });
@@ -241,20 +261,20 @@ posts.delete = function(postId) {
 
 /* deleting first post should remove thread */
 posts.purge = function(id) {
-  var postKey = Post.keyFromId(id);
+  var postKey = Post.key(id);
   var deletedPost;
   var threadId;
 
   return db.content.getAsync(postKey) // get post
   .then(function(post) {
-    deletedPost = new Post(post);
+    deletedPost = post;
     return id;
   })
   .then(posts.versions)
   .then(function(versions) { // move versions to deleted db
     var batchArray = versions.map(function(version) {
-      var post = Post(version);
-      return { type: 'put', key: post.versionKey(), value: post };
+      var versionKey = Post.versionKey(version.id, version.version);
+      return { type: 'put', key: versionKey, value: version };
     });
     return db.deleted.batchAsync(batchArray)
     .then(function() {
@@ -280,7 +300,7 @@ posts.purge = function(id) {
     });
   })
   .then(function() { // delete ThreadPostOrder and PostOrder
-    var postOrderKey = deletedPost.postOrderKey();
+    var postOrderKey = Post.postOrderKey(id);
     return db.metadata.getAsync(postOrderKey)
     .then(function(postOrder) {
       return db.metadata.delAsync(postOrderKey)
@@ -310,7 +330,7 @@ posts.purge = function(id) {
   // temporarily not handling thread username (first post)
   .then(function() { // delete legacy key
     if (deletedPost.smf) {
-      var legacyKey = deletedPost.legacyKey();
+      var legacyKey = Post.legacyKey(deletedPost.smf.ID_MSG);
       return db.legacy.delAsync(legacyKey);
     }
     else { return; }
@@ -319,12 +339,10 @@ posts.purge = function(id) {
 };
 
 posts.postByOldId = function(oldId) {
-  var legacyThreadKey = Post.legacyKeyFromId(oldId);
+  var legacyThreadKey = Post.legacyKey(oldId);
 
   return db.legacy.getAsync(legacyThreadKey)
-  .then(function(postId) {
-    return posts.find(postId);
-  });
+  .then(posts.find);
 };
 
 posts.byThread = function(threadId, opts) {
@@ -443,7 +461,7 @@ function reorderPostOrder(threadId, startIndex) {
       var newIndex = lastIndex - 1;
 
       // handle metadata
-      var metadataKey = Post.postOrderKeyFromId(value);
+      var metadataKey = Post.postOrderKey(value.id);
       db.metadata.putAsync(metadataKey, newIndex);
 
       // handle index

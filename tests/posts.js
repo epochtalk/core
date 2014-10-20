@@ -198,7 +198,7 @@ describe('posts', function() {
       title: 'post title',
       body: 'hello world.',
       smf: {
-        ID_MSG: '123'
+        ID_MSG: 123
       }
      };
      var user;
@@ -579,8 +579,7 @@ describe('posts', function() {
     });
 
     it('should undelete specified post', function() {
-      plainPost.deleted = false;
-      return posts.update(plainPost)
+      return posts.undelete(plainPost.id)
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
