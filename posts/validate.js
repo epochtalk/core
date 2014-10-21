@@ -20,7 +20,7 @@ var importSchema = joi.object().keys({
   }
 });
 validator.import = function(post) {
-  return validate(post, importSchema, { stripUnknown: true });
+  return validate(post, importSchema);
 };
 
 var createSchema = joi.object().keys({

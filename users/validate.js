@@ -25,7 +25,7 @@ var importSchema = joi.object().keys({
   }
 }).with('password', 'confirmation');
 validator.import = function(user) {
-  return validate(user, importSchema, { stripUnknown: true });
+  return validate(user, importSchema);
 };
 
 var updateSchema = joi.object().keys({

@@ -18,7 +18,7 @@ var importSchema = joi.object().keys({
   }
 });
 validator.import = function(thread) {
-  return validate(thread, importSchema, { stripUnknown: true });
+  return validate(thread, importSchema);
 };
 
 var createSchema = joi.object().keys({

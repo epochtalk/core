@@ -42,7 +42,7 @@ var boardIdSchema = joi.string().min(1);
 var boardNumIdSchema = joi.number().min(1);
 
 validator.import = function(board) {
-  return validate(board, boardImportSchema, { stripUnknown: true });
+  return validate(board, boardImportSchema);
 };
 
 validator.create = function(board) {
