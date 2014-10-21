@@ -53,14 +53,6 @@ describe('Post', function() {
     });
   });
 
-  describe('#threadKey', function() {
-    it('should return the post\'s thread key', function() {
-      var key = Post.threadKey(post.thread_id);
-      var check = postPrefix + sep + post.thread_id;
-      key.should.be.equal(check);
-    });
-  });
-
   describe('#versionKey', function() {
     it('should return the post\'s version key', function() {
       var timestamp = 123412538;

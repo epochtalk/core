@@ -54,14 +54,6 @@ Post.threadPostOrderKey = function(thread_id, count) {
   return key;
 };
 
-Post.threadKey = function(threadId) {
-  var key;
-  if (threadId) {
-    key = prefix + sep + threadId;
-  }
-  return key;
-};
-
 Post.versionKey = function(id, version) {
   var key;
   if (id && version) {

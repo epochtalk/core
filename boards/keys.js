@@ -31,13 +31,15 @@ var sep = config.sep;
 */
 
 var keyForBoard = function(id) {
-  var boardKey;
-  if (id) { boardKey = prefix + sep + id; }
-  return boardKey;
+  return prefix + sep + id;
 };
 
 Board.key = function(id) {
-  return keyForBoard(id);
+  var key;
+  if (id) {
+    key = keyForBoard(id);
+  }
+  return key;
 };
 
 Board.legacyKey = function(legacyId) {
@@ -50,39 +52,75 @@ Board.legacyKey = function(legacyId) {
 };
 
 Board.categoryKey = function(catId) {
-  return catPrefix + sep + catId;
+  var key;
+  if (catId) {
+    key = catPrefix + sep + catId;
+  }
+  return key;
 };
 
 Board.postCountKey = function(id) {
-  return keyForBoard(id) + config.sep + 'post_count';
+  var key;
+  if (id) {
+    key = keyForBoard(id) + config.sep + 'post_count';
+  }
+  return key;
 };
 
 Board.threadCountKey = function(id) {
-  return keyForBoard(id) + config.sep + 'thread_count';
+  var key;
+  if (id) {
+    key = keyForBoard(id) + config.sep + 'thread_count';
+  }
+  return key;
 };
 
 Board.totalPostCountKey = function(id) {
-  return keyForBoard(id) + config.sep + 'total_post_count';
+  var key;
+  if (id) {
+    key = keyForBoard(id) + config.sep + 'total_post_count';
+  }
+  return key;
 };
 
 Board.totalThreadCountKey = function(id) {
-  return keyForBoard(id) + config.sep + 'total_thread_count';
+  var key;
+  if (id) {
+    key = keyForBoard(id) + config.sep + 'total_thread_count';
+  }
+  return key;
 };
 
 Board.lastPostUsernameKey = function(id) {
-  return keyForBoard(id) + config.sep + 'last_post_username';
+  var key;
+  if (id) {
+    key = keyForBoard(id) + config.sep + 'last_post_username';
+  }
+  return key;
 };
 
 Board.lastPostCreatedAtKey = function(id) {
-  return keyForBoard(id) + config.sep + 'last_post_created_at';
+  var key;
+  if (id) {
+    key = keyForBoard(id) + config.sep + 'last_post_created_at';
+  }
+  return key;
 };
 
 Board.lastThreadTitleKey = function(id) {
-  return keyForBoard(id) + config.sep + 'last_thread_title';
+  var key;
+  if (id) {
+    key = keyForBoard(id) + config.sep + 'last_thread_title';
+  }
+  return key;
 };
 
 Board.lastThreadIdKey = function(id) {
-  return keyForBoard(id) + config.sep + 'last_thread_id';
+  var key;
+  if (id) {
+    key = keyForBoard(id) + config.sep + 'last_thread_id';
+  }
+  return key;
 };
 
 Board.prefix = prefix;

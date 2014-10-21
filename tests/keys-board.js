@@ -19,6 +19,22 @@ describe('Board', function() {
     });
   });
 
+  describe('#legacyKey', function() {
+    it('should return the board\'s legacy key', function() {
+      var key = Board.legacyKey(board.smf.ID_BOARD);
+      var check = boardPrefix + sep + board.smf.ID_BOARD;
+      key.should.be.equal(check);
+    });
+  });
+
+  describe('#categoryKey', function() {
+    it('should return the board\'s key', function() {
+      var key = Board.categoryKey(board.id);
+      var check = config.boards.categoryPrefix + sep + board.id;
+      key.should.be.equal(check);
+    });
+  });
+
   describe('#postCountKey', function() {
     it('should return the board\'s post count key', function() {
       var key = Board.postCountKey(board.id);
@@ -75,10 +91,10 @@ describe('Board', function() {
     });
   });
 
-  describe('#legacyKey', function() {
-    it('should return the board\'s legacy key', function() {
-      var key = Board.legacyKey(board.smf.ID_BOARD);
-      var check = boardPrefix + sep + board.smf.ID_BOARD;
+  describe('#lastThreadIdKey', function() {
+    it('should return the board\'s last thread id key', function() {
+      var key = Board.lastThreadIdKey(board.id);
+      var check = boardPrefix + sep + board.id + sep + 'last_thread_id';
       key.should.be.equal(check);
     });
   });

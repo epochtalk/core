@@ -22,7 +22,7 @@ describe('Thread', function() {
     });
   });
 
-  describe('#legacyKeyFromId', function() {
+  describe('#legacyKey', function() {
     it('should return the board\'s legacy key', function() {
       var id = 1234;
       var key = Thread.legacyKey(id);
