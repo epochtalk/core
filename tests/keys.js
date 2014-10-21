@@ -1516,7 +1516,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 10 keys in metadata', function() {
+    it('should have 9 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post created at
@@ -1528,14 +1528,13 @@ describe('threads', function() {
         // board total post count
         // board total thread count
         // posts post order *** SHOULD BE DELETED?
-        // thread view count *** SHOULD BE DELETED? NO (cannot be derived again?)
-        // ------------------------------------------------
-        // thread first post id *** SHOULD BE DELETED? YES
-        // thread post title *** SHOULD BE DELETED? YES
-        // thread username  *** SHOULD BE DELETED? YES
-        // thread last post username *** SHOULD BE DELETED? YES
-        // thread last post created at *** SHOULD BE DELETED? YES
-        metadata.should.have.length(10);
+        // thread view count
+        // thread first post id
+        // thread post title
+        // thread username
+        // thread last post username
+        // thread last post created at
+        metadata.should.have.length(9);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });
@@ -1627,7 +1626,7 @@ describe('threads', function() {
       });
     });
 
-    it('should have 10 keys in metadata', function() {
+    it('should have 9 keys in metadata', function() {
       return probe.all(METADATA)
       .then(function(metadata) {
         // board last post username
@@ -1639,14 +1638,13 @@ describe('threads', function() {
         // board total post count
         // board total thread count
         // posts post order *** SHOULD BE DELETED?
-        // thread view count *** SHOULD BE DELETED? NO (cannot be derived again?)
-        // ------------------------------------------------
-        // thread first post id *** SHOULD BE DELETED? YES
-        // thread post title *** SHOULD BE DELETED? YES
-        // thread username  *** SHOULD BE DELETED? YES
-        // thread last post username *** SHOULD BE DELETED? YES
-        // thread last post created at *** SHOULD BE DELETED? YES
-        metadata.should.have.length(10);
+        // thread view count
+        // thread first post id
+        // thread post title
+        // thread username
+        // thread last post username
+        // thread last post created at
+        metadata.should.have.length(9);
         return Promise.map(metadata, function(data) {
           return probe.del(METADATA, data.key);
         });

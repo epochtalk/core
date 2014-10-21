@@ -175,6 +175,15 @@ threadsDb.purge = function(id) {
   .then(function(thread) {
     deletedThread = thread;
   })
+  .then(function() { // save view count to deletedThread
+    return db.metadata.getAsync(viewCountKey)
+    .then(function(viewCount) {
+      deletedThread.view_count = viewCount;
+    })
+    .then(function() {
+      return db.metadata.delAsync(viewCountKey);
+    });
+  })
   .then(function() { // move to deleted DB
     return db.deleted.putAsync(threadKey, deletedThread);
   })
@@ -209,10 +218,6 @@ threadsDb.purge = function(id) {
   .then(function() {
     return syncThreadOrder(deletedThread);
   })
-  // TODO: This cannot be derived if we deleted it.
-  // .then(function() { // remove view count Key
-  //   return db.metadata.delAsync(viewCountKey);
-  // })
   .then(function() { // decrement board thread count
     var boardId = deletedThread.board_id;
     return boardsDb.decThreadCount(boardId);
