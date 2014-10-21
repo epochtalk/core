@@ -124,7 +124,7 @@ describe('users', function() {
       username: 'testuser',
       email: 'testuser@randomdomain1234.org',
       smf: {
-        ID_MEMBER: '123'
+        ID_MEMBER: 123
       }
     };
 
@@ -156,7 +156,7 @@ describe('users', function() {
       username: 'testuser',
       email: 'testuser@randomdomain1234.org',
       smf: {
-        ID_MEMBER: '123'
+        ID_MEMBER: 123
       }
     };
 

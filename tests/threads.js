@@ -137,12 +137,8 @@ describe('threads', function() {
   describe('#import', function() {
     var plainThread = {
       smf: {
-        ID_TOPIC: '112'
+        ID_TOPIC: 112
       }
-    };
-    var plainPost = {
-      title: 'post title',
-      body: 'post body'
     };
     var user;
 
@@ -162,15 +158,7 @@ describe('threads', function() {
       .then(function(board) {
         plainThread.board_id = board.id;
         return plainThread;
-      })
-      .then(threads.import)
-      .then(function(thread) {
-        plainThread = thread;
-        plainPost.thread_id = thread.id;
-        plainPost.user_id = user.id;
-        return posts.create(plainPost);
-      })
-      .then(function(post) { plainPost = post; });
+      });
     });
 
     it('should create a thread in the db', function() {
@@ -192,7 +180,7 @@ describe('threads', function() {
   describe('#import_get', function() {
     var plainThread = {
       smf: {
-        ID_TOPIC: '112'
+        ID_TOPIC: 112
       }
     };
     var plainPost = {
@@ -247,7 +235,7 @@ describe('threads', function() {
     var catchCalled = false;
     var plainThread = {
       smf: {
-        ID_TOPIC: '112'
+        ID_TOPIC: 112
       }
     };
     var plainPost = {

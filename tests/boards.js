@@ -148,8 +148,8 @@ describe('boards', function() {
       name: 'import child name',
       description: 'import child description',
       smf: {
-        ID_BOARD: '112',
-        ID_PARENT: '111'
+        ID_BOARD: 112,
+        ID_PARENT: 111
       }
     };
 
@@ -216,7 +216,7 @@ describe('boards', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { ID_BOARD: '111' }
+      smf: { ID_BOARD: 111 }
     };
 
     before(function() {
@@ -248,7 +248,7 @@ describe('boards', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { ID_BOARD: '111' }
+      smf: { ID_BOARD: 111 }
     };
 
     before(function() {
