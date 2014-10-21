@@ -12,7 +12,7 @@ threads.import = function(json) {
 
 threads.create = function(json) {
   return validate.create(json)
-  .then(threadsDb.insert);
+  .then(threadsDb.create);
 };
 
 threads.find = function(id) {

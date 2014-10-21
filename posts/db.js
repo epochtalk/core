@@ -20,7 +20,7 @@ var usersDb = require(path.join(__dirname, '..', 'users', 'db'));
 posts.import = function(post) {
   var insertPost = function() {
     // insert post
-    return posts.insert(post)
+    return posts.create(post)
     .then(function(dbPost) {
       if (dbPost.smf) {
         return db.legacy.putAsync(Post.legacyKey(dbPost.smf.ID_MSG), dbPost.id)
@@ -42,7 +42,7 @@ posts.import = function(post) {
   return promise;
 };
 
-posts.insert = function(post) {
+posts.create = function(post) {
   var timestamp = Date.now();
   // If post created at isn't defined
   if (!post.created_at) {

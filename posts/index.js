@@ -18,7 +18,7 @@ posts.create = function(json) {
   return validate.create(json)
   .then(function(post) {
     post = pre.parseBody(post);
-    return postsDb.insert(post);
+    return postsDb.create(post);
   });
 };
 

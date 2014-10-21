@@ -13,7 +13,7 @@ var userViewsLock = new Padlock();
 
 users.import = function(user) {
   user.imported_at = Date.now();
-  return users.insert(user)
+  return users.create(user)
   .then(function(dbUser) {
     if (dbUser.smf) {
       return db.legacy.putAsync(User.legacyKey(dbUser.smf.ID_MEMBER), dbUser.id)
@@ -24,7 +24,7 @@ users.import = function(user) {
   });
 };
 
-users.insert = function(user) {
+users.create = function(user) {
   var timestamp = Date.now();
   if (!user.created_at) {
     user.created_at = timestamp;
@@ -61,21 +61,21 @@ users.find = function(id) {
   return db.content.getAsync(userKey);
 };
 
-users.findByLegacyId = function(legacyId) {
+users.userByOldId = function(legacyId) {
   var legacyUserKey = User.legacyKey(legacyId);
 
   return db.legacy.getAsync(legacyUserKey)
   .then(users.find);
 };
 
-users.findByUsername = function(username) {
+users.userByUsername = function(username) {
   var usernameKey = User.usernameKey(username);
 
   return db.indexes.getAsync(usernameKey)
   .then(users.find);
 };
 
-users.findByEmail = function(email) {
+users.userByEmail = function(email) {
   var emailKey = User.emailKey(email);
 
   return db.indexes.getAsync(emailKey)

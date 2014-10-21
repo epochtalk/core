@@ -18,7 +18,7 @@ var vault = require(path.join(__dirname, '..', 'vault'));
 
 threadsDb.import = function(thread) {
   thread.imported_at = Date.now();
-  return threadsDb.insert(thread)
+  return threadsDb.create(thread)
   .then(function(dbThread) {
     if (dbThread.smf) {
       return db.legacy.putAsync(Thread.legacyKey(thread.smf.ID_TOPIC), dbThread.id)
@@ -28,7 +28,7 @@ threadsDb.import = function(thread) {
 };
 
 // thread must have a board_id
-threadsDb.insert = function(thread) {
+threadsDb.create = function(thread) {
   if (!thread.board_id) {
     return Promise.reject('Invalid board id.');
   }

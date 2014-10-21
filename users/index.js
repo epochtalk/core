@@ -12,7 +12,7 @@ users.import = function(json) {
 
 users.create = function(json) {
   return validate.create(json)
-  .then(usersDb.insert);
+  .then(usersDb.create);
 };
 
 users.find = function(id) {
@@ -22,17 +22,17 @@ users.find = function(id) {
 
 users.userByOldId = function(oldId) {
   return validate.numId(oldId)
-  .then(usersDb.findByLegacyId);
+  .then(usersDb.userByOldId);
 };
 
 users.userByUsername = function(username) {
   return validate.username(username)
-  .then(usersDb.findByUsername);
+  .then(usersDb.userByUsername);
 };
 
 users.userByEmail = function(email) {
   return validate.email(email)
-  .then(usersDb.findByEmail);
+  .then(usersDb.userByEmail);
 };
 
 users.update = function(json) {
