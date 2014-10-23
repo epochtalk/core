@@ -126,6 +126,16 @@ users.update = function(user) {
     if (user.password) {
       updateUser.passhash = bcrypt.hashSync(user.password, 12);
     }
+    if (user.name) { updateUser.name = user.name; }
+    if (user.website) { updateUser.website = user.website; }
+    if (user.btcAddress) { updateUser.btcAddress = user.btcAddress; }
+    if (user.gender) { updateUser.gender = user.gender; }
+    if (user.dob) { updateUser.dob = user.dob; }
+    if (user.location) { updateUser.location = user.location; }
+    if (user.language) { updateUser.language = user.language; }
+    if (user.signature) { updateUser.signature = user.signature; }
+    if (user.avatar) { updateUser.avatar = user.avatar; }
+
     updateUser.updated_at = Date.now();
 
     delete updateUser.password;
