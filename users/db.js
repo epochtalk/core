@@ -40,7 +40,6 @@ users.create = function(user) {
   }
 
   delete user.password;
-  delete user.confirmation;
 
   return db.content.putAsync(User.key(user.id), user)
   .then(function() { // insert username index
@@ -63,21 +62,18 @@ users.find = function(id) {
 
 users.userByOldId = function(legacyId) {
   var legacyUserKey = User.legacyKey(legacyId);
-
   return db.legacy.getAsync(legacyUserKey)
   .then(users.find);
 };
 
 users.userByUsername = function(username) {
   var usernameKey = User.usernameKey(username);
-
   return db.indexes.getAsync(usernameKey)
   .then(users.find);
 };
 
 users.userByEmail = function(email) {
   var emailKey = User.emailKey(email);
-
   return db.indexes.getAsync(emailKey)
   .then(users.find);
 };
@@ -235,9 +231,9 @@ users.all = function() {
   });
 };
 
-users.getUserViews = function(userId) {
+users.getUserViews = function(id) {
   // build userView key
-  var userViewsKey = User.userViewsKey(userId);
+  var userViewsKey = User.userViewsKey(id);
   return db.metadata.getAsync(userViewsKey);
 };
 

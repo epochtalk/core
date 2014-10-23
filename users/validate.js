@@ -8,8 +8,7 @@ var validate = Promise.promisify(joi.validate);
 var createSchema = joi.object().keys({
   username: joi.string().regex(/[a-zA-Z0-9_\-]/).min(2).max(30).required(),
   email: joi.string().email().required(),
-  password: joi.string().regex(/[a-zA-Z0-9]{3,30}/).required(),
-  confirmation: joi.string().required()
+  password: joi.string().regex(/[a-zA-Z0-9]{3,30}/).required()
 });
 validator.create = function(user) {
   return validate(user, createSchema, { stripUnknown: true });
@@ -32,8 +31,17 @@ var updateSchema = joi.object().keys({
   id: joi.string().required(),
   username: joi.string(),
   email: joi.string(),
-  password: joi.string().regex(/[a-zA-Z0-9]{3,30}/),
-  confirmation: joi.ref('password')
+  password: joi.string(),
+  confirmation: joi.ref('password'),
+  name: joi.string(),
+  website: joi.string(),
+  btcAddress: joi.string(),
+  gender: joi.string(),
+  dob: joi.date(),
+  location: joi.string(),
+  language: joi.string(),
+  signature: joi.string(),
+  avatar: joi.string() // url
 }).with('password', 'confirmation');
 validator.update = function(user) {
   return validate(user, updateSchema, { stripUnknown: true });

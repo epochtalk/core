@@ -59,8 +59,9 @@ users.all = function() {
   return usersDb.all();
 };
 
-users.getUserViews = function(userId) {
-  return usersDb.getUserViews(userId);
+users.getUserViews = function(id) {
+  return validate.id(id)
+  .then(usersDb.getUserViews);
 };
 
 users.putUserViews = function(userId, userViewsArray) {
