@@ -390,8 +390,9 @@ posts.byThread = function(threadId, opts) {
       .then(function(user) {
         delete post.user_id;
         post.user = {
-          id: user.id,
-          username: user.username
+          username: user.username,
+          signature: user.signature,
+          avatar: user.avatar
         };
         return post;
       });
