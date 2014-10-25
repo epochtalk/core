@@ -65,7 +65,7 @@ describe('posts', function() {
           post.title.should.equal('title');
           post.body.should.equal('body');
           post.user.should.exist;
-          post.user.id.should.be.a('string');
+          should.not.exist(post.user.id);
           post.user.username.should.be.a('string');
           should.not.exist(post.deleted);
           should.not.exist(post.smf);
