@@ -87,7 +87,7 @@ users.update = function(user) {
     var oldUsername = userData.username;
     var newUsername = user.username;
 
-    if (oldUsername !== newUsername) {
+    if (newUsername && oldUsername !== newUsername) {
       // remove old username index
       var oldUsernameKey = User.usernameKey(oldUsername);
       return db.indexes.delAsync(oldUsernameKey)
@@ -104,7 +104,7 @@ users.update = function(user) {
     var oldEmail = userData.email;
     var newEmail = user.email;
 
-    if (oldEmail !== newEmail) {
+    if (newEmail && oldEmail !== newEmail) {
       // remove old email index
       var oldEmailKey = User.emailKey(oldEmail);
       return db.indexes.delAsync(oldEmailKey)
