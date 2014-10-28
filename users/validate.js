@@ -19,6 +19,15 @@ var importSchema = joi.object().keys({
   email: joi.string(), // should be required?
   created_at: joi.number(),
   updated_at: joi.number(),
+  name: joi.string(),
+  website: joi.string(),
+  gender: joi.string(),
+  dob: joi.date(),
+  location: joi.string(),
+  language: joi.string(),
+  signature: joi.string(),
+  avatar: joi.string(), // url
+  status: joi.string(),
   smf: {
     ID_MEMBER: joi.number().required()
   }
