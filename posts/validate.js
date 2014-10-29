@@ -8,7 +8,6 @@ var validate = Promise.promisify(joi.validate);
 var importSchema = joi.object().keys({
   title: joi.string().required(),
   body: joi.string().min(1).required(),
-  encodedBody: joi.string(),
   user_id: joi.string(),
   thread_id: joi.string().required(),
   created_at: joi.number(),
@@ -26,7 +25,6 @@ validator.import = function(post) {
 var createSchema = joi.object().keys({
   title: joi.string().required(),
   body: joi.string().min(1).required(),
-  encodedBody: joi.string(),
   user_id: joi.string().required(),
   thread_id: joi.string().required(),
 });
@@ -38,7 +36,6 @@ var updateSchema = joi.object().keys({
   id: joi.string().required(),
   title: joi.string().required(),
   body: joi.string().min(1).required(),
-  encodedBody: joi.string(),
   thread_id: joi.string().required()
 });
 validator.update = function(post) {
