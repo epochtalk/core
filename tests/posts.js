@@ -11,8 +11,8 @@ var boards = core.boards;
 describe('posts', function() {
 
   describe('#byThread', function() {
-    var post1 = { title: 'title', body: 'body' };
-    var post2 = { title: 'title', body: 'body' };
+    var post1 = { title: 'title', encodedBody: 'body' };
+    var post2 = { title: 'title', encodedBody: 'body' };
     var parentThead, user;
 
     before(function() {
@@ -84,7 +84,7 @@ describe('posts', function() {
   });
 
   describe('#versions', function() {
-    var plainPost = { title: 'post title', body: 'hello world.' };
+    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -115,7 +115,7 @@ describe('posts', function() {
       })
       .then(function(post) {
         post.title = 'updated';
-        post.body = 'updated';
+        post.encodedBody = 'updated';
         return posts.update(post);
       });
     });
@@ -149,7 +149,7 @@ describe('posts', function() {
   });
 
   describe('#create', function() {
-    var plainPost = { title: 'post title', body: 'hello world.' };
+    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -183,7 +183,7 @@ describe('posts', function() {
         post.updated_at.should.be.a('number');
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.body);
+        post.body.should.equal(plainPost.encodedBody);
         post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
@@ -196,7 +196,7 @@ describe('posts', function() {
   describe('#import', function() {
     var plainPost = {
       title: 'post title',
-      body: 'hello world.',
+      encodedBody: 'hello world.',
       smf: {
         ID_MSG: 123
       }
@@ -234,7 +234,7 @@ describe('posts', function() {
         post.updated_at.should.be.a('number');
         post.imported_at.should.be.a('number');
         post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.body);
+        post.body.should.equal(plainPost.encodedBody);
         post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         post.smf.ID_MSG.should.equal(plainPost.smf.ID_MSG);
@@ -247,7 +247,7 @@ describe('posts', function() {
   describe('#import_get', function() {
     var plainPost = {
       title: 'post title',
-      body: 'hello world.',
+      encodedBody: 'hello world.',
       smf: {
         ID_MSG: 123
       }
@@ -302,7 +302,7 @@ describe('posts', function() {
     var user;
     var plainPost = {
       title: 'post title',
-      body: 'hello world.',
+      encodedBody: 'hello world.',
       smf: {
         ID_MSG: 123
       }
@@ -364,7 +364,7 @@ describe('posts', function() {
   });
 
   describe('#find', function() {
-    var plainPost = { title: 'post title', body: 'hello world.' };
+    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -412,7 +412,7 @@ describe('posts', function() {
   });
 
   describe('#update', function() {
-    var plainPost = { title: 'post title', body: 'hello world.' };
+    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -443,8 +443,8 @@ describe('posts', function() {
     });
 
     it('should update specified post with new values', function() {
-      plainPost.name = 'update name';
-      plainPost.description = 'update Description';
+      plainPost.title = 'update name';
+      plainPost.encodedBody = 'update Description';
 
       return posts.update(plainPost)
       .then(function(post) {
@@ -453,7 +453,7 @@ describe('posts', function() {
         post.updated_at.should.be.above(plainPost.created_at);
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.body);
+        post.body.should.equal(plainPost.encodedBody);
         post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
@@ -471,7 +471,7 @@ describe('posts', function() {
         post.updated_at.should.be.above(plainPost.created_at);
         should.not.exist(post.imported_at);
         post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.body);
+        post.body.should.equal(plainPost.encodedBody);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(plainPost.thread_id);
@@ -482,7 +482,7 @@ describe('posts', function() {
   });
 
   describe('#delete', function() {
-    var plainPost = { title: 'post title', body: 'hello world.' };
+    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -547,7 +547,7 @@ describe('posts', function() {
   });
 
   describe('#undelete', function() {
-    var plainPost = { title: 'post title', body: 'hello world.' };
+    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -614,7 +614,7 @@ describe('posts', function() {
 
   describe('#purge', function() {
     var catchCalled = false;
-    var plainPost = { title: 'post title', body: 'hello world.' };
+    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
     var user;
     before(function() {
       var newUser = {

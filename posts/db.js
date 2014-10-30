@@ -192,6 +192,7 @@ posts.update = function(post) {
     if (post.title) { updatePost.title = post.title; }
     if (post.body) { updatePost.body = post.body; }
     if (post.encodedBody) { updatePost.encodedBody = post.encodedBody; }
+    else if (post.encodedBody === null) { delete updatePost.encodedBody; }
     updatePost.updated_at = timestamp;
     updatePost.version = timestamp;
 

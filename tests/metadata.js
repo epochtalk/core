@@ -13,7 +13,7 @@ describe('metadata', function() {
   describe('#boards', function() {
     var plainPost = {
       title: 'post title',
-      body: 'post body'
+      encodedBody: 'post body'
     };
     var boardId, user, tempPost;
     before(function() {
@@ -131,7 +131,7 @@ describe('metadata', function() {
   describe('#threads', function() {
     var plainPost = {
       title: 'post title',
-      body: 'post body'
+      encodedBody: 'post body'
     };
     var threadId, firstPostId, user;
     var first = true;
@@ -163,7 +163,7 @@ describe('metadata', function() {
             user_id: user.id,
             thread_id: thread.id,
             title: firstPostTitle,
-            body: 'this is the first post'
+            encodedBody: 'this is the first post'
           };
           return [ firstPost, plainPost, plainPost, plainPost, plainPost ];
         })

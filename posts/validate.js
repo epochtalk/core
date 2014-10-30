@@ -6,10 +6,10 @@ var Promise = require('bluebird');
 var validate = Promise.promisify(joi.validate);
 
 var importSchema = joi.object().keys({
-  title: joi.string().required(),
-  body: joi.string().min(1).required(),
-  user_id: joi.string(),
+  user_id: joi.string().required(),
   thread_id: joi.string().required(),
+  title: joi.string().required(),
+  encodedBody: joi.string().required(),
   created_at: joi.number(),
   updated_at: joi.number(),
   smf: {
@@ -23,20 +23,20 @@ validator.import = function(post) {
 };
 
 var createSchema = joi.object().keys({
-  title: joi.string().required(),
-  body: joi.string().min(1).required(),
   user_id: joi.string().required(),
   thread_id: joi.string().required(),
+  title: joi.string().required(),
+  encodedBody: joi.string().required()
 });
 validator.create = function(post) {
   return validate(post, createSchema, { stripUnknown: true });
 };
 
 var updateSchema = joi.object().keys({
+  thread_id: joi.string().required(),
   id: joi.string().required(),
   title: joi.string().required(),
-  body: joi.string().min(1).required(),
-  thread_id: joi.string().required()
+  encodedBody: joi.string().required()
 });
 validator.update = function(post) {
   return validate(post, updateSchema, { stripUnknown: true });

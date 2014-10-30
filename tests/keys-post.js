@@ -15,11 +15,11 @@ describe('Post', function() {
   var sep = config.sep;
   var post = { id: 'asdfa', thread_id: 'alkjadsf' };
 
-  describe('#ParseBody', function() {
-    var plainPost = { title: 'post title', body: '[b]hello world.[/b]' };
+  describe('#ParseEncodings', function() {
+    var plainPost = { title: 'post title', encodedBody: '[b]hello world.[/b]' };
 
     it('should populate the encodedBody property', function() {
-      var parsedPost = pre.parseBody(plainPost);
+      var parsedPost = pre.parseEncodings(plainPost);
       parsedPost.encodedBody.should.equal('[b]hello world.[/b]');
       parsedPost.body.should.equal('<b>hello world.</b>');
     });

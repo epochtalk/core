@@ -12,19 +12,18 @@ var newBoard = {
 
 describe('hierarchy', function() {
   describe('#check', function() {
-    var user;
+    var user = {
+      username: 'test_user',
+      email: 'test_user@example.com',
+      password: 'epochtalk',
+      confirmation: 'epochtalk'
+    };
+    
     before(function() {
-      var newUser = {
-        username: 'test_user',
-        email: 'test_user@example.com',
-        password: 'epochtalk',
-        confirmation: 'epochtalk'
-      };
-      core.users.create(newUser)
-      .then(function(dbUser) {
-        user = dbUser;
-      });
+      return core.users.create(user)
+      .then(function(dbUser) { user = dbUser; });
     });
+
     it('should check board/thread/post relationship', function() {
       var createdThread;
       var createdBoard;
@@ -40,7 +39,7 @@ describe('hierarchy', function() {
         createdThread = thread;
         createdThread.board_id.should.equal(createdBoard.id);
         return {
-          body: 'Test post',
+          encodedBody: 'Test post',
           title: 'Post title',
           user_id: user.id,
           thread_id: createdThread.id
@@ -50,6 +49,7 @@ describe('hierarchy', function() {
       .then(function(post) {
         createdPost = post;
         createdPost.thread_id.should.equal(createdThread.id);
+        createdPost.user_id.should.equal(user.id);
       });
     });
   });
