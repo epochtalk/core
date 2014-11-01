@@ -43,11 +43,13 @@ users.create = function(user) {
 
   return db.content.putAsync(User.key(user.id), user)
   .then(function() { // insert username index
-    var usernameKey = User.usernameKey(user.username);
+    var lowerCaseUsername = user.username.toLowerCase();
+    var usernameKey = User.usernameKey(lowerCaseUsername);
     return db.indexes.putAsync(usernameKey, user.id);
   })
   .then(function() { // inset email index
-    var emailKey = User.emailKey(user.email);
+    var lowerCaseEmail = user.email.toLowerCase();
+    var emailKey = User.emailKey(lowerCaseEmail);
     return db.indexes.putAsync(emailKey, user.id);
   })
   .then(function() {
@@ -67,13 +69,15 @@ users.userByOldId = function(legacyId) {
 };
 
 users.userByUsername = function(username) {
-  var usernameKey = User.usernameKey(username);
+  var lowerCaseUsername = username.toLowerCase();
+  var usernameKey = User.usernameKey(lowerCaseUsername);
   return db.indexes.getAsync(usernameKey)
   .then(users.find);
 };
 
 users.userByEmail = function(email) {
-  var emailKey = User.emailKey(email);
+  var lowerCaseEmail = email.toLowerCase();
+  var emailKey = User.emailKey(lowerCaseEmail);
   return db.indexes.getAsync(emailKey)
   .then(users.find);
 };
@@ -93,7 +97,8 @@ users.update = function(user) {
       return db.indexes.delAsync(oldUsernameKey)
       // insert new username index
       .then(function() {
-        var newUsernameKey = User.usernameKey(newUsername);
+        var lowerCaseUsername = newUsername.toLowerCase();
+        var newUsernameKey = User.usernameKey(lowerCaseUsername);
         return db.indexes.putAsync(newUsernameKey, user.id);
       })
       .then(function() { return userData; });
@@ -110,7 +115,8 @@ users.update = function(user) {
       return db.indexes.delAsync(oldEmailKey)
       // insert new email index
       .then(function() {
-        var newEmailKey = User.emailKey(newEmail);
+        var lowerCaseEmail = newEmail.toLowerCase();
+        var newEmailKey = User.emailKey(lowerCaseEmail);
         return db.indexes.putAsync(newEmailKey, user.id);
       })
       .then(function() { return userData; });
