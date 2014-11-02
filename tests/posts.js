@@ -672,6 +672,55 @@ describe('posts', function() {
     });
   });
 
+  describe('#SANITIZE', function() {
+    var safeTitle = 'post title';
+    var unsafeTitle = 'post title<script>alert("okay");</script>';
+    var safeBody = '<div>Test</div> Post <b>Description</b><img /><img src="http://placehold.it/400/400" />';
+    var unsafeBody = '<div class="test">Test</div> Post <b>Description</b><script>alert("something");</script><IMG SRC="javascript:alert("XSS");"><img src="http://placehold.it/400/400" />';
+    var plainPost = { title: unsafeTitle, encodedBody: unsafeBody };
+    var user;
+    before(function() {
+      var newUser = {
+        username: 'test_user',
+        email: 'test_user@example.com',
+        password: 'epochtalk',
+        confirmation: 'epochtalk'
+      };
+      return core.users.create(newUser)
+      .then(function(dbUser) {
+        user = dbUser;
+        var newBoard = { name: 'Board', description: 'Board Desc' };
+        return boards.create(newBoard);
+      })
+      .then(function(board) {
+        return { board_id: board.id };
+      })
+      .then(threads.create)
+      .then(function(thread) {
+        plainPost.thread_id = thread.id;
+        plainPost.user_id = user.id;
+      });
+    });
+
+    it('should create a post in the db', function() {
+      return posts.create(plainPost)
+      .then(function(post) {
+        post.id.should.be.ok;
+        post.id.should.be.a('string');
+        post.created_at.should.be.a('number');
+        post.updated_at.should.be.a('number');
+        should.not.exist(post.imported_at);
+        post.title.should.equal(safeTitle);
+        post.body.should.equal(safeBody);
+        post.user_id.should.equal(user.id);
+        should.not.exist(post.deleted);
+        should.not.exist(post.smf);
+        post.version.should.be.a('number');
+        post.thread_id.should.equal(plainPost.thread_id);
+      });
+    });
+  });
+  
   describe('#CLEANING', function() {
     it('cleaning all db', function() {
       return probe.clean();

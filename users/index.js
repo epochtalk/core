@@ -9,6 +9,7 @@ var validate = require(path.join(__dirname, 'validate'));
 users.import = function(json) {
   return validate.import(json)
   .then(function(user) {
+    user = pre.clean(user);
     user = pre.parseSignature(user);
     return usersDb.import(user);
   });
@@ -16,7 +17,10 @@ users.import = function(json) {
 
 users.create = function(json) {
   return validate.create(json)
-  .then(usersDb.create);
+  .then(function(user) {
+    user = pre.clean(user);
+    return usersDb.create(user);
+  });
 };
 
 users.find = function(id) {
@@ -41,7 +45,11 @@ users.userByEmail = function(email) {
 
 users.update = function(json) {
   return validate.update(json)
-  .then(usersDb.update);
+  .then(function(user) {
+    user = pre.clean(user);
+    user = pre.parseSignature(user);
+    return usersDb.update(user);
+  });
 };
 
 users.delete = function(id) {

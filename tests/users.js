@@ -315,7 +315,7 @@ describe('users', function() {
       .then(function(user) {
         user.id.should.equal(testUser.id);
         user.created_at.should.equal(testUser.created_at);
-        user.updated_at.should.be.above(testUser.created_at);
+        user.updated_at.should.be.a('number');
         should.not.exist(user.imported_at);
         user.username.should.equal(testUser.username);
         user.email.should.equal(testUser.email);
@@ -334,7 +334,7 @@ describe('users', function() {
       .then(function(user) {
         user.id.should.equal(testUser.id);
         user.created_at.should.equal(testUser.created_at);
-        user.updated_at.should.be.above(testUser.created_at);
+        user.updated_at.should.be.a('number');
         should.not.exist(user.imported_at);
         user.username.should.equal(testUser.username);
         user.email.should.equal(testUser.email);
@@ -489,6 +489,76 @@ describe('users', function() {
       })
       .then(function() {
         catchCalled.should.be.true;
+      });
+    });
+  });
+
+  describe('#SANITIZE', function() {
+    var safeUsername = 'testuser';
+    var unsafeUsername = 'testuser<script>alert("boo");</script>';
+    var safeEmail = 'testuser@abe.efd';
+    var safeName = 'safe name';
+    var unsafeName = 'safe name<script>alert("boo");</script>';
+    var safeWebsite = 'http://www.google.com';
+    var unsafeWebsite = 'http://www.google.com<script>alert("boo");</script>';
+    var safeBtcAddress = 'aslkdfjlksadf';
+    var unsafeBtcAddress = 'aslkdfjlksadf<script>alert("boo");</script>';
+    var safeGender = 'male';
+    var unsafeGender = 'male<script>alert("boo");</script>';
+    var safeLocation = 'here';
+    var unsafeLocation = 'here<script>alert("boo");</script>';
+    var safeLanguage = 'english';
+    var unsafeLanguage = 'english<script>alert("boo");</script>';
+    var safeAvatar = 'http://placehold.it/400/400';
+    var unsafeAvatar = 'http://placehold.it/400/400<script>alert("boo");</script>';
+    var safeSignature = '<div>asdf</div>';
+    var unsafeSignature = '<div>asdf</div><script>alert("boo");</script>';
+
+    var testUser = {
+      username: unsafeUsername,
+      email: 'testuser@randomdomain.com',
+      password: 'asdf1234',
+      confirmation: 'asdf1234',
+    };
+
+    it('should create and return the created user', function() {
+      return users.create(testUser)
+      .then(function(user) {
+        user.name = unsafeName;
+        user.website = unsafeWebsite;
+        user.btcAddress = unsafeBtcAddress;
+        user.gender = unsafeGender;
+        user.location = unsafeLocation;
+        user.language = unsafeLanguage;
+        user.signature = unsafeSignature;
+        user.avatar = unsafeAvatar;
+        user.dob = 12343424542;
+        testUser = user;
+        return users.update(user);
+      })
+      .then(function(user) {
+        user.id.should.be.ok;
+        user.id.should.be.a('string');
+        user.created_at.should.be.a('number');
+        user.updated_at.should.be.a('number');
+        should.not.exist(user.imported_at);
+        user.username.should.equal(safeUsername);
+        user.email.should.equal(testUser.email);
+        should.not.exist(user.password);
+        should.not.exist(user.confirmation);
+        user.name.should.equal(safeName);
+        user.website.should.equal(safeWebsite);
+        user.btcAddress.should.equal(safeBtcAddress);
+        user.gender.should.equal(safeGender);
+        user.dob.should.equal(testUser.dob);
+        user.location.should.equal(safeLocation);
+        user.language.should.equal(safeLanguage);
+        user.signature.should.equal(safeSignature);
+        user.avatar.should.equal(safeAvatar);
+        user.passhash.should.be.ok;
+        user.passhash.should.be.a('string');
+        should.not.exist(user.deleted);
+        should.not.exist(user.smf);
       });
     });
   });

@@ -753,6 +753,36 @@ describe('boards', function() {
     });
   });
 
+  describe('#SANITIZE', function() {
+    var safeTitle = 'Test Board';
+    var unsafeTitle = '<b>Test</b> Board<script>alert("something");</script>';
+    var safeDescription = '<div>Test</div> Board <b>Description</b>';
+    var unsafeDescription = '<div class="test">Test</div> Board <b>Description</b><script>alert("something");</script><IMG SRC="javascript:alert("XSS");">';
+    var testBoard = {
+      name: unsafeTitle,
+      description: unsafeDescription
+    };
+
+    it('should sanitize on create/update/import board', function() {
+      return boards.create(testBoard)
+      .then(function(board) {
+        board.id.should.be.ok;
+        board.id.should.be.a('string');
+        board.created_at.should.be.a('number');
+        board.updated_at.should.be.a('number');
+        should.not.exist(board.imported_at);
+        should.not.exist(board.deleted);
+        board.name.should.equal(safeTitle);
+        board.description.should.equal(safeDescription);
+        should.not.exist(board.smf);
+        should.not.exist(board.parent_id);
+        should.not.exist(board.children_ids);
+        should.not.exist(board.children);
+      });
+    });
+  });
+
+
   describe('#CLEANING', function() {
     it('cleaning all db', function() {
       return probe.clean();

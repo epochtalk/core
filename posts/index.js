@@ -9,6 +9,7 @@ var validate = require(path.join(__dirname, 'validate'));
 posts.import = function(json) {
   return validate.import(json)
   .then(function(post) {
+    post = pre.clean(post);
     post = pre.parseEncodings(post);
     return postsDb.import(post);
   });
@@ -17,6 +18,7 @@ posts.import = function(json) {
 posts.create = function(json) {
   return validate.create(json)
   .then(function(post) {
+    post = pre.clean(post);
     post = pre.parseEncodings(post);
     return postsDb.create(post);
   });
@@ -30,6 +32,7 @@ posts.find = function(id) {
 posts.update = function(json) {
   return validate.update(json)
   .then(function(post) {
+    post = pre.clean(post);
     post = pre.parseEncodings(post);
     return postsDb.update(post);
   });

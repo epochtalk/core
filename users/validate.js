@@ -6,7 +6,7 @@ var Promise = require('bluebird');
 var validate = Promise.promisify(joi.validate);
 
 var createSchema = joi.object().keys({
-  username: joi.string().regex(/[a-zA-Z0-9_\-]/).min(2).max(30).required(),
+  username: joi.string().regex(/[a-zA-Z0-9_\-]/).min(2).required(),
   email: joi.string().email().required(),
   password: joi.string().regex(/[a-zA-Z0-9]{3,30}/).required()
 });
@@ -21,13 +21,13 @@ var importSchema = joi.object().keys({
   updated_at: joi.number(),
   name: joi.string(),
   website: joi.string(),
+  btcAddress: joi.string(),
   gender: joi.string(),
-  dob: joi.date(),
+  dob: joi.number(),
   location: joi.string(),
   language: joi.string(),
   signature: joi.string(),
   avatar: joi.string(), // url
-  status: joi.string(),
   smf: {
     ID_MEMBER: joi.number().required()
   }
@@ -46,7 +46,7 @@ var updateSchema = joi.object().keys({
   website: joi.string(),
   btcAddress: joi.string(),
   gender: joi.string(),
-  dob: joi.date(),
+  dob: joi.number(),
   location: joi.string(),
   language: joi.string(),
   signature: joi.string(),
