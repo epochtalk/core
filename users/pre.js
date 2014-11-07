@@ -11,7 +11,7 @@ users.parseSignature = function(user) {
     // convert all &lt; and &gt; to decimal to escape the regex
     // in the bbcode parser that'll unescape those chars
     user.signature = user.signature.replace(/&gt;/g, '&#62;');
-    user.signature = user.signature.replace(/&lt;/g, '&#60;')
+    user.signature = user.signature.replace(/&lt;/g, '&#60;');
 
     // parse encodedBody to generate body
     var parsed = bbcodeParser.process({text: user.signature}).html;
@@ -22,8 +22,8 @@ users.parseSignature = function(user) {
 };
 
 users.clean = function(user) {
-  user.username = sanitize.strip(user.username);
-  user.email = sanitize.strip(user.email);
+  if (user.username) { user.username = sanitize.strip(user.username); }
+  if (user.email) { user.email = sanitize.strip(user.email); }
   if (user.name) { user.name = sanitize.strip(user.name); }
   if (user.website) { user.website = sanitize.strip(user.website); }
   if (user.btcAddress) { user.btcAddress = sanitize.strip(user.btcAddress); }
@@ -32,5 +32,7 @@ users.clean = function(user) {
   if (user.language) { user.language = sanitize.strip(user.language); }
   if (user.signature) { user.signature = sanitize.bbcode(user.signature); }
   if (user.avatar) { user.avatar = sanitize.strip(user.avatar); }
+  if (user.reset_token) { user.reset_token = sanitize.strip(user.reset_token); }
+  if (user.reset_expiration) { user.reset_expiration = sanitize.strip(user.reset_expiration); }
   return user;
 };

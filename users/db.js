@@ -90,7 +90,6 @@ users.update = function(user) {
   .then(function(userData) { // handle username change
     var oldUsername = userData.username;
     var newUsername = user.username;
-
     if (newUsername && oldUsername !== newUsername) {
       // remove old username index
       var oldUsernameKey = User.usernameKey(oldUsername);
@@ -141,6 +140,8 @@ users.update = function(user) {
     if (user.language) { updateUser.language = user.language; }
     if (user.signature) { updateUser.signature = user.signature; }
     if (user.avatar) { updateUser.avatar = user.avatar; }
+    if (user.reset_token) { updateUser.reset_token = user.reset_token; }
+    if (user.reset_expiration) { updateUser.reset_expiration = user.reset_expiration; }
 
     updateUser.updated_at = Date.now();
 
@@ -151,6 +152,7 @@ users.update = function(user) {
     return db.content.putAsync(userKey, updateUser);
   })
   .then(function() {
+
     return updateUser;
   });
 };
