@@ -6,7 +6,7 @@ var Promise = require('bluebird');
 var validate = Promise.promisify(joi.validate);
 
 var importSchema = joi.object().keys({
-  user_id: joi.string().required(),
+  user_id: joi.string(),
   thread_id: joi.string().required(),
   title: joi.string().required(),
   encodedBody: joi.string().required(),
