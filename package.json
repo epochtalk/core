@@ -33,6 +33,8 @@
     "replify": "^1.2.0",
     "replpad": "^0.12.0",
     "rimraf": "^2.2.8",
+    "sanitize-html": "^1.4.3",
+    "through2": "^0.6.3",
     "treedb": "git://github.com/epochtalk/treedb"
   },
   "devDependencies": {
