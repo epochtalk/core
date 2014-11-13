@@ -29,36 +29,28 @@ threadsDb.import = function(thread) {
 
 // thread must have a board_id
 threadsDb.create = function(thread) {
-  if (!thread.board_id) {
-    return Promise.reject('Invalid board id.');
-  }
-
-  var timestamp = Date.now();
-  // If created at doesnt exist
-  if (!thread.created_at) {
-    thread.created_at = timestamp;
-  }
-  thread.id = helper.genId(thread.created_at);
-  var boardThreadKey = Thread.boardThreadKey(thread.id, thread.board_id, thread.created_at);
-  var threadKey = Thread.key(thread.id);
-  var lastPostUsernameKey = Thread.lastPostUsernameKey(thread.id);
-  var lastPostCreatedAtKey = Thread.lastPostCreatedAtKey(thread.id);
-  var threadOrderKey = Thread.threadOrderKey(thread.id);
-  var metadataBatch = [
-    // TODO: There should be a better solution than initializing with strings
-    { type: 'put', key: lastPostUsernameKey, value: 'none' },
-    { type: 'put', key: lastPostCreatedAtKey, value: thread.created_at },
-    { type: 'put', key: threadOrderKey, value: 0 }
-  ];
-  if (!thread.view_count) { thread.view_count = 0; }
-  var viewCountKey = Thread.viewCountKey(thread.id);
-  metadataBatch.push({ type: 'put', key: viewCountKey , value: thread.view_count });
-  return db.metadata.batchAsync(metadataBatch)
-  .then(function() { return db.content.putAsync(threadKey, thread); })
-  .then(function() { return db.indexes.putAsync(boardThreadKey, thread.id); })
-  .then(function() { return threadsDb.incPostCount(thread.id); })
-  .then(function() { return boardsDb.incThreadCount(thread.board_id); })
-  .then(function() { return thread; });
+  return new Promise(function(fulfill, reject) {
+    var timestamp = Date.now();
+    // If created at doesnt exist
+    if (!thread.created_at) {
+      thread.created_at = timestamp;
+    }
+    var newThread = {
+      parentKey: ['board', thread.board_id],
+      type: 'thread',
+      callback: function(err, storedThread) {
+        if (err) {
+          reject(err);
+        }
+        else {
+          storedThread.value.id = storedThread.key[1];
+          fulfill(storedThread.value);
+        }
+      }
+    };
+    newThread.object = thread;
+    tree.store(newThread);
+  });
 };
 
 threadsDb.incViewCount = function(id) {
