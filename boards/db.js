@@ -53,7 +53,6 @@ boards.create = function(board) {
       board.updated_at = board.created_at;
     }
     var newBoard = {
-      object: board,
       type: 'board',
       callback: function(err, storedBoard) {
         if (err) {
@@ -67,8 +66,9 @@ boards.create = function(board) {
     };
     if (board.parent_id) {
       newBoard.parentKey = ['board', board.parent_id];
-      delete newBoard.object.board['parent_id'];
+      delete board.parent_id;
     }
+    newBoard.object = board;
     tree.store(newBoard);
   });
 };
