@@ -53,68 +53,6 @@ threadsDb.create = function(thread) {
   });
 };
 
-threadsDb.incViewCount = function(id) {
-  var viewCountKey = Thread.viewCountKey(id);
-  return new Promise(function(fulfill, reject) {
-    viewCountLock.runwithlock(function() {
-      var newViewCount = 0;
-      db.metadata.getAsync(viewCountKey)
-      .then(function(viewCount) {
-        newViewCount = Number(viewCount);
-        newViewCount++;
-        return newViewCount;
-      })
-      .catch(function() { return newViewCount; })
-      .then(function(viewCount) { return db.metadata.putAsync(viewCountKey, viewCount); })
-      .then(function() { fulfill(newViewCount); })
-      .catch(function(err) { reject(err); })
-      .finally(function() { viewCountLock.release(); });
-    });
-  });
-};
-
-threadsDb.incPostCount = function(id) {
-  var postCountKey = Thread.postCountKey(id);
-  return new Promise(function(fulfill, reject) {
-    postCountLock.runwithlock(function() {
-      var newPostCount = 0;
-      db.metadata.getAsync(postCountKey)
-      .then(function(postCount) {
-        newPostCount = Number(postCount);
-        newPostCount++;
-        return newPostCount;
-      })
-      .catch(function() { return newPostCount; })
-      .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
-      .then(function() { fulfill(newPostCount); })
-      .catch(function(err) { reject(err); })
-      .finally(function() { postCountLock.release(); });
-    });
-  });
-};
-
-threadsDb.decPostCount = function(id) {
-  var postCountKey = Thread.postCountKey(id);
-  return new Promise(function(fulfill, reject) {
-    postCountLock.runwithlock(function() {
-      var newPostCount = 0;
-      db.metadata.getAsync(postCountKey)
-      .then(function(postCount) {
-        newPostCount = Number(postCount);
-        if (newPostCount > 0) {
-          newPostCount--;
-        }
-        return newPostCount;
-      })
-      .catch(function() { return newPostCount; })
-      .then(function(postCount) { return db.metadata.putAsync(postCountKey, postCount); })
-      .then(function() { fulfill(newPostCount); })
-      .catch(function(err) { reject(err); })
-      .finally(function() { postCountLock.release(); });
-    });
-  });
-};
-
 threadsDb.delete = function(id) {
   var threadKey = Thread.key(id);
   var deletedThread = null;
