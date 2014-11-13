@@ -60,6 +60,7 @@ boards.create = function(board) {
           reject(err);
         }
         else {
+          storedBoard.value.id = storedBoard.key[1];
           fulfill(storedBoard.value);
         }
       }
