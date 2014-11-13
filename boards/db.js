@@ -4,6 +4,7 @@ module.exports = boards;
 var _ = require('lodash');
 var path = require('path');
 var Promise = require('bluebird');
+var through2 = require('through2');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var tree = db.tree;
@@ -74,58 +75,54 @@ boards.create = function(board) {
 };
 
 boards.find = function(id) {
-  var addProperty = function(key, keyName) {
-    return db.metadata.getAsync(key)
-    .then(function(value) {
-      if (_.isNumber(board[keyName]) && _.isNumber(value)) {
-        board[keyName] += Number(value);
-      }
-      else if (_.isNumber(value)) {
-        board[keyName] = Number(value);
-      }
-      else if (_.isString(value)) {
-        board[keyName] = value;
-      }
+  function worker(storedThing) {
+    return new Promise(function(fulfill, reject) {
+      var thing = storedThing.value;
+      tree.metadata({
+        key: storedThing.key,
+        callback: function(err, metadata) {
+          if (err) { reject(err); }
+          Object.keys(metadata).forEach(function(key) {
+            thing[key] = metadata[key];
+          });
+          thing.id = storedThing.key[1];
+          fulfill(thing);
+        }
+      });
     });
   };
-
-  var board;
-  var boardKey = Board.key(id);
-  var postCountKey = Board.postCountKey(id);
-  var threadCountKey = Board.threadCountKey(id);
-  var totalPostCountKey = Board.totalPostCountKey(id);
-  var totalThreadCountKey = Board.totalThreadCountKey(id);
-  var lastPostUsernameKey = Board.lastPostUsernameKey(id);
-  var lastPostCreatedAtKey = Board.lastPostCreatedAtKey(id);
-  var lastThreadTitleKey = Board.lastThreadTitleKey(id);
-  var lastThreadIdKey = Board.lastThreadIdKey(id);
-
-  return db.content.getAsync(boardKey)
-  .then(function(boardDb) {
-    board = boardDb;
-    board.post_count = 0;
-    board.thread_count = 0;
-    if (board.children_ids && board.children_ids.length > 0) {
-      board.children = [];
-      return Promise.all(board.children_ids.map(function(childId) {
-        return boards.find(childId)
-        .then(function(childBoard) {
-          board.children.push(childBoard);
-        });
+  function getChildrenArray(parentKey) {
+    return new Promise(function(fulfill, reject) {
+      var storedChildren = [];
+      tree.children(parentKey, 'board').pipe(through2.obj(function(storedChild, enc, callback) {
+        storedChildren.push(storedChild);
+        callback();
+      }, function() {
+        fulfill(storedChildren);
       }));
-    }
+    })
+    .then(function(storedChildren) {
+      return Promise.map(storedChildren, worker);
+    });
+  };
+  return new Promise(function(fulfill, reject) {
+    tree.get(['board', id], function(err, storedBoard) {
+      if (err) { reject(err); }
+      else { fulfill(storedBoard); }
+    });
   })
-  .then(function() {
+  .then(function(storedBoard) {
     return Promise.join(
-      addProperty(postCountKey, 'post_count'),
-      addProperty(threadCountKey, 'thread_count'),
-      addProperty(totalPostCountKey, 'total_post_count'),
-      addProperty(totalThreadCountKey, 'total_thread_count'),
-      addProperty(lastPostUsernameKey, 'last_post_username'),
-      addProperty(lastPostCreatedAtKey, 'last_post_created_at'),
-      addProperty(lastThreadTitleKey, 'last_thread_title'),
-      addProperty(lastThreadIdKey, 'last_thread_id'),
-      function() { return board; });
+      worker(storedBoard),
+      getChildrenArray(storedBoard.key),
+      function(board, children) {
+        // check if a result was found
+        if (children.length) {
+          board.children = children;
+        }
+        return board;
+      }
+    );
   });
 };
 
