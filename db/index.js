@@ -29,5 +29,6 @@ exp.deleted = Promise.promisifyAll(deleted);
 exp.metadata = Promise.promisifyAll(metadata);
 exp.indexes = Promise.promisifyAll(indexes);
 exp.legacy = Promise.promisifyAll(legacy);
+exp.tree = tree;
 
 tree.addIndexes({indexes: TreeDBIndexes});
