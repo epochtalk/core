@@ -42,7 +42,7 @@ boards.import = function(board) {
 };
 
 boards.create = function(board) {
-  return new Promise(function(fulfil, reject) {
+  return new Promise(function(fulfill, reject) {
     // insert into db
     var timestamp = Date.now();
     if (!board.created_at) {
@@ -60,7 +60,7 @@ boards.create = function(board) {
           reject(err);
         }
         else {
-          fulfil(storedBoard.value);
+          fulfill(storedBoard.value);
         }
       }
     };
