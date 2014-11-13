@@ -87,8 +87,6 @@ describe('boards', function() {
         board.name.should.equal(childABoard.name);
         board.description.should.equal(childABoard.description);
         should.not.exist(board.smf);
-        board.parent_id.should.equal(parentBoard.id);
-        should.not.exist(board.children_ids);
         should.not.exist(board.children);
 
         childABoard = board;
@@ -105,8 +103,6 @@ describe('boards', function() {
           board.name.should.equal(childBBoard.name);
           board.description.should.equal(childBBoard.description);
           should.not.exist(board.smf);
-          board.parent_id.should.equal(parentBoard.id);
-          should.not.exist(board.children_ids);
           should.not.exist(board.children);
 
           childBBoard = board;
@@ -123,11 +119,6 @@ describe('boards', function() {
           board.name.should.equal(parentBoard.name);
           board.description.should.equal(parentBoard.description);
           should.not.exist(board.smf);
-          should.not.exist(board.parent_id);
-          board.children_ids.should.be.an('array');
-          board.children_ids.should.have.length(2);
-          board.children_ids[0].should.equal(childABoard.id);
-          board.children_ids[1].should.equal(childBBoard.id);
           board.children.should.be.an('array');
           board.children.should.have.length(2);
           board.children[0].id.should.equal(childABoard.id);
@@ -306,8 +297,6 @@ describe('boards', function() {
         board.name.should.equal(findBoard.name);
         board.description.should.equal(findBoard.description);
         should.not.exist(board.smf);
-        should.not.exist(board.parent_id);
-        should.not.exist(board.children_ids);
         should.not.exist(board.children);
       });
     });
@@ -350,9 +339,6 @@ describe('boards', function() {
         board.name.should.equal(parentBoard.name);
         board.description.should.equal(parentBoard.description);
         should.not.exist(board.smf);
-        should.not.exist(board.parent_id);
-        board.children_ids.should.be.an('array');
-        board.children_ids.should.have.length(2);
         board.children.should.be.an('array');
         board.children.should.have.length(2);
       });
@@ -369,8 +355,6 @@ describe('boards', function() {
         board.name.should.equal(childABoard.name);
         board.description.should.equal(childABoard.description);
         should.not.exist(board.smf);
-        board.parent_id.should.equal(parentBoard.id);
-        should.not.exist(board.children_ids);
         should.not.exist(board.children);
       });
     });
