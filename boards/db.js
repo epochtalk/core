@@ -6,6 +6,7 @@ var path = require('path');
 var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
+var tree = db.tree;
 var Board = require(path.join(__dirname, 'keys'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var Padlock = require('padlock').Padlock;
@@ -41,46 +42,34 @@ boards.import = function(board) {
 };
 
 boards.create = function(board) {
-  // insert into db
-  var timestamp = Date.now();
-  if (!board.created_at) {
-    board.created_at = timestamp;
-    board.updated_at = timestamp;
-  }
-  else if (!board.updated_at) {
-    board.updated_at = board.created_at;
-  }
-  board.id = helper.genId(board.created_at);
-  var boardKey = Board.key(board.id);
-  var boardLastPostUsernameKey = Board.lastPostUsernameKey(board.id);
-  var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKey(board.id);
-  var boardLastThreadTitleKey = Board.lastThreadTitleKey(board.id);
-  var boardLastThreadIdKey = Board.lastThreadIdKey(board.id);
-  var totalPostCountKey = Board.totalPostCountKey(board.id);
-  var totalThreadCountKey = Board.totalThreadCountKey(board.id);
-  var postCountKey = Board.postCountKey(board.id);
-  var threadCountKey = Board.threadCountKey(board.id);
-
-  var metadataBatch = [
-    // TODO: There should be a better solution than initializing with strings
-    { type: 'put', key: boardLastPostUsernameKey , value: 'none' },
-    { type: 'put', key: boardLastPostCreatedAtKey , value: 0 },
-    { type: 'put', key: boardLastThreadTitleKey , value: 'none' },
-    { type: 'put', key: boardLastThreadIdKey , value: 'none' },
-    { type: 'put', key: totalPostCountKey , value: 0 },
-    { type: 'put', key: totalThreadCountKey , value: 0 },
-    { type: 'put', key: postCountKey , value: 0 },
-    { type: 'put', key: threadCountKey , value: 0 }
-  ];
-  return db.metadata.batchAsync(metadataBatch)
-  .then(function() {
-    if (board.parent_id) {
-      return addChildToBoard(board.id, board.parent_id);
+  return new Promise(function(fulfil, reject) {
+    // insert into db
+    var timestamp = Date.now();
+    if (!board.created_at) {
+      board.created_at = timestamp;
+      board.updated_at = timestamp;
     }
-    else { return; }
-  })
-  .then(function() { return db.content.putAsync(boardKey, board); })
-  .then(function() { return board; });
+    else if (!board.updated_at) {
+      board.updated_at = board.created_at;
+    }
+    var newBoard = {
+      object: board,
+      type: 'board',
+      callback: function(err, storedBoard) {
+        if (err) {
+          reject(err);
+        }
+        else {
+          fulfil(storedBoard.value);
+        }
+      }
+    };
+    if (board.parent_id) {
+      newBoard.parentKey = ['board', board.parent_id];
+      delete newBoard.object.board['parent_id'];
+    }
+    tree.store(newBoard);
+  });
 };
 
 boards.find = function(id) {
