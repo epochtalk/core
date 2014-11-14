@@ -6,6 +6,7 @@ var bcrypt = require('bcrypt');
 var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
+var tree = db.tree;
 var helper = require(path.join(__dirname, '..', 'helper'));
 var User = require(path.join(__dirname, 'keys'));
 var Padlock = require('padlock').Padlock;
@@ -25,35 +26,35 @@ users.import = function(user) {
 };
 
 users.create = function(user) {
-  var timestamp = Date.now();
-  if (!user.created_at) {
-    user.created_at = timestamp;
-    user.updated_at = timestamp;
-  }
-  else if (!user.updated_at) {
-    user.updated_at = user.created_at;
-  }
-  user.id = helper.genId(user.created_at);
-  // prepare for storage or match
-  if (user.password) {
-    user.passhash = bcrypt.hashSync(user.password, 12);
-  }
+  return new Promise(function(fulfill, reject) {
+    var timestamp = Date.now();
+    if (!user.created_at) {
+      user.created_at = timestamp;
+      user.updated_at = timestamp;
+    }
+    else if (!user.updated_at) {
+      user.updated_at = user.created_at;
+    }
+    // prepare for storage or match
+    if (user.password) {
+      user.passhash = bcrypt.hashSync(user.password, 12);
+    }
 
-  delete user.password;
-
-  return db.content.putAsync(User.key(user.id), user)
-  .then(function() { // insert username index
-    var lowerCaseUsername = user.username.toLowerCase();
-    var usernameKey = User.usernameKey(lowerCaseUsername);
-    return db.indexes.putAsync(usernameKey, user.id);
-  })
-  .then(function() { // inset email index
-    var lowerCaseEmail = user.email.toLowerCase();
-    var emailKey = User.emailKey(lowerCaseEmail);
-    return db.indexes.putAsync(emailKey, user.id);
-  })
-  .then(function() {
-    return user;
+    delete user.password;
+    var newUser = {
+      object: user,
+      type: 'user',
+      callback: function(err, storedUser) {
+        if (err) {
+          reject(err);
+        }
+        else {
+          storedUser.value.id = storedUser.key[1];
+          fulfill(storedUser.value);
+        }
+      }
+    };
+    tree.store(newUser);
   });
 };
 
