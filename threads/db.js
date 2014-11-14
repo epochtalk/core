@@ -7,6 +7,7 @@ var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
 var encodeIntHex = dbHelper.encodeIntHex;
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
+var tree = db.tree;
 var Thread = require(path.join(__dirname, 'keys'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
@@ -163,53 +164,13 @@ threadsDb.purge = function(id) {
 };
 
 threadsDb.find = function(id) {
-  var thread;
-  var threadKey = Thread.key(id);
-  var postCountKey = Thread.postCountKey(id);
-  var firstPostIdKey = Thread.firstPostIdKey(id);
-  var titleKey = Thread.titleKey(id);
-  var usernameKey = Thread.usernameKey(id);
-  var lastPostUsernameKey = Thread.lastPostUsernameKey(id);
-  var lastPostCreatedAtKey = Thread.lastPostCreatedAtKey(id);
-  var viewCountKey = Thread.viewCountKey(id);
-  return db.content.getAsync(threadKey)
-  .then(function(dbThread) {
-    thread = dbThread;
-    return db.metadata.getAsync(postCountKey);
+  return new Promise(function(fulfill, reject) {
+    tree.get(['thread', id], function(err, storedThread) {
+      if (err) { reject(err); }
+      else { fulfill(storedThread); }
+    });
   })
-  .then(function(count) {
-    thread.post_count = Number(count);
-    return db.metadata.getAsync(firstPostIdKey);
-    // possibly add catch here if first post doesn't exist
-  })
-  .then(function(firstPostId) {
-    thread.first_post_id = firstPostId;
-    return db.metadata.getAsync(titleKey);
-    // possibly add catch here if first post doesn't exist
-  })
-  .then(function(title) {
-    thread.title = title;
-    return db.metadata.getAsync(usernameKey);
-    // possibly add catch here if usernameKey doesn't exit
-  })
-  .then(function(threadUsername) {
-    thread.user = {
-      username: threadUsername
-    };
-    return db.metadata.getAsync(lastPostUsernameKey);
-  })
-  .then(function(lastPostUsername) {
-    thread.last_post_username = lastPostUsername;
-    return db.metadata.getAsync(lastPostCreatedAtKey);
-  })
-  .then(function(lastPostCreatedAt) {
-    thread.last_post_created_at = lastPostCreatedAt;
-    return db.metadata.getAsync(viewCountKey);
-  })
-  .then(function(viewCount) {
-    thread.view_count = Number(viewCount);
-    return thread;
-  });
+  .then(helper.decMetadata);
 };
 
 threadsDb.threadByOldId = function(oldId) {
