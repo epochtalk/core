@@ -6,6 +6,7 @@ var Promise = require('bluebird');
 var config = require(path.join(__dirname, '..', 'config'));
 var vault = require(path.join(__dirname, '..', 'vault'));
 var db = require(path.join(__dirname, '..', 'db'));
+var tree = db.tree;
 var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
 var encodeIntHex = dbHelper.encodeIntHex;
 var Post = require(path.join(__dirname, 'keys'));
@@ -43,122 +44,34 @@ posts.import = function(post) {
 };
 
 posts.create = function(post) {
-  var timestamp = Date.now();
-  // If post created at isn't defined
-  if (!post.created_at) {
-    post.created_at = timestamp;
-    post.updated_at = timestamp;
-  }
-  // If post created at is defined but updated at isn't
-  else if (!post.updated_at) {
-    post.updated_at = post.created_at;
-  }
-  post.id = helper.genId(post.created_at);
-
-  var postUsername, boardId, threadTitle, postCount, thread;
-  return usersDb.find(post.user_id)
-  .then(function(user) {
-    postUsername = user.username;
-    return threadsDb.incPostCount(post.thread_id);
-  })
-  .then(function(count) {
-    postCount = Number(count);
-    var metadataBatch = [];
-
-    if (postCount === 1) { // First Post
-      var threadId = post.thread_id;
-      var threadFirstPostIdKey = Thread.firstPostIdKey(threadId);
-      var threadTitleKey = Thread.titleKey(threadId);
-      var threadUsernameKey = Thread.usernameKey(threadId);
-      metadataBatch = [
-        { type: 'put', key: threadFirstPostIdKey, value: post.id },
-        { type: 'put', key: threadTitleKey, value: post.title },
-        { type: 'put', key: threadUsernameKey, value: postUsername }
-      ];
+  return new Promise(function(fulfill, reject) {
+    var timestamp = Date.now();
+    // If post created at isn't defined
+    if (!post.created_at) {
+      post.created_at = timestamp;
+      post.updated_at = timestamp;
+    }
+    // If post created at is defined but updated at isn't
+    else if (!post.updated_at) {
+      post.updated_at = post.created_at;
     }
 
-    // post order metadata
-    var postOrderKey = Post.postOrderKey(post.id);
-    metadataBatch.push({ type: 'put', key: postOrderKey, value: postCount });
-    return db.metadata.batchAsync(metadataBatch);
-  })
-  .then(function() { return threadsDb.find(post.thread_id); })
-  .then(function(dbThread) {
-    boardId = dbThread.board_id;
-    threadTitle = dbThread.title;
-    thread = dbThread;
-    return boardsDb.incPostCount(boardId);
-  })
-  .then(function() {
-    // get current thread last updated at timestamp
-    var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKey(post.thread_id);
-    return db.metadata.getAsync(threadLastPostCreatedAtKey);
-  })
-  .then(function(oldTimestamp) {
-    // only remove if post.created_at is newer
-    if (post.created_at >= oldTimestamp) {
-      // build metadata batch array
-      var threadLastPostUsernameKey = Thread.lastPostUsernameKey(post.thread_id);
-      var threadLastPostCreatedAtKey = Thread.lastPostCreatedAtKey(post.thread_id);
-      var metadataBatch = [
-        { type: 'put', key: threadLastPostUsernameKey, value: postUsername },
-        { type: 'put', key: threadLastPostCreatedAtKey, value: post.created_at }
-      ];
-      var metadata = {
-        username: postUsername,
-        createdAt: post.created_at,
-        threadTitle: threadTitle,
-        threadId: post.thread_id
-      };
-      // build and insert metadata
-      return buildMetadataBatch(boardId, metadata, metadataBatch, post.created_at)
-      .then(function(metadataBatch) {
-        return db.metadata.batchAsync(metadataBatch);
-      })
-      // update board thread key index
-      .then(function() {
-        // old thread index
-        var oldBoardThreadKey = Thread.boardThreadKey(thread.id, thread.board_id, oldTimestamp);
-        // add new thread index value
-        var newBoardThreadKey = Thread.boardThreadKey(thread.id, thread.board_id, post.created_at);
-        var indexBatch = [
-          { type: 'del', key: oldBoardThreadKey },
-          { type: 'put', key: newBoardThreadKey, value: post.thread_id }
-        ];
-        return db.indexes.batchAsync(indexBatch)
-        .then(function() { syncThreadOrder(thread); });
-      });
-    }
-    else { return; }
-  })
-  .then(function() { // threadPostOrder
-    var key = Post.threadPostOrderKey(post.thread_id, postCount);
-    return db.indexes.putAsync(key, post.id);
-  })
-  .then(function() {
-    post.version = timestamp; // add version
-    var versionKey = Post.versionKey(post.id, post.version);
-    return db.content.putAsync(versionKey, post);
-  })
-  .then(function() { return db.content.putAsync(Post.key(post.id), post); })
-  .then(function() { return post; });
-};
-
-var buildMetadataBatch = function(boardId, metadata, batchArray, postCreatedAt) {
-  if (!boardId) { return batchArray; }
-  return boardsDb.find(boardId)
-  .then(function(board) {
-    if (postCreatedAt >= board.last_post_created_at) {
-      var boardLastPostUsernameKey = Board.lastPostUsernameKey(boardId);
-      var boardLastPostCreatedAtKey = Board.lastPostCreatedAtKey(boardId);
-      var boardLastThreadTitleKey = Board.lastThreadTitleKey(boardId);
-      var boardLastThreadIdKey = Board.lastThreadIdKey(boardId);
-      batchArray.push({ type: 'put', key: boardLastPostUsernameKey, value: metadata.username });
-      batchArray.push({ type: 'put', key: boardLastPostCreatedAtKey, value: metadata.createdAt });
-      batchArray.push({ type: 'put', key: boardLastThreadTitleKey, value: metadata.threadTitle });
-      batchArray.push({ type: 'put', key: boardLastThreadIdKey, value: metadata.threadId });
-    }
-    return buildMetadataBatch(board.parent_id, metadata, batchArray, postCreatedAt);
+    var newPost = {
+      //version: post.created_at,
+      parentKey: ['thread', post.thread_id],
+      type: 'post',
+      callback: function(err, storedPost) {
+        if (err) {
+          reject(err);
+        }
+        else {
+          storedPost.value.id = storedPost.key[1];
+          fulfill(storedPost.value);
+        }
+      }
+    };
+    newPost.object = post;
+    tree.store(newPost);
   });
 };
 
