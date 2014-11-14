@@ -58,6 +58,7 @@ posts.create = function(post) {
 
     var newPost = {
       //version: post.created_at,
+      object: post,
       parentKey: ['thread', post.thread_id],
       type: 'post',
       callback: function(err, storedPost) {
@@ -70,7 +71,6 @@ posts.create = function(post) {
         }
       }
     };
-    newPost.object = post;
     tree.store(newPost);
   });
 };
