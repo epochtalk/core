@@ -1,3 +1,5 @@
+var Promise = require('bluebird');
+var tree = require(path.join(__dirname, '..', 'db')).tree;
 var uuid = require('node-uuid');
 var path = require('path');
 
