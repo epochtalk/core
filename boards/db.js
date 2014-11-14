@@ -86,7 +86,7 @@ boards.find = function(id) {
       }));
     })
     .then(function(storedChildren) {
-      return Promise.map(storedChildren, worker);
+      return Promise.map(storedChildren, helper.decMetadata);
     });
   };
   return new Promise(function(fulfill, reject) {
@@ -97,7 +97,7 @@ boards.find = function(id) {
   })
   .then(function(storedBoard) {
     return Promise.join(
-      worker(storedBoard),
+      helper.decMetadata(storedBoard),
       getChildrenArray(storedBoard.key),
       function(board, children) {
         // check if a result was found
