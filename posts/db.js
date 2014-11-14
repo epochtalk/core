@@ -76,8 +76,12 @@ posts.create = function(post) {
 };
 
 posts.find = function(id) {
-  var postKey = Post.key(id);
-  return db.content.getAsync(postKey);
+  return new Promise(function(fulfill, reject) {
+    tree.get(['post', id], function(err, storedPost) {
+      if (err) { reject(err); }
+      else { fulfill(storedPost); }
+    });
+  });
 };
 
 posts.update = function(post) {
