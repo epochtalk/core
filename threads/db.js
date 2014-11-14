@@ -37,6 +37,7 @@ threadsDb.create = function(thread) {
       thread.created_at = timestamp;
     }
     var newThread = {
+      object: thread,
       parentKey: ['board', thread.board_id],
       type: 'thread',
       callback: function(err, storedThread) {
@@ -49,7 +50,6 @@ threadsDb.create = function(thread) {
         }
       }
     };
-    newThread.object = thread;
     tree.store(newThread);
   });
 };
