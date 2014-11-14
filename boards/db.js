@@ -75,22 +75,6 @@ boards.create = function(board) {
 };
 
 boards.find = function(id) {
-  function worker(storedThing) {
-    return new Promise(function(fulfill, reject) {
-      var thing = storedThing.value;
-      tree.metadata({
-        key: storedThing.key,
-        callback: function(err, metadata) {
-          if (err) { reject(err); }
-          Object.keys(metadata).forEach(function(key) {
-            thing[key] = metadata[key];
-          });
-          thing.id = storedThing.key[1];
-          fulfill(thing);
-        }
-      });
-    });
-  };
   function getChildrenArray(parentKey) {
     return new Promise(function(fulfill, reject) {
       var storedChildren = [];
