@@ -74,10 +74,21 @@ users.userByOldId = function(legacyId) {
 };
 
 users.userByUsername = function(username) {
-  var lowerCaseUsername = username.toLowerCase();
-  var usernameKey = User.usernameKey(lowerCaseUsername);
-  return db.indexes.getAsync(usernameKey)
-  .then(users.find);
+  return new Promise(function(fulfill, reject) {
+    var options = {
+      type: 'user',
+      indexedField: 'username',
+      indexedValue: username.toLowerCase(),
+      limit: 1
+    };
+    tree.nodes(options)
+    .on('data', function(data) {
+      fulfill(data);
+    })
+    .on('error', function(err) {
+      reject(err);
+    });
+  });
 };
 
 users.userByEmail = function(email) {
