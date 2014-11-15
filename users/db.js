@@ -92,10 +92,21 @@ users.userByUsername = function(username) {
 };
 
 users.userByEmail = function(email) {
-  var lowerCaseEmail = email.toLowerCase();
-  var emailKey = User.emailKey(lowerCaseEmail);
-  return db.indexes.getAsync(emailKey)
-  .then(users.find);
+  return new Promise(function(fulfill, reject) {
+    var options = {
+      type: 'user',
+      indexedField: 'email',
+      indexedValue: email.toLowerCase(),
+      limit: 1
+    };
+    tree.nodes(options)
+    .on('data', function(data) {
+      fulfill(data);
+    })
+    .on('error', function(err) {
+      reject(err);
+    });
+  });
 };
 
 users.update = function(user) {
