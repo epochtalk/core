@@ -142,7 +142,7 @@ users.update = function(user) {
     if (user.avatar) { updateUser.avatar = user.avatar; }
     if (user.reset_token) { updateUser.reset_token = user.reset_token; }
     if (user.reset_expiration) { updateUser.reset_expiration = user.reset_expiration; }
-
+    if (user.confirmation_token === null) { delete user.confirmation_token; }
     updateUser.updated_at = Date.now();
 
     delete updateUser.password;

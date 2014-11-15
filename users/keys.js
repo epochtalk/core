@@ -22,6 +22,7 @@ User.indexPrefix = indexPrefix;
   passhash
   reset_token
   reset_expiration
+  confirmation_token
   smf: ID_MEMBER
 */
 

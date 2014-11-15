@@ -34,5 +34,6 @@ users.clean = function(user) {
   if (user.avatar) { user.avatar = sanitize.strip(user.avatar); }
   if (user.reset_token) { user.reset_token = sanitize.strip(user.reset_token); }
   if (user.reset_expiration) { user.reset_expiration = sanitize.strip(user.reset_expiration); }
+  if (user.confirmation_token) { user.confirmation_token = sanitize.strip(user.confirmation_token); }
   return user;
 };

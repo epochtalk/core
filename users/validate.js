@@ -8,7 +8,8 @@ var validate = Promise.promisify(joi.validate);
 var createSchema = joi.object().keys({
   username: joi.string().regex(/[a-zA-Z0-9_\-]/).min(2).required(),
   email: joi.string().email().required(),
-  password: joi.string().regex(/[a-zA-Z0-9]{3,30}/).required()
+  password: joi.string().regex(/[a-zA-Z0-9]{3,30}/).required(),
+  confirmation_token: joi.string().token()
 });
 validator.create = function(user) {
   return validate(user, createSchema, { stripUnknown: true });
