@@ -59,8 +59,12 @@ users.create = function(user) {
 };
 
 users.find = function(id) {
-  var userKey = User.key(id);
-  return db.content.getAsync(userKey);
+  return new Promise(function(fulfill, reject) {
+    tree.get(['user', id], function(err, storedUser) {
+      if (err) { reject(err); }
+      else { fulfill(storedUser); }
+    });
+  });
 };
 
 users.userByOldId = function(legacyId) {
