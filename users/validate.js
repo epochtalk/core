@@ -53,7 +53,8 @@ var updateSchema = joi.object().keys({
   signature: joi.string(),
   avatar: joi.string(), // url
   reset_token: joi.string(),
-  reset_expiration: joi.number()
+  reset_expiration: joi.number(),
+  confirmation_token: joi.any().optional()
 }).with('password', 'confirmation');
 validator.update = function(user) {
   return validate(user, updateSchema, { stripUnknown: true });

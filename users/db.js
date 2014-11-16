@@ -85,7 +85,6 @@ users.userByEmail = function(email) {
 users.update = function(user) {
   var userKey = User.key(user.id);
   var updateUser;
-
   return db.content.getAsync(userKey)
   .then(function(userData) { // handle username change
     var oldUsername = userData.username;
@@ -142,7 +141,7 @@ users.update = function(user) {
     if (user.avatar) { updateUser.avatar = user.avatar; }
     if (user.reset_token) { updateUser.reset_token = user.reset_token; }
     if (user.reset_expiration) { updateUser.reset_expiration = user.reset_expiration; }
-    if (user.confirmation_token === null) { delete user.confirmation_token; }
+    if (user.confirmation_token === undefined) { delete updateUser.confirmation_token; }
     updateUser.updated_at = Date.now();
 
     delete updateUser.password;
