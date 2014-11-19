@@ -1,27 +1,17 @@
 var posts = {};
 module.exports = posts;
 var path = require('path');
-var pre = require(path.join(__dirname, 'pre'));
 var postsDb = require(path.join(__dirname, 'db'));
-var Post = require(path.join(__dirname, 'keys'));
 var validate = require(path.join(__dirname, 'validate'));
 
 posts.import = function(json) {
   return validate.import(json)
-  .then(function(post) {
-    post = pre.clean(post);
-    post = pre.parseEncodings(post);
-    return postsDb.import(post);
-  });
+  .then(postsDb.import);
 };
 
 posts.create = function(json) {
   return validate.create(json)
-  .then(function(post) {
-    post = pre.clean(post);
-    post = pre.parseEncodings(post);
-    return postsDb.create(post);
-  });
+  .then(postsDb.create);
 };
 
 posts.find = function(id) {
@@ -31,11 +21,7 @@ posts.find = function(id) {
 
 posts.update = function(json) {
   return validate.update(json)
-  .then(function(post) {
-    post = pre.clean(post);
-    post = pre.parseEncodings(post);
-    return postsDb.update(post);
-  });
+  .then(postsDb.update);
 };
 
 posts.delete = function(id) {

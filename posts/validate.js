@@ -9,7 +9,8 @@ var importSchema = joi.object().keys({
   user_id: joi.string(),
   thread_id: joi.string().required(),
   title: joi.string().required(),
-  encodedBody: joi.string().required(),
+  body: joi.string().required(),
+  encodedBody: joi.string().allow(null),
   created_at: joi.number(),
   updated_at: joi.number(),
   smf: {
@@ -26,7 +27,8 @@ var createSchema = joi.object().keys({
   user_id: joi.string().required(),
   thread_id: joi.string().required(),
   title: joi.string().required(),
-  encodedBody: joi.string().required()
+  body: joi.string().required(),
+  encodedBody: joi.string().allow(null),
 });
 validator.create = function(post) {
   return validate(post, createSchema, { stripUnknown: true });
@@ -36,7 +38,8 @@ var updateSchema = joi.object().keys({
   thread_id: joi.string().required(),
   id: joi.string().required(),
   title: joi.string().required(),
-  encodedBody: joi.string().required()
+  body: joi.string().required(),
+  encodedBody: joi.string().allow(null),
 });
 validator.update = function(post) {
   return validate(post, updateSchema, { stripUnknown: true });
