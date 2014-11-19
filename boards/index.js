@@ -3,24 +3,17 @@ module.exports = boards;
 
 var Promise = require('bluebird');
 var path = require('path');
-var pre = require(path.join(__dirname, 'pre'));
 var db = require(path.join(__dirname, 'db'));
 var validate = require(path.join(__dirname, 'validate'));
 
 boards.import = function(json) {
   return validate.import(json)
-  .then(function(board) {
-    board = pre.clean(board);
-    return db.import(board);
-  });
+  .then(db.import);
 };
 
 boards.create = function(json) {
   return validate.create(json)
-  .then(function(board) {
-    board = pre.clean(board);
-    return db.create(board);
-  });
+  .then(db.create);
 };
 
 boards.find = function(id) {
@@ -30,10 +23,7 @@ boards.find = function(id) {
 
 boards.update = function(json) {
   return validate.update(json)
-  .then(function(board) {
-    board = pre.clean(board);
-    return db.update(board);
-  });
+  .then(db.update);
 };
 
 boards.delete = function(id) {

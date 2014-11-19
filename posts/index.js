@@ -1,5 +1,6 @@
 var posts = {};
 module.exports = posts;
+
 var path = require('path');
 var postsDb = require(path.join(__dirname, 'db'));
 var validate = require(path.join(__dirname, 'validate'));
