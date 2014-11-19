@@ -687,7 +687,7 @@ describe('boards', function() {
   describe('#totals', function() {
     var testBoard = { name: 'Board', description: 'Description' };
     var childBoard = { name: 'child', description: 'child' };
-    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
+    var plainPost = { title: 'post title', body: 'hello world.' };
     var newUser = {
         username: 'test_user',
         email: 'test_user@example.com',
@@ -911,7 +911,7 @@ describe('threads', function() {
 
   describe('#create user, board, thread, post', function() {
     var plainThread, user;
-    var plainPost = { title: 'post title', encodedBody: 'post body' };
+    var plainPost = { title: 'post title', body: 'post body' };
 
     before(function() {
       var newUser = {
@@ -1022,7 +1022,7 @@ describe('threads', function() {
     };
     var plainPost = {
       title: 'post title',
-      encodedBody: 'post body'
+      body: 'post body'
     };
     var user;
 
@@ -1134,7 +1134,7 @@ describe('threads', function() {
 
   describe('#find', function() {
     var plainThread, user;
-    var plainPost = { title: 'post title', encodedBody: 'post body' };
+    var plainPost = { title: 'post title', body: 'post body' };
 
     before(function() {
       var newUser = {
@@ -1246,7 +1246,7 @@ describe('threads', function() {
     };
     var plainPost = {
       title: 'post title',
-      encodedBody: 'post body'
+      body: 'post body'
     };
     var user;
     before(function() {
@@ -1357,7 +1357,7 @@ describe('threads', function() {
 
   describe('#delete', function() {
     var plainThread, user;
-    var plainPost = { title: 'post title', encodedBody: 'post body' };
+    var plainPost = { title: 'post title', body: 'post body' };
 
     before(function() {
       var newUser = {
@@ -1463,7 +1463,7 @@ describe('threads', function() {
 
   describe('#purge', function() {
     var plainThread, user;
-    var plainPost = { title: 'post title', encodedBody: 'post body' };
+    var plainPost = { title: 'post title', body: 'post body' };
 
     before(function() {
       var newUser = {
@@ -1571,7 +1571,7 @@ describe('threads', function() {
         ID_TOPIC: '112'
       }
     };
-    var plainPost = { title: 'post title', encodedBody: 'post body' };
+    var plainPost = { title: 'post title', body: 'post body' };
     var user;
 
     before(function() {
@@ -1676,7 +1676,7 @@ describe('threads', function() {
 
   describe('#byBoard', function() {
     var plainThread = {};
-    var plainPost = { title: 'plain title', encodedBody: 'plain body' };
+    var plainPost = { title: 'plain title', body: 'plain body' };
     var thread1;
     var thread2;
     var boardId;
@@ -1880,7 +1880,7 @@ describe('threads', function() {
 describe('posts', function() {
 
   describe('#create user, board, thread, post', function() {
-    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
+    var plainPost = { title: 'post title', body: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -1986,7 +1986,7 @@ describe('posts', function() {
   describe('#import user, board, thread, post', function() {
     var plainPost = {
       title: 'post title',
-      encodedBody: 'hello world.',
+      body: 'hello world.',
       smf: {
         ID_MSG: '123'
       }
@@ -2099,7 +2099,7 @@ describe('posts', function() {
   });
 
   describe('#find', function() {
-    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
+    var plainPost = { title: 'post title', body: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -2206,7 +2206,7 @@ describe('posts', function() {
   describe('#postByOldId', function() {
     var plainPost = {
       title: 'post title',
-      encodedBody: 'hello world.',
+      body: 'hello world.',
       smf: {
         ID_MSG: '123'
       }
@@ -2317,7 +2317,7 @@ describe('posts', function() {
   });
 
   describe('#update', function() {
-    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
+    var plainPost = { title: 'post title', body: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -2344,7 +2344,7 @@ describe('posts', function() {
       .then(posts.create)
       .then(function(post) { plainPost = post; })
       .then(function() {
-        plainPost.encodedBody = "updated hello world";
+        plainPost.body = "updated hello world";
         return posts.update(plainPost);
       });
     });
@@ -2425,7 +2425,7 @@ describe('posts', function() {
   });
 
   describe('#delete', function() {
-    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
+    var plainPost = { title: 'post title', body: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -2530,7 +2530,7 @@ describe('posts', function() {
   });
 
   describe('#purge', function() {
-    var plainPost = { title: 'post title', encodedBody: 'hello world.' };
+    var plainPost = { title: 'post title', body: 'hello world.' };
     var user;
     before(function() {
       var newUser = {
@@ -2638,7 +2638,7 @@ describe('posts', function() {
     var user;
     var plainPost = {
       title: 'post title',
-      encodedBody: 'hello world.',
+      body: 'hello world.',
       smf: {
         ID_MSG: '123'
       }
@@ -2746,8 +2746,8 @@ describe('posts', function() {
   });
 
   describe('#byThread', function() {
-    var post1 = { title: 'title', encodedBody: 'body' };
-    var post2 = { title: 'title', encodedBody: 'body' };
+    var post1 = { title: 'title', body: 'body' };
+    var post2 = { title: 'title', body: 'body' };
     var parentThead, user;
 
     before(function() {

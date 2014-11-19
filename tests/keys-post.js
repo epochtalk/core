@@ -3,7 +3,6 @@ var should = require('chai').should();
 var path = require('path');
 var dbName = '.testDB';
 var probe = require(path.join(__dirname, '..', 'probe'));
-var pre = require(path.join(__dirname, '..', 'posts', 'pre'));
 var Post = require(path.join(__dirname, '..', 'posts', 'keys'));
 var config = require(path.join(__dirname, '..', 'config'));
 var dbHelper = require(path.join(__dirname, '..', 'db', 'helper'));
@@ -14,16 +13,6 @@ describe('Post', function() {
   var indexPrefix = config.posts.indexPrefix;
   var sep = config.sep;
   var post = { id: 'asdfa', thread_id: 'alkjadsf' };
-
-  describe('#ParseEncodings', function() {
-    var plainPost = { title: 'post title', encodedBody: '[b]hello world.[/b]' };
-
-    it('should populate the encodedBody property', function() {
-      var parsedPost = pre.parseEncodings(plainPost);
-      parsedPost.encodedBody.should.equal('[b]hello world.[/b]');
-      parsedPost.body.should.equal('<b>hello world.</b>');
-    });
-  });
   
   describe('#key', function() {
     it('should return the post\'s key', function() {

@@ -782,7 +782,6 @@ describe('boards', function() {
     });
   });
 
-
   describe('#CLEANING', function() {
     it('cleaning all db', function() {
       return probe.clean();

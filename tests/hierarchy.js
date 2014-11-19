@@ -39,7 +39,7 @@ describe('hierarchy', function() {
         createdThread = thread;
         createdThread.board_id.should.equal(createdBoard.id);
         return {
-          encodedBody: 'Test post',
+          body: 'Test post',
           title: 'Post title',
           user_id: user.id,
           thread_id: createdThread.id
