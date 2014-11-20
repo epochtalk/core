@@ -67,7 +67,7 @@ boards.create = function(board) {
       }
     };
     if (board.parent_id) {
-      newBoard.parentKey = ['board', board.parent_id];
+      newBoard.parentKeys = [['board', board.parent_id]];
       delete board.parent_id;
     }
     newBoard.object = board;
