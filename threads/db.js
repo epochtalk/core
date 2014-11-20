@@ -38,7 +38,7 @@ threadsDb.create = function(thread) {
     }
     var newThread = {
       object: thread,
-      parentKey: ['board', thread.board_id],
+      parentKeys: [['board', thread.board_id]],
       type: 'thread',
       callback: function(options) {
         var storedThread = options.storedThread;
