@@ -40,9 +40,10 @@ threadsDb.create = function(thread) {
       object: thread,
       parentKey: ['board', thread.board_id],
       type: 'thread',
-      callback: function(err, storedThread) {
-        if (err) {
-          reject(err);
+      callback: function(options) {
+        var storedThread = options.storedThread;
+        if (options.err) {
+          reject(options.err);
         }
         else {
           storedThread.value.id = storedThread.key[1];
