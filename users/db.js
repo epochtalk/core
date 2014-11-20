@@ -44,9 +44,10 @@ users.create = function(user) {
     var newUser = {
       object: user,
       type: 'user',
-      callback: function(err, storedUser) {
-        if (err) {
-          reject(err);
+      callback: function(options) {
+        var storedUser = options.storedUser;
+        if (options.err) {
+          reject(options.err);
         }
         else {
           storedUser.value.id = storedUser.key[1];
