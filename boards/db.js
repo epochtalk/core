@@ -79,7 +79,7 @@ boards.find = function(id) {
   function getChildrenArray(parentKey) {
     return new Promise(function(fulfill, reject) {
       var storedChildren = [];
-      tree.children(parentKey, 'board').pipe(through2.obj(function(storedChild, enc, callback) {
+      tree.children({parentKey: parentKey, type: 'board'}).pipe(through2.obj(function(storedChild, enc, callback) {
         storedChildren.push(storedChild);
         callback();
       }, function() {
