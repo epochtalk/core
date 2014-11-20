@@ -55,9 +55,10 @@ boards.create = function(board) {
     }
     var newBoard = {
       type: 'board',
-      callback: function(err, storedBoard) {
-        if (err) {
-          reject(err);
+      callback: function(options) {
+        var storedBoard = options.storedBoard;
+        if (options.err) {
+          reject(options.err);
         }
         else {
           storedBoard.value.id = storedBoard.key[1];
