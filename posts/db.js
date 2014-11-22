@@ -44,35 +44,19 @@ posts.import = function(post) {
 };
 
 posts.create = function(post) {
-  return new Promise(function(fulfill, reject) {
-    var timestamp = Date.now();
-    // If post created at isn't defined
-    if (!post.created_at) {
-      post.created_at = timestamp;
-      post.updated_at = timestamp;
-    }
-    // If post created at is defined but updated at isn't
-    else if (!post.updated_at) {
-      post.updated_at = post.created_at;
-    }
+  var timestamp = Date.now();
+  // If post created at isn't defined
+  if (!post.created_at) {
+    post.created_at = timestamp;
+    post.updated_at = timestamp;
+  }
+  // If post created at is defined but updated at isn't
+  else if (!post.updated_at) {
+    post.updated_at = post.created_at;
+  }
 
-    var newPost = {
-      //version: post.created_at,
-      object: post,
-      parentKey: ['thread', post.thread_id],
-      type: 'post',
-      callback: function(err, storedPost) {
-        if (err) {
-          reject(err);
-        }
-        else {
-          storedPost.value.id = storedPost.key[1];
-          fulfill(storedPost.value);
-        }
-      }
-    };
-    tree.store(newPost);
-  });
+  return storePost(post)
+  .then(storePostVersion);
 };
 
 posts.find = function(id) {
@@ -341,3 +325,48 @@ posts.versions = function(id) {
     .on('end', handler);
   });
 };
+
+// post: post, callback
+function storePost(post) {
+  return new Promise(function(fulfill, reject) {
+    var newPostOptions = {
+      parentKeys: [['thread', post.thread_id], ['user', post.user_id]],
+      type: 'post',
+      callback: function(options) {
+        // get the key for the post
+        var key = options.key;
+        var value = options.value;
+        if (options.err) {
+          reject(options.err);
+        }
+        else {
+          // fulfill with the new post's id
+          post.id = key[i];
+          fulfill(post);
+        }
+      };
+    };
+    tree.store(newPostOptions);
+  });
+};
+
+function storePostVersion(post) {
+  return new Promise(function(fulfill, reject) {
+    var postWithoutId = JSON.parse(JSON.stringify(post));
+    delete postWithoutId.id;
+    var newPostVersion = {
+      object: postWithoutId,
+      parentKey: ['post', post.id],
+      type: 'postVersion',
+      callback: function(options) {
+        if (options.err) {
+          reject(options.err);
+        }
+        else {
+          fulfill(post);
+        }
+      }
+    };
+    tree.store(newPostVersion);
+  });
+}
