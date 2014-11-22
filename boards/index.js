@@ -4,45 +4,45 @@ module.exports = boards;
 var Promise = require('bluebird');
 var path = require('path');
 var db = require(path.join(__dirname, 'db'));
-var validate = require(path.join(__dirname, 'validate'));
+var boardsValidator = require('epoch-validator').core.boards;
 
 boards.import = function(json) {
-  return validate.import(json)
+  return boardsValidator.import(json)
   .then(db.import);
 };
 
 boards.create = function(json) {
-  return validate.create(json)
+  return boardsValidator.create(json)
   .then(db.create);
 };
 
 boards.find = function(id) {
-  return validate.id(id)
+  return boardsValidator.id(id)
   .then(db.find);
 };
 
 boards.update = function(json) {
-  return validate.update(json)
+  return boardsValidator.update(json)
   .then(db.update);
 };
 
 boards.delete = function(id) {
-  return validate.id(id)
+  return boardsValidator.id(id)
   .then(db.delete);
 };
 
 boards.undelete = function(id) {
-  return validate.id(id)
+  return boardsValidator.id(id)
   .then(db.undelete);
 };
 
 boards.purge = function(id) {
-  return validate.id(id)
+  return boardsValidator.id(id)
   .then(db.purge);
 };
 
 boards.boardByOldId = function(oldId) {
-  return validate.numId(oldId)
+  return boardsValidator.numId(oldId)
   .then(db.boardByOldId);
 };
 
