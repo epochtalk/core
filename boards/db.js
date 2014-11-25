@@ -56,13 +56,13 @@ boards.create = function(board) {
     var newBoard = {
       type: 'board',
       callback: function(options) {
-        var storedBoard = options.storedBoard;
+        var storedBoard = options.value;
         if (options.err) {
           reject(options.err);
         }
         else {
-          storedBoard.value.id = storedBoard.key[1];
-          fulfill(storedBoard.value);
+          storedBoard.id = options.key[1];
+          fulfill(storedBoard);
         }
       }
     };
