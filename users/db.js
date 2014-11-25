@@ -45,13 +45,13 @@ users.create = function(user) {
       object: user,
       type: 'user',
       callback: function(options) {
-        var storedUser = options.storedUser;
+        var storedUser = options.value;
         if (options.err) {
           reject(options.err);
         }
         else {
-          storedUser.value.id = storedUser.key[1];
-          fulfill(storedUser.value);
+          storedUser.id = options.key[1];
+          fulfill(storedUser);
         }
       }
     };
