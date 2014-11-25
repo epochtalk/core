@@ -344,7 +344,7 @@ function storePost(post) {
           post.id = key[1];
           fulfill(post);
         }
-      };
+      }
     };
     tree.store(newPostOptions);
   });
