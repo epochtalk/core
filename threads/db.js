@@ -41,13 +41,13 @@ threadsDb.create = function(thread) {
       parentKeys: [['board', thread.board_id]],
       type: 'thread',
       callback: function(options) {
-        var storedThread = options.storedThread;
+        var storedThread = options.value;
         if (options.err) {
           reject(options.err);
         }
         else {
-          storedThread.value.id = storedThread.key[1];
-          fulfill(storedThread.value);
+          storedThread.id = options.key[1];
+          fulfill(storedThread);
         }
       }
     };
