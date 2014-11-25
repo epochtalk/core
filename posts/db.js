@@ -341,7 +341,7 @@ function storePost(post) {
         }
         else {
           // fulfill with the new post's id
-          post.id = key[i];
+          post.id = key[1];
           fulfill(post);
         }
       };
