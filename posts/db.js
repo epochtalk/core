@@ -72,7 +72,7 @@ posts.find = function(id) {
     tree.children(options)
     .on('data', function(post) {
       storedPost = post.value;
-      storedPost.id = post.key[1];
+      storedPost.id = id;
     })
     .on('error', function(error) {
       reject(error);
