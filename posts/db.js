@@ -279,23 +279,24 @@ posts.byThread = function(threadId, opts) {
 posts.versions = function(id) {
   return new Promise(function(fulfill, reject) {
     var postVersions = [];
-    var sortVersions = function(post) {
-      postVersions.push(post);
+    var options = {
+      reverse: true,
+      parentKey: ['post', id],
+      type: 'postVersion',
+      indexedField: 'created_at'
     };
-    var handler = function() {
+    tree.children(options)
+    .on('data', function(postVersionObject) {
+      var postVersion = postVersionObject.value;
+      postVersion.id = postVersionObject.key[1];
+      postVersions.push(postVersion);
+    })
+    .on('error', function(error) {
+      reject(error);
+    })
+    .on('end', function() {
       fulfill(postVersions);
-    };
-
-    var searchKey = config.posts.version + config.sep + id + config.sep;
-    var query = {
-      gte: searchKey,
-      lte: searchKey + '\xff'
-    };
-    db.content.createValueStream(query)
-    .on('data', sortVersions)
-    .on('error', reject)
-    .on('close', handler)
-    .on('end', handler);
+    });
   });
 };
 
