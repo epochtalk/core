@@ -61,9 +61,13 @@ users.create = function(user) {
 
 users.find = function(id) {
   return new Promise(function(fulfill, reject) {
-    tree.get(['user', id], function(err, storedUser) {
+    tree.get(['user', id], function(err, results) {
+      var storedUser = results.value;
       if (err) { reject(err); }
-      else { fulfill(storedUser); }
+      else {
+        storedUser.id = id;
+        fulfill(storedUser);
+      }
     });
   });
 };
