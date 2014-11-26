@@ -354,6 +354,7 @@ function storePost(post) {
 
 function storePostVersion(post) {
   return new Promise(function(fulfill, reject) {
+    post.version = post.created_at;
     var postWithoutId = JSON.parse(JSON.stringify(post));
     delete postWithoutId.id;
     var newPostVersion = {
