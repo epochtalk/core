@@ -61,9 +61,23 @@ posts.create = function(post) {
 
 posts.find = function(id) {
   return new Promise(function(fulfill, reject) {
-    tree.get(['post', id], function(err, storedPost) {
-      if (err) { reject(err); }
-      else { fulfill(storedPost); }
+    var storedPost;
+    var options = {
+      limit: 1,
+      parentKey: ['post', id],
+      type: 'postVersion',
+      indexedField: 'created_at'
+    };
+    tree.children(options)
+    .on('data', function(post) {
+      storedPost = post.value;
+      storedPost.id = post.key[1];
+    })
+    .on('error', function(error) {
+      reject(error);
+    })
+    .on('end', function() {
+      fulfill(storedPost);
     });
   });
 };
