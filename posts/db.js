@@ -332,6 +332,10 @@ function storePost(post) {
     var newPostOptions = {
       parentKeys: [['thread', post.thread_id], ['user', post.user_id]],
       type: 'post',
+      // TODO: this is a workaround
+      // posts should be indexed by metadata
+      // created_at
+      object: {created_at: post.created_at},
       callback: function(options) {
         // get the key for the post
         var key = options.key;
