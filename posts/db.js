@@ -64,6 +64,7 @@ posts.find = function(id) {
     var storedPost;
     var options = {
       limit: 1,
+      reverse: true,
       parentKey: ['post', id],
       type: 'postVersion',
       indexedField: 'created_at'
