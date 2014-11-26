@@ -84,44 +84,18 @@ posts.find = function(id) {
 };
 
 posts.update = function(post) {
-  var postKey = Post.key(post.id);
-  var updatePost = null;
-  var threadFirstPostIdKey = Thread.firstPostIdKey(post.thread_id);
+  var timestamp = Date.now();
+  // If post created at isn't defined
+  if (!post.created_at) {
+    post.created_at = timestamp;
+    post.updated_at = timestamp;
+  }
+  // If post created at is defined but updated at isn't
+  else if (!post.updated_at) {
+    post.updated_at = post.created_at;
+  }
 
-  // check if first post in thread
-  return db.metadata.getAsync(threadFirstPostIdKey)
-  .then(function(firstPostId) {
-    if (firstPostId === post.id) {
-      return db.metadata.putAsync(threadFirstPostIdKey, post.title)
-      .then(function() { return; });
-    }
-    else { return; }
-  })
-  .then(function() {
-    return db.content.getAsync(postKey); // get old post
-  })
-  .then(function(oldPost) {
-    updatePost = oldPost;
-    var timestamp = Date.now();
-
-    // update post values
-    if (post.title) { updatePost.title = post.title; }
-    if (post.body) { updatePost.body = post.body; }
-    if (post.encodedBody) { updatePost.encodedBody = post.encodedBody; }
-    else if (post.encodedBody === null) { delete updatePost.encodedBody; }
-    updatePost.updated_at = timestamp;
-    updatePost.version = timestamp;
-
-    // insert back into db
-    return db.content.putAsync(postKey, updatePost);
-  })
-  .then(function() {
-    // version already updated above
-    var versionKey = Post.versionKey(updatePost.id, updatePost.version);
-    return db.content.putAsync(versionKey, updatePost);
-  })
-  .then(function() { return updatePost; })
-  .catch(function(err) { console.log(err); });
+  return storePostVersion(post);
 };
 
 posts.delete = function(postId) {
