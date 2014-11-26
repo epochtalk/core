@@ -264,35 +264,19 @@ posts.postByOldId = function(oldId) {
 posts.byThread = function(threadId, opts) {
   return new Promise(function(fulfill, reject) {
     var postIds = [];
-    var sorter = function(value) { postIds.push(value); };
-    var handler = function() { fulfill(postIds); };
-
-    // query vars
-    var limit = opts.limit ? Number(opts.limit) : 10;
-    var page = opts.page ? Math.abs(Number(opts.page)) : 1;
-
-    // query key
-    var postOrderPrefix = config.posts.indexPrefix;
-    var sep = config.sep;
-    var startKey = postOrderPrefix + sep + threadId + sep;
-    var endKey = startKey + '\xff';
-
-    // query start value
-    var pageStart = limit * page - (limit - 1);
-    pageStart = encodeIntHex(pageStart);
-    startKey += pageStart;
-
-    var queryOptions = {
-      limit: limit,
-      gte: startKey,
-      lte: endKey
-    };
-    // query for all posts fir this threadId
-    db.indexes.createValueStream(queryOptions)
-    .on('data', sorter)
-    .on('error', reject)
-    .on('close', handler)
-    .on('end', handler);
+    var options = {};
+    options.parentKey = ['thread', threadId];
+    options.type = 'post';
+    options.indexedField = 'created_at';
+    options.limit = opts.limit;
+    tree.children(options)
+    .on('data', function(post) {
+      // add to postIds
+      postIds.push(post.key[1]);
+    })
+    .on('end', function() {
+      fulfill(postIds);
+    });
   })
   .then(function(postIds) {
     // get post for each postId
