@@ -356,7 +356,7 @@ function storePostVersion(post) {
     delete postWithoutId.id;
     var newPostVersion = {
       object: postWithoutId,
-      parentKey: ['post', post.id],
+      parentKeys: [['post', post.id]],
       type: 'postVersion',
       callback: function(options) {
         if (options.err) {
