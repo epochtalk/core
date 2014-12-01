@@ -67,7 +67,7 @@ posts.find = function(id) {
       reverse: true,
       parentKey: ['post', id],
       type: 'postVersion',
-      indexedField: 'created_at'
+      indexedField: 'updated_at'
     };
     tree.children(options)
     .on('data', function(post) {
@@ -283,7 +283,7 @@ posts.versions = function(id) {
       reverse: true,
       parentKey: ['post', id],
       type: 'postVersion',
-      indexedField: 'created_at'
+      indexedField: 'updated_at'
     };
     tree.children(options)
     .on('data', function(postVersionObject) {
@@ -330,7 +330,7 @@ function storePost(post) {
 
 function storePostVersion(post) {
   return new Promise(function(fulfill, reject) {
-    post.version = post.created_at;
+    post.version = post.updated_at;
     var postWithoutId = JSON.parse(JSON.stringify(post));
     delete postWithoutId.id;
     var newPostVersion = {
