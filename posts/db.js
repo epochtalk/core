@@ -74,19 +74,20 @@ posts.find = function(id) {
   });
 };
 
-posts.update = function(post) {
-  var timestamp = Date.now();
-  // If post created at isn't defined
-  if (!post.created_at) {
-    post.created_at = timestamp;
-    post.updated_at = timestamp;
-  }
-  // If post created at is defined but updated at isn't
-  else if (!post.updated_at) {
-    post.updated_at = post.created_at;
-  }
-
-  return storePostVersion(post);
+posts.update = function(updates) {
+  // find original post
+  return posts.find(updates.id)
+  .then(function(foundPost) {
+    // if new thread_id
+    // delete old relationship
+    // create new relationship
+    foundPost.body = updates.body || foundPost.body;
+    foundPost.encodedBody = updates.encodedBody || foundPost.encodedBody;
+    foundPost.thread_id = updates.thread_id || foundPost.thread_id;
+    foundPost.title = updates.title || foundPost.title;
+    return foundPost;
+  })
+  .then(storePostVersion);
 };
 
 posts.delete = function(postId) {
