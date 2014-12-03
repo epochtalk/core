@@ -417,6 +417,7 @@ describe('posts', function() {
 
   describe('#update', function() {
     var plainPost = { title: 'post title', encodedBody: 'hello world.' };
+    var createdPost, updatedPost;
     var user;
     before(function() {
       var newUser = {
@@ -442,45 +443,42 @@ describe('posts', function() {
       })
       .then(posts.create)
       .then(function(post) {
-        plainPost = post;
+        createdPost = post;
+        return helper.delay(post.id, posts.find, 1000);
+      })
+      .then(function(postToUpdate) {
+        postToUpdate.title = 'update name';
+        postToUpdate.encodedBody = 'update Description';
+        postToUpdate.farfigneuton = 'g is 7th';
+        return postToUpdate;
+      })
+      .then(posts.update)
+      .then(function(post){
+        updatedPost = post;
       });
     });
 
-    it('should update specified post with new values', function() {
-      plainPost.title = 'update name';
-      plainPost.encodedBody = 'update Description';
+    it('should have the same id', function() {
+      createdPost.id.should.equal(updatedPost.id);
+    });
 
-      return posts.update(plainPost)
+    it('should have updated specified post with new values', function() {
+      return posts.find(createdPost.id)
       .then(function(post) {
-        post.id.should.equal(plainPost.id);
-        post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.above(plainPost.created_at);
+        post.id.should.equal(createdPost.id);
+        post.created_at.should.equal(createdPost.created_at);
+        post.updated_at.should.be.above(createdPost.created_at);
         should.not.exist(post.imported_at);
-        post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.encodedBody);
+        post.title.should.not.equal(createdPost.title);
+        post.body.should.not.equal(createdPost.encodedBody);
+        post.title.should.equal(updatedPost.title);
+        post.body.should.equal(updatedPost.body);
         post.user_id.should.equal(user.id);
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
-        post.thread_id.should.equal(plainPost.thread_id);
+        post.thread_id.should.equal(createdPost.thread_id);
         post.version.should.be.a('number');
-        // post.version.should.not.equal(plainPost.version);
-      });
-    });
-
-    it('should return the updated post on find', function() {
-      return posts.find(plainPost.id)
-      .then(function(post) {
-        post.id.should.equal(plainPost.id);
-        post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.above(plainPost.created_at);
-        should.not.exist(post.imported_at);
-        post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.encodedBody);
-        should.not.exist(post.deleted);
-        should.not.exist(post.smf);
-        post.thread_id.should.equal(plainPost.thread_id);
-        post.version.should.be.a('number');
-        // post.version.should.not.equal(plainPost.version);
+        post.version.should.not.equal(createdPost.version);
       });
     });
   });
