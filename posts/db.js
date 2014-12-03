@@ -45,16 +45,7 @@ posts.import = function(post) {
 
 posts.create = function(post) {
   var timestamp = Date.now();
-  // If post created at isn't defined
-  if (!post.created_at) {
-    post.created_at = timestamp;
-    post.updated_at = timestamp;
-  }
-  // If post created at is defined but updated at isn't
-  else if (!post.updated_at) {
-    post.updated_at = post.created_at;
-  }
-
+  post.created_at = timestamp;
   return storePost(post)
   .then(storePostVersion);
 };
@@ -330,7 +321,7 @@ function storePost(post) {
 
 function storePostVersion(post) {
   return new Promise(function(fulfill, reject) {
-    post.version = post.updated_at;
+    post.version = post.updated_at = Date.now();
     var postWithoutId = JSON.parse(JSON.stringify(post));
     delete postWithoutId.id;
     var newPostVersion = {
