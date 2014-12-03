@@ -117,7 +117,10 @@ describe('posts', function() {
       .then(function(post) {
         post.title = 'updated';
         post.encodedBody = 'updated';
-        return posts.update(post);
+        helper.delay(post, posts.update, 1000);
+      })
+      .then(function() {
+        return helper.delay(null, function(){}, 1000);
       });
     });
 
