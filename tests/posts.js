@@ -581,7 +581,7 @@ describe('posts', function() {
       })
       .then(posts.create)
       .then(function(post) {
-        return posts.delete(post.id)
+        return helper.delay(post.id, posts.delete, 1000)
         .then(function(post) { plainPost = post; });
       });
     });
@@ -603,7 +603,9 @@ describe('posts', function() {
         // post.version.should.not.equal(plainPost.version);
         return post.id;
       })
-      .then(posts.find)
+      .then(function(postid) {
+        return helper.delay(postid, posts.find, 1000);
+      })
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
