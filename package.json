@@ -4,7 +4,9 @@
   "description": "Epochtalk Core",
   "main": "index.js",
   "scripts": {
-    "test": "rm -rf ./test-epoch.db & ./node_modules/.bin/mocha -R spec ./tests"
+    "test": "rm -rf ./test-epoch.db & ./node_modules/.bin/mocha -R spec ./tests",
+    "testposts": "rm -rf ./test-epoch.db & ./node_modules/.bin/mocha -R spec ./tests/posts",
+    "testsports": "rm -rf ./test-epoch.db & ./node_modules/.bin/mocha --grep 'update' -R spec ./tests/posts"
   },
   "repository": {
     "type": "git",

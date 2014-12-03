@@ -253,7 +253,7 @@ describe('posts', function() {
       title: 'post title',
       encodedBody: 'hello world.',
       smf: {
-        ID_MSG: 123
+        ID_MSG: 456
       }
     };
     var user;
@@ -285,7 +285,7 @@ describe('posts', function() {
     });
 
     it('should verify key mapping for imported posts', function() {
-      return posts.postByOldId(plainPost.smf.ID_MSG)
+      return helper.delay(plainPost.smf.ID_MSG, posts.postByOldId, 1000)
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);

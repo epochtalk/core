@@ -21,18 +21,14 @@ var usersDb = require(path.join(__dirname, '..', 'users', 'db'));
 posts.import = function(post) {
   var insertPost = function() {
     // insert post
-    return posts.create(post)
-    .then(function(dbPost) {
-      if (dbPost.smf) {
-        return db.legacy.putAsync(Post.legacyKey(dbPost.smf.ID_MSG), dbPost.id)
-        .then(function() { return dbPost; });
-      }
-    });
+    return storePost(post)
+    .then(storePostVersion);
   };
 
-  post.imported_at = Date.now();
+  post.imported_at = post.created_at = Date.now();
   var promise;
   if (post.smf.ID_MEMBER) {
+    // get user id from legacy key
     promise = db.legacy.getAsync(User.legacyKey(post.smf.ID_MEMBER))
     .then(function(userId) { post.user_id = userId; })
     .then(insertPost);
@@ -70,6 +66,23 @@ posts.find = function(id) {
     })
     .on('end', function() {
       fulfill(storedPost);
+    });
+  })
+  .then(function(postVersion) {
+    return new Promise(function(fulfill, reject) {
+      tree.get(['post', id], function(err, post) {
+        if (err) {
+          reject(err);
+        }
+        else {
+          postVersion.created_at = post.value.created_at;
+          if (post.value.imported_at) {
+            postVersion.smf = post.value.smf;
+            postVersion.imported_at = post.value.imported_at;
+          }
+          fulfill(postVersion);
+        }
+      });
     });
   });
 };
@@ -190,10 +203,23 @@ posts.purge = function(id) {
 };
 
 posts.postByOldId = function(oldId) {
-  var legacyThreadKey = Post.legacyKey(oldId);
-
-  return db.legacy.getAsync(legacyThreadKey)
-  .then(posts.find);
+  return new Promise(function(fulfill, reject) {
+    var storedPostId;
+    tree.nodes({agnostic: true, type: 'post', indexedField: 'smf.ID_MSG', indexedValue: oldId})
+    .on('data', function(post) {
+      console.log('found', post);
+      storedPostId = post.key[1];
+    })
+    .on('end', function() {
+      fulfill(storedPostId);
+    })
+    .on('err', function(err) {
+      reject(err);
+    });
+  })
+  .then(function(postId) {
+    return posts.find(postId);
+  });
 };
 
 posts.byThread = function(threadId, opts) {
@@ -257,19 +283,44 @@ posts.versions = function(id) {
     .on('end', function() {
       fulfill(postVersions);
     });
+  })
+  .then(function(postVersions) {
+    return new Promise(function(fulfill, reject) {
+      tree.get(['post', id], function(err, post) {
+        if (err) {
+          reject(err);
+        }
+        else {
+          postVersions.forEach(function(postVersion) {
+            postVersion.created_at = post.value.created_at;
+            if (post.value.imported_at) {
+              postVersion.smf = post.value.smf;
+              postVersion.imported_at = post.value.imported_at;
+            }
+          });
+          fulfill(postVersions);
+        }
+      });
+    });
   });
 };
 
 // post: post, callback
 function storePost(post) {
   return new Promise(function(fulfill, reject) {
+    var valuesToStore = {};
+    valuesToStore.created_at = post.created_at;
+    if (post.imported_at) {
+      valuesToStore.smf = post.smf;
+      valuesToStore.imported_at = post.imported_at;
+    }
     var newPostOptions = {
       parentKeys: [['thread', post.thread_id], ['user', post.user_id]],
       type: 'post',
       // TODO: this is a workaround
       // posts should be indexed by metadata
       // created_at
-      object: {created_at: post.created_at},
+      object: valuesToStore,
       callback: function(options) {
         // get the key for the post
         var key = options.key;
@@ -293,6 +344,9 @@ function storePostVersion(post) {
     post.version = post.updated_at = Date.now();
     var postWithoutId = JSON.parse(JSON.stringify(post));
     delete postWithoutId.id;
+    delete postWithoutId.smf;
+    delete postWithoutId.imported_at;
+    delete postWithoutId.created_at;
     var newPostVersion = {
       object: postWithoutId,
       parentKeys: [['post', post.id]],
