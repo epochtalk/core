@@ -91,8 +91,6 @@ posts.update = function(updates) {
 };
 
 posts.delete = function(postId) {
-  var deletedPost = null;
-
   // see if post already exists
   return posts.find(postId)
   .then(function(postData) {
