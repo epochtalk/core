@@ -564,7 +564,7 @@ describe('posts', function() {
         return post.id;
       })
       .then(function(postid) {
-        return helper.delay(postid, posts.find, 500);
+        return helper.delay(postid, posts.find, 1000);
       })
       .then(function(post) {
         post.id.should.equal(plainPost.id);
