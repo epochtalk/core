@@ -116,8 +116,12 @@ describe('posts', function() {
       })
       .then(function(post) {
         post.title = 'updated';
-        post.body = 'updated';
-        return posts.update(post);
+
+        post.encodedBody = 'updated';
+        helper.delay(post, posts.update, 1000);
+      })
+      .then(function() {
+        return helper.delay(null, function(){}, 1000);
       });
     });
 
