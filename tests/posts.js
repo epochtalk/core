@@ -511,6 +511,9 @@ describe('posts', function() {
       .then(posts.create)
       .then(function(post) {
         plainPost = post;
+      })
+      .then(function() {
+        return helper.delay(null, function(){}, 1000);
       });
     });
 
@@ -531,7 +534,9 @@ describe('posts', function() {
         post.version.should.not.equal(plainPost.version);
         return post.id;
       })
-      .then(posts.find)
+      .then(function(postid) {
+        return helper.delay(postid, posts.find, 500);
+      })
       .then(function(post) {
         post.id.should.equal(plainPost.id);
         post.created_at.should.equal(plainPost.created_at);
