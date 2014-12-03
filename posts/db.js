@@ -91,29 +91,15 @@ posts.update = function(updates) {
 };
 
 posts.delete = function(postId) {
-  var postKey = Post.key(postId);
   var deletedPost = null;
 
   // see if post already exists
-  return db.content.getAsync(postKey)
+  return posts.find(postId)
   .then(function(postData) {
-    deletedPost = postData;
-    var timestamp = Date.now();
-
-    // add deleted: true flag to board
-    deletedPost.deleted = true;
-    deletedPost.updated_at = timestamp;
-    deletedPost.version = timestamp;
-
-    // insert back into db
-    return db.content.putAsync(postKey, deletedPost);
+    postData.deleted = true;
+    return postData;
   })
-  .then(function() {
-    // version already updated above
-    var versionKey = Post.versionKey(deletedPost.id, deletedPost.version);
-    return db.content.putAsync(versionKey, deletedPost);
-  })
-  .then(function() { return deletedPost; });
+  .then(storePostVersion);
 };
 
 posts.undelete = function(postId) {
