@@ -15,7 +15,7 @@ var dbPath = config.dbPath;
 var jsonEncoding = {valueEncoding: 'json'};
 var utfEncoding = {valueEncoding: 'utf8'};
 
-var tree = new TreeDB(levelup(path.join(dbPath)), {meta: require('epochmeta')});
+var tree = new TreeDB(levelup(path.join(dbPath)), {meta: require('epoch-core-meta')});
 var db = tree.db;
 var messages = db.sublevel('messages');
 var deleted = db.sublevel('deleted');
