@@ -7,7 +7,6 @@ var probe = require(path.join(__dirname, '..', 'probe'));
 var posts = core.posts;
 var threads = core.threads;
 var boards = core.boards;
-var helper = require(path.join(__dirname, 'helper'));
 
 describe('posts', function() {
 
