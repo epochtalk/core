@@ -571,7 +571,7 @@ describe('posts', function() {
       })
       .then(posts.create)
       .then(function(post) {
-        return helper.delay(post.id, posts.delete, 1000)
+        return posts.delete(post.id)
         .then(function(post) { plainPost = post; });
       });
     });
@@ -591,10 +591,7 @@ describe('posts', function() {
         post.thread_id.should.equal(plainPost.thread_id);
         post.version.should.be.a('number');
         // post.version.should.not.equal(plainPost.version);
-        return post.id;
-      })
-      .then(function(postid) {
-        return helper.delay(postid, posts.find, 1000);
+        return posts.find(post.id);
       })
       .then(function(post) {
         post.id.should.equal(plainPost.id);
