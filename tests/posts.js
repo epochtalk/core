@@ -249,7 +249,7 @@ describe('posts', function() {
       title: 'post title',
       encodedBody: 'hello world.',
       smf: {
-        ID_MSG: 123
+        ID_MSG: 456
       }
     };
     var user;
