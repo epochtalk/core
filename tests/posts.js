@@ -32,7 +32,7 @@ describe('posts', function() {
       .then(function(board) {
         return { board_id: board.id };
       })
-      .then(core.threads.create)
+      .then(threads.create)
       .then(function(thread) {
         parentThread = thread;
         post1.thread_id = thread.id;
@@ -118,10 +118,7 @@ describe('posts', function() {
         post.title = 'updated';
 
         post.encodedBody = 'updated';
-        helper.delay(post, posts.update, 1000);
-      })
-      .then(function() {
-        return helper.delay(null, function(){}, 1000);
+        return posts.update(post);
       });
     });
 
