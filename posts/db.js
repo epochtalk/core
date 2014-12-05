@@ -21,18 +21,14 @@ var usersDb = require(path.join(__dirname, '..', 'users', 'db'));
 posts.import = function(post) {
   var insertPost = function() {
     // insert post
-    return posts.create(post)
-    .then(function(dbPost) {
-      if (dbPost.smf) {
-        return db.legacy.putAsync(Post.legacyKey(dbPost.smf.ID_MSG), dbPost.id)
-        .then(function() { return dbPost; });
-      }
-    });
+    return storePost(post)
+    .then(storePostVersion);
   };
 
-  post.imported_at = Date.now();
+  post.imported_at = post.created_at = Date.now();
   var promise;
   if (post.smf.ID_MEMBER) {
+    // get user id from legacy key
     promise = db.legacy.getAsync(User.legacyKey(post.smf.ID_MEMBER))
     .then(function(userId) { post.user_id = userId; })
     .then(insertPost);
