@@ -263,13 +263,19 @@ posts.versions = function(id) {
 // post: post, callback
 function storePost(post) {
   return new Promise(function(fulfill, reject) {
+    var valuesToStore = {};
+    valuesToStore.created_at = post.created_at;
+    if (post.imported_at) {
+      valuesToStore.smf = post.smf;
+      valuesToStore.imported_at = post.imported_at;
+    }
     var newPostOptions = {
       parentKeys: [['thread', post.thread_id], ['user', post.user_id]],
       type: 'post',
       // TODO: this is a workaround
       // posts should be indexed by metadata
       // created_at
-      object: {created_at: post.created_at},
+      object: valuesToStore,
       callback: function(options) {
         // get the key for the post
         var key = options.key;
@@ -293,6 +299,9 @@ function storePostVersion(post) {
     post.version = post.updated_at = Date.now();
     var postWithoutId = JSON.parse(JSON.stringify(post));
     delete postWithoutId.id;
+    delete postWithoutId.smf;
+    delete postWithoutId.imported_at;
+    delete postWithoutId.created_at;
     var newPostVersion = {
       object: postWithoutId,
       parentKeys: [['post', post.id]],
