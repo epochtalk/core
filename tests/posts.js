@@ -250,7 +250,7 @@ describe('posts', function() {
       title: 'post title',
       body: 'hello world.',
       smf: {
-        ID_MSG: 123
+        ID_MSG: 456
       }
     };
     var user;
