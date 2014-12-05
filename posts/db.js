@@ -203,10 +203,22 @@ posts.purge = function(id) {
 };
 
 posts.postByOldId = function(oldId) {
-  var legacyThreadKey = Post.legacyKey(oldId);
-
-  return db.legacy.getAsync(legacyThreadKey)
-  .then(posts.find);
+  return new Promise(function(fulfill, reject) {
+    var storedPostId;
+    tree.nodes({agnostic: true, type: 'post', indexedField: 'smf.ID_MSG', indexedValue: oldId})
+    .on('data', function(post) {
+      storedPostId = post.key[1];
+    })
+    .on('end', function() {
+      fulfill(storedPostId);
+    })
+    .on('err', function(err) {
+      reject(err);
+    });
+  })
+  .then(function(postId) {
+    return posts.find(postId);
+  });
 };
 
 posts.byThread = function(threadId, opts) {
