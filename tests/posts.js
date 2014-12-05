@@ -442,7 +442,7 @@ describe('posts', function() {
       .then(posts.create)
       .then(function(post) {
         createdPost = post;
-        return helper.delay(post.id, posts.find, 1000);
+        return posts.find(post.id);
       })
       .then(function(postToUpdate) {
         postToUpdate.title = 'update name';
