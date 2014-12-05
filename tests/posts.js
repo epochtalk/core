@@ -393,7 +393,6 @@ describe('posts', function() {
       .then(posts.create)
       .then(function(post) {
         plainPost = post;
-        return helper.delay(null, function(){}, 1000);
       });
     });
 
