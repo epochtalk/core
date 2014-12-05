@@ -274,6 +274,25 @@ posts.versions = function(id) {
     .on('end', function() {
       fulfill(postVersions);
     });
+  })
+  .then(function(postVersions) {
+    return new Promise(function(fulfill, reject) {
+      tree.get(['post', id], function(err, post) {
+        if (err) {
+          reject(err);
+        }
+        else {
+          postVersions.forEach(function(postVersion) {
+            postVersion.created_at = post.value.created_at;
+            if (post.value.imported_at) {
+              postVersion.smf = post.value.smf;
+              postVersion.imported_at = post.value.imported_at;
+            }
+          });
+          fulfill(postVersions);
+        }
+      });
+    });
   });
 };
 
