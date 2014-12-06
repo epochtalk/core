@@ -35,6 +35,7 @@ threadsDb.create = function(thread) {
     // If created at doesnt exist
     if (!thread.created_at) {
       thread.created_at = timestamp;
+      thread.updated_at = timestamp;
     }
     var newThread = {
       object: thread,
@@ -183,42 +184,27 @@ threadsDb.threadByOldId = function(oldId) {
 
 threadsDb.byBoard = function(boardId, opts) {
   return new Promise(function(fulfill, reject) {
-    var entries = [];
-    var sorter = function(value) { entries.push(value.value); };
-    var handler = function() { return fulfill(entries); };
-
-    // query vars
-    var limit = opts.limit ? Number(opts.limit) : 10;
-    var page = opts.page ? Math.abs(Number(opts.page)) : 1;
-
-    // query keys
-    var threadOrderPrefix = config.threads.indexPrefix;
-    var sep = config.sep;
-    var startKey = threadOrderPrefix + sep + boardId + sep + 'order' + sep;
-    var endKey = startKey;
-    endKey += '\xff';
-
-    // query counting
-    var threadStart = limit * page - (limit - 1);
-    threadStart = encodeIntHex(threadStart);
-    startKey += threadStart;
-
-    var queryOptions = {
-      limit: limit,
-      gte: startKey,
-      lte: endKey
-    };
-
-    // query thread Index
-    db.indexes.createReadStream(queryOptions)
-    .on('data', sorter)
-    .on('error', reject)
-    .on('close', handler)
-    .on('end', handler);
+    var threadIds = [];
+    var options = {};
+    options.parentKey = ['board', boardId];
+    options.type = 'thread';
+    options.indexedField = 'updated_at';
+    options.limit = opts.limit;
+    tree.children(options)
+    .on('data', function(thread) {
+      // add to threadIds
+      threadIds.push(thread.key[1]);
+    })
+    .on('end', function() {
+      fulfill(threadIds);
+    })
+    .on('error', function(err) {
+      reject(err);
+    });
   })
-  .then(function(allThreads) {
-    return Promise.map(allThreads, function(entry) {
-      return threadsDb.find(entry);
+  .then(function(threadIds) {
+    return Promise.map(threadIds, function(threadId) {
+      return threadsDb.find(threadId);
     });
   });
 };
