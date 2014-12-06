@@ -77,7 +77,7 @@ describe('threads', function() {
       });
     });
 
-    it('should return 2 boards', function() {
+    it('should return 2 threads in the board', function() {
       return threads.byBoard(boardId, { limit: 10 })
       .then(function(allThreads) {
         allThreads.should.have.length(2);
