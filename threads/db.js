@@ -31,30 +31,12 @@ threadsDb.import = function(thread) {
 
 // thread must have a board_id
 threadsDb.create = function(thread) {
-  return new Promise(function(fulfill, reject) {
-    var timestamp = Date.now();
-    // If created at doesnt exist
-    if (!thread.created_at) {
-      thread.created_at = timestamp;
-      thread.updated_at = timestamp;
-    }
-    var newThread = {
-      object: thread,
-      parentKeys: [['board', thread.board_id]],
-      type: 'thread',
-      callback: function(options) {
-        var storedThread = options.value;
-        if (options.err) {
-          reject(options.err);
-        }
-        else {
-          storedThread.id = options.key[1];
-          fulfill(storedThread);
-        }
-      }
-    };
-    tree.store(newThread);
-  });
+  var timestamp = Date.now();
+  // If created at doesnt exist
+  if (!thread.created_at) {
+    thread.created_at = timestamp;
+  }
+  return storeThread(thread);
 };
 
 threadsDb.delete = function(id) {
@@ -219,5 +201,27 @@ threadsDb.byBoard = function(boardId, opts) {
     return Promise.map(threadIds, function(threadId) {
       return threadsDb.find(threadId);
     });
+  });
+};
+
+function storeThread(thread) {
+  return new Promise(function(fulfill, reject) {
+    thread.updated_at = Date.now();
+    var newThread = {
+      object: thread,
+      parentKeys: [['board', thread.board_id]],
+      type: 'thread',
+      callback: function(options) {
+        var storedThread = options.value;
+        if (options.err) {
+          reject(options.err);
+        }
+        else {
+          storedThread.id = options.key[1];
+          fulfill(storedThread);
+        }
+      }
+    };
+    tree.store(newThread);
   });
 };
