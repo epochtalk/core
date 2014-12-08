@@ -8,6 +8,7 @@ var encodeIntHex = dbHelper.encodeIntHex;
 var config = require(path.join(__dirname, '..', 'config'));
 var db = require(path.join(__dirname, '..', 'db'));
 var tree = db.tree;
+var posts = require(path.join(__dirname, '..', 'posts', 'db'));
 var Thread = require(path.join(__dirname, 'keys'));
 var helper = require(path.join(__dirname, '..', 'helper'));
 var boardsDb = require(path.join(__dirname, '..', 'boards', 'db'));
@@ -169,7 +170,19 @@ threadsDb.find = function(id) {
   return new Promise(function(fulfill, reject) {
     tree.get(['thread', id], function(err, storedThread) {
       if (err) { reject(err); }
-      else { fulfill(storedThread); }
+      else {
+        // Get first post
+        posts.byThread(id, {limit: 1})
+        .then(function(firstPost) {
+          // Fill in first post's data
+          storedThread.value.title = firstPost[0].title;
+          storedThread.value.first_post_id = firstPost[0].id;
+          storedThread.value.user = firstPost[0].user.username;
+        })
+        .then(function() {
+          fulfill(storedThread);
+        });
+      }
     });
   })
   .then(helper.decMetadata);
