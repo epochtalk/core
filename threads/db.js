@@ -146,7 +146,7 @@ threadsDb.find = function(id) {
           // Fill in first post's data
           storedThread.value.title = firstPost[0].title;
           storedThread.value.first_post_id = firstPost[0].id;
-          storedThread.value.user = firstPost[0].user.username;
+          storedThread.value.user = firstPost[0].user;
         })
         .then(function() {
           fulfill(storedThread);
