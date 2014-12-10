@@ -4,7 +4,7 @@
   "description": "Epochtalk Core",
   "main": "index.js",
   "scripts": {
-    "test": "rm -rf ./test-epoch.db & ./node_modules/.bin/mocha -R spec ./tests"
+    "test": "node test/*.js"
   },
   "repository": {
     "type": "git",
