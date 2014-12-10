@@ -40,22 +40,17 @@ threadsDb.create = function(thread) {
 };
 
 threadsDb.delete = function(id) {
-  var threadKey = Thread.key(id);
-  var deletedThread = null;
-
   // see if thread already exists
-  return db.content.getAsync(threadKey)
+  return threadsDb.find(id)
   .then(function(threadData) {
-    deletedThread = threadData;
-
-    // add deleted: true flag to board
-    deletedThread.deleted = true;
-    deletedThread.updated_at = Date.now();
-
-    // insert back into db
-    return db.content.putAsync(threadKey, deletedThread);
+    threadData.deleted = true;
+    threadData.updated_at = Date.now();
+    delete threadData.title;
+    delete threadData.first_post_id;
+    delete threadData.user;
+    return threadData;
   })
-  .then(function() { return deletedThread; });
+  .then(storeThread);
 };
 
 threadsDb.undelete = function(id) {
