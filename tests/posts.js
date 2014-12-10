@@ -455,30 +455,8 @@ describe('posts', function() {
       });
     });
 
-<<<<<<< HEAD
-    it('should update specified post with new values', function() {
-      plainPost.title = 'update name';
-      plainPost.body = 'update Description';
-
-      return posts.update(plainPost)
-      .then(function(post) {
-        post.id.should.equal(plainPost.id);
-        post.created_at.should.equal(plainPost.created_at);
-        post.updated_at.should.be.above(plainPost.created_at);
-        should.not.exist(post.imported_at);
-        post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.body);
-        post.user_id.should.equal(user.id);
-        should.not.exist(post.deleted);
-        should.not.exist(post.smf);
-        post.thread_id.should.equal(plainPost.thread_id);
-        post.version.should.be.a('number');
-        // post.version.should.not.equal(plainPost.version);
-      });
-=======
     it('should have the same id', function() {
       createdPost.id.should.equal(updatedPost.id);
->>>>>>> tests/posts update now uses helper
     });
 
     it('should have updated specified post with new values', function() {
@@ -488,16 +466,11 @@ describe('posts', function() {
         post.created_at.should.equal(createdPost.created_at);
         post.updated_at.should.be.above(createdPost.created_at);
         should.not.exist(post.imported_at);
-<<<<<<< HEAD
-        post.title.should.equal(plainPost.title);
-        post.body.should.equal(plainPost.body);
-=======
         post.title.should.not.equal(createdPost.title);
         post.body.should.not.equal(createdPost.encodedBody);
         post.title.should.equal(updatedPost.title);
         post.body.should.equal(updatedPost.body);
         post.user_id.should.equal(user.id);
->>>>>>> tests/posts update now uses helper
         should.not.exist(post.deleted);
         should.not.exist(post.smf);
         post.thread_id.should.equal(createdPost.thread_id);
