@@ -282,24 +282,18 @@ boards.boardByOldId = function(oldId) {
 */
 boards.all = function() {
   return new Promise(function(fulfill, reject) {
-    var boardIds = [];
-    var sorter = function(entry) { boardIds.push(entry.id); };
-    var handler = function() { return fulfill(boardIds); };
-
-    var searchKey = Board.prefix + config.sep;
-    var query = {
-      gte: searchKey,
-      lte: searchKey + '\xff'
-    };
-    db.content.createValueStream(query)
+    var boardKeys = [];
+    var sorter = function(entry) { boardKeys.push(entry.key); };
+    var handler = function() { return fulfill(boardKeys); };
+    db.tree.nodes({type: 'board', indexedField: 'name' })
     .on('data', sorter)
     .on('error', reject)
     .on('close', handler)
     .on('end', handler);
   })
   .then(function(allBoards) {
-    return Promise.map(allBoards, function(boardId) {
-      return boards.find(boardId);
+    return Promise.map(allBoards, function(boardKey) {
+      return boards.find(boardKey[1]);
     })
     .then(function(allBoards) {
       var boards = [];

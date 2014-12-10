@@ -7,6 +7,7 @@ var users = core.users;
 var boards = core.boards;
 var posts = core.posts;
 var threads = core.threads;
+var noop = function(){};
 var user = {};
 
 var createUser = function() {
@@ -16,7 +17,7 @@ var createUser = function() {
     password: 'password',
     confirmation: 'password'
   })
-  .then(function(newUser) { user = newUser; });
+  .then(function(newuser) { user = newuser; });
 };
 
 var createBoard = function (index) {
@@ -44,6 +45,7 @@ var createPost = function(threadId, index) {
 };
 
 module.exports = function(numBoards, numThreads, numPosts, cb) {
+  if (!cb) cb = noop;
   var boardIndexes = _.range(numBoards);
   var threadIndexes = _.range(numThreads);
   var postIndexes = _.range(numPosts);
