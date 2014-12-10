@@ -193,8 +193,11 @@ threadsDb.byBoard = function(boardId, opts) {
 
 function storeThread(thread) {
   return new Promise(function(fulfill, reject) {
+    var id = thread.id;
+    delete thread.id;
     thread.updated_at = Date.now();
     var newThread = {
+      id: id,
       object: thread,
       parentKeys: [['board', thread.board_id]],
       type: 'thread',
