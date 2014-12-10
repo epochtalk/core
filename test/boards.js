@@ -16,6 +16,19 @@ function start() {
     boards.all().then(function(allBoards) {
       t.equal(allBoards.length, seedCount);
       t.end();
+    });
+  });
+  test('create', function(t) {
+    var testBoard = {
+      name: 'Test Board',
+      description: 'Test Board Description'
+    };
+    boards.create(testBoard).
+    then(function(board) {
+      t.ok(board, 'board returned from create is truthy');
+      t.equal(testBoard.name, board.name, 'board name is correct');
+      t.equal(testBoard.description, board.description, 'board description is correct');
+      t.end();
       teardown();
     });
   });
