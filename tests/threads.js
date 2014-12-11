@@ -389,7 +389,6 @@ describe('threads', function() {
         should.not.exist(thread.imported_at);
         thread.deleted.should.be.true;
         should.not.exist(thread.smf);
-        should.not.exist(thread.post_count); // no post count for delete return
         should.not.exist(thread.title); // no title for delete return
         thread.board_id.should.equal(plainThread.board_id);
         return thread.id;
@@ -453,8 +452,6 @@ describe('threads', function() {
         should.not.exist(thread.imported_at);
         should.not.exist(thread.deleted);
         should.not.exist(thread.smf);
-        should.not.exist(thread.post_count); // no post count for delete return
-        should.not.exist(thread.title); // no title for delete return
         thread.board_id.should.equal(plainThread.board_id);
         return thread.id;
       })
