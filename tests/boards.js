@@ -7,6 +7,7 @@ var core = require(path.join(__dirname, '..'))(dbName);
 var probe = require(path.join(__dirname, '..', 'probe'));
 var seed = require(path.join(__dirname, '..', 'seed', 'seed'));
 var boards = core.boards;
+var _ = require('lodash');
 
 describe('boards', function() {
 
@@ -14,19 +15,6 @@ describe('boards', function() {
     before(function(done) {
       seed(25, 0, 0, done);
     });
-
-    it('should return matching board data', function() {
-      return boards.all()
-      .then(function(allBoards) {
-        for (var i = 0; i < allBoards.length; i++) {
-          var boardName = 'Board ' + i;
-          var boardDesc = 'Hello World! This is board ' + i + ' in a popular forum.';
-          allBoards[i].name.should.equal(boardName);
-          allBoards[i].description.should.equal(boardDesc);
-        }
-      });
-    });
-
     it('should return 25 boards', function() {
       return boards.all()
       .then(function(allBoards) {
@@ -121,8 +109,9 @@ describe('boards', function() {
           should.not.exist(board.smf);
           board.children.should.be.an('array');
           board.children.should.have.length(2);
-          board.children[0].id.should.equal(childABoard.id);
-          board.children[1].id.should.equal(childBBoard.id);
+          var childrenIds = _.map(board.children, function(b) { return b.id });
+          childrenIds.should.include(childABoard.id);
+          childrenIds.should.include(childBBoard.id);
         });
       });
     });
@@ -132,7 +121,7 @@ describe('boards', function() {
     var importBoard = {
       name: 'import name',
       description: 'import description',
-      smf: { ID_BOARD: '111' }
+      smf: { ID_BOARD: 111 }
     };
 
     var importChildBoard = {
@@ -177,6 +166,7 @@ describe('boards', function() {
         board.description.should.equal(importChildBoard.description);
         board.smf.ID_BOARD.should.equal(importChildBoard.smf.ID_BOARD);
         board.smf.ID_PARENT.should.equal(importChildBoard.smf.ID_PARENT);
+        console.log(board);
         board.parent_id.should.be.ok;
         board.parent_id.should.be.a('string');
         board.parent_id.should.equal(importBoard.id)

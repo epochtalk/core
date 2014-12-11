@@ -22,7 +22,9 @@ boards.import = function(board) {
     .then(function(dbBoard) {
       if (dbBoard.smf) {
         return db.legacy.putAsync(Board.legacyKey(board.smf.ID_BOARD), dbBoard.id)
-        .then(function() { return dbBoard; });
+        .then(function() {
+          return dbBoard; 
+        });
       }
     });
   };
