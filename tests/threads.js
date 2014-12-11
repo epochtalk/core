@@ -13,7 +13,7 @@ describe('threads', function() {
   describe('#byBoard', function() {
     // byBoards doesn't work for threads without posts
     var plainThread = {};
-    var plainPost = { title: 'plain title', encodedBody: 'plain body' };
+    var plainPost = { title: 'plain title', body: 'plain body' };
     var thread1;
     var thread2;
     var boardId;
@@ -89,7 +89,7 @@ describe('threads', function() {
     var plainThread, user;
     var plainPost = {
       title: 'post title',
-      encodedBody: 'post body'
+      body: 'post body'
     };
 
     before(function() {
@@ -185,7 +185,7 @@ describe('threads', function() {
     };
     var plainPost = {
       title: 'post title',
-      encodedBody: 'post body'
+      body: 'post body'
     };
     var user;
     before(function() {
@@ -240,7 +240,7 @@ describe('threads', function() {
     };
     var plainPost = {
       title: 'post title',
-      encodedBody: 'post body'
+      body: 'post body'
     };
     var user;
 
@@ -301,7 +301,7 @@ describe('threads', function() {
     var plainThread, user;
     var plainPost = {
       title: 'post title',
-      encodedBody: 'post body'
+      body: 'post body'
     };
 
     before(function() {
@@ -352,7 +352,7 @@ describe('threads', function() {
     var plainThread, user;
     var plainPost = {
       title: 'post title',
-      encodedBody: 'post body'
+      body: 'post body'
     };
 
     before(function() {
@@ -413,7 +413,7 @@ describe('threads', function() {
   describe('#undelete', function() {
     // *** you can delete a thread with posts still in it ***
     var plainThread, user;
-    var plainPost = { title: 'post title', encodedBody: 'post body' };
+    var plainPost = { title: 'post title', body: 'post body' };
 
     before(function() {
       var newUser = {
@@ -480,7 +480,7 @@ describe('threads', function() {
     var plainThread, user;
     var plainPost = {
       title: 'post title',
-      encodedBody: 'post body'
+      body: 'post body'
     };
 
     before(function() {
