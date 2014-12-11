@@ -17,13 +17,16 @@ var updateParentLock = new Padlock();
 var catLock = new Padlock();
 
 boards.import = function(board) {
-  var insertBoard = function() {
+  var insertBoard = function(board) {
+    var parentId;
+    if (board.parent_id) parentId = board.parent_id;
     return boards.create(board) // create board first to handle id
     .then(function(dbBoard) {
       if (dbBoard.smf) {
         return db.legacy.putAsync(Board.legacyKey(board.smf.ID_BOARD), dbBoard.id)
         .then(function() {
-          return dbBoard; 
+          if (parentId) dbBoard.parent_id = parentId;
+          return dbBoard;
         });
       }
     });
@@ -35,11 +38,12 @@ boards.import = function(board) {
     promise = db.legacy.getAsync(Board.legacyKey(board.smf.ID_PARENT))
     .then(function(parentBoardId) {
       board.parent_id = parentBoardId;
+      return board;
     })
     .then(insertBoard);
   }
   else {
-    promise = insertBoard();
+    promise = insertBoard(board);
   }
   return promise;
 };
