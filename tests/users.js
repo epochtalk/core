@@ -7,7 +7,6 @@ var users = core.users;
 var probe = require(path.join(__dirname, '..', 'probe'));
 
 describe('users', function() {
-
   describe('#ALL', function() {
     var user1 = {
       username: 'user1',
@@ -55,13 +54,6 @@ describe('users', function() {
           should.not.exist(user.deleted);
           should.not.exist(user.smf);
         });
-      });
-    });
-
-    it('should return 2 users', function() {
-      return users.all()
-      .then(function(allUsers) {
-        allUsers.should.have.length(2);
       });
     });
   });

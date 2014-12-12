@@ -275,8 +275,6 @@ users.all = function() {
     var handler = function() {
       return fulfill(entries);
     };
-
-    var modelPrefix = config.users.prefix;
     tree.nodes({type: 'user', indexedField: 'username' })
     .on('data', sorter)
     .on('error', reject)
