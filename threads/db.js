@@ -152,10 +152,22 @@ threadsDb.find = function(id) {
 };
 
 threadsDb.threadByOldId = function(oldId) {
-  var legacyThreadKey = Thread.legacyKey(oldId);
-
-  return db.legacy.getAsync(legacyThreadKey)
-  .then(threadsDb.find);
+  return new Promise(function(fulfill, reject) {
+    var storedThreadId;
+    tree.nodes({agnostic: true, type: 'thread', indexedField: 'smf.ID_TOPIC', indexedValue: oldId})
+    .on('data', function(thread) {
+      storedThreadId = thread.key[1];
+    })
+    .on('end', function() {
+      fulfill(storedThreadId);
+    })
+    .on('err', function(err) {
+      reject(err);
+    });
+  })
+  .then(function(threadId) {
+    return threadsDb.find(threadId);
+  });
 };
 
 threadsDb.byBoard = function(boardId, opts) {
