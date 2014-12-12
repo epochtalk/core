@@ -88,7 +88,9 @@ users.userByUsername = function(username) {
     };
     tree.nodes(options)
     .on('data', function(data) {
-      fulfill(data);
+      var user = data.value;
+      user.id = data.key[1];
+      fulfill(user);
     })
     .on('error', function(err) {
       reject(err);
@@ -106,7 +108,9 @@ users.userByEmail = function(email) {
     };
     tree.nodes(options)
     .on('data', function(data) {
-      fulfill(data);
+      var user = data.value;
+      user.id = data.key[1];
+      fulfill(user);
     })
     .on('error', function(err) {
       reject(err);
@@ -264,15 +268,16 @@ users.all = function() {
   return new Promise(function(fulfill, reject) {
     var entries = [];
     var sorter = function(entry) {
-      entries.push(entry.value);
+      var user = entry.value;
+      user.id = entry.key[1];
+      entries.push(user);
     };
     var handler = function() {
       return fulfill(entries);
     };
 
     var modelPrefix = config.users.prefix;
-    var query = { gte: modelPrefix, lte: modelPrefix + '\xff'};
-    db.content.createReadStream(query)
+    tree.nodes({type: 'user', indexedField: 'username' })
     .on('data', sorter)
     .on('error', reject)
     .on('close', handler)
