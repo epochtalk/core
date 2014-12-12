@@ -180,7 +180,7 @@ describe('threads', function() {
   describe('#import_get', function() {
     var plainThread = {
       smf: {
-        ID_TOPIC: 112
+        ID_TOPIC: 113
       }
     };
     var plainPost = {
