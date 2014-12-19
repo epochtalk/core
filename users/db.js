@@ -248,13 +248,13 @@ users.all = function() {
   });
 };
 
-users.getUserViews = function(id) {
+users.getUserThreadViews = function(id) {
   // build userView key
   var userViewsKey = User.userViewsKey(id);
   return db.metadata.getAsync(userViewsKey);
 };
 
-users.putUserViews = function(userId, userViewsArray) {
+users.putUserThreadViews = function(userId, userViewsArray) {
   return new Promise(function(fulfill, reject) {
     userViewsLock.runwithlock(function() {
       var userViewsKey = User.userViewsKey(userId);
