@@ -72,14 +72,16 @@ users.userByUsername = function(username) {
   var lowerCaseUsername = username.toLowerCase();
   var usernameKey = User.usernameKey(lowerCaseUsername);
   return db.indexes.getAsync(usernameKey)
-  .then(users.find);
+  .then(users.find)
+  .catch(function() { return undefined; });
 };
 
 users.userByEmail = function(email) {
   var lowerCaseEmail = email.toLowerCase();
   var emailKey = User.emailKey(lowerCaseEmail);
   return db.indexes.getAsync(emailKey)
-  .then(users.find);
+  .then(users.find)
+  .catch(function() { return undefined; });
 };
 
 users.update = function(user) {
